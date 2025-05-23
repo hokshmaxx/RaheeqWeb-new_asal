@@ -22,7 +22,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -i ~/.ssh/id_rsa ec2-user@15.185.55.55 << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@15.185.55.55 << 'EOF'
             cd ~/raheeq || git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git ~/raheeq
             cd ~/raheeq
             git pull origin master
