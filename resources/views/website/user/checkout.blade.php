@@ -4,7 +4,7 @@
 @endsection
 @section('content')
 
-
+//
         <section class="section_page_site">
 		    <div class="container">
 
