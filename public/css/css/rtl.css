@@ -1,0 +1,333 @@
+body {
+    direction: rtl;
+    text-align: right;
+}
+.hamburger {
+    right: auto;
+    left: 15px
+}
+.logo-site {
+    float: right;
+}
+.main_menu > li {
+    float: right;
+}
+.main_menu > li:last-child {
+    margin-left: 0;
+}
+.main_menu, .head-right {
+    float: left;
+}
+.home_txt {
+    right: 0;
+    left: auto;
+    padding-right: 40px;
+    padding-left: initial
+}
+.home_txt:before, .home_txt:after {
+    right: 0;
+    left: auto;
+}
+.content-sub .btn-send {
+    left: 100px;
+    right: auto;
+}
+.content-sub .btn-send span {
+    margin-left: 10px;
+    margin-right: 0;
+}
+.content-sub .btn-send i {
+    transform: scale(-1)
+}
+.content-sub .form-group .form-control {
+    padding-right: 25px;
+    padding-left: 140px;
+}
+.section_about .row:after {
+    left: 0;
+    right: auto;
+    border: 5px solid #B88306;
+    border-left: 5px solid #B88306;
+    border-right: 0;
+}
+.content-curriculum .sec_head:before {
+    right: 0;
+    left: auto;
+    border: 5px solid #B88306;
+    border-right: 5px solid #B88306;
+    border-top: 0;
+    border-left: 0;
+}
+.content-curriculum .sec_head {
+    padding-right: 30px;
+    padding-left: inherit;
+}
+.section_courses .container:before {
+    left: -30px;
+    right: auto;
+    border: 5px solid #B88306;
+    border-left: 5px solid #B88306;
+    border-right: 0;
+}
+.section_courses .sec_head:before {
+    left: auto;
+    right: -30px;
+    border: 5px solid #B88306;
+    border-right: 5px solid #B88306;
+    border-left: 0;
+}
+.box-instructors .sec-title:before {
+    content: "";
+    border: 5px solid #B88306;
+    border-right: 5px solid #B88306;
+    border-bottom: 0;
+    border-left: 0;
+    left: auto;
+    right: 0;
+}
+.box-instructors .sec-title {
+    padding-right: 40px;
+    padding-left: initial;
+}
+.box-instructors {
+    flex-direction: row-reverse;
+}
+.box-instructors figure:before {
+    left: 0;
+    right: auto;
+}
+.box-instructors:before {
+    left: 0;
+    right: auto;
+}
+.list-contact li figure {
+    margin-left: 25px;
+    margin-right: 0;
+}
+.flex-blog {
+    flex-direction: row-reverse;
+}
+.ph-blog .sec-title {
+    padding-right: 20px;
+    padding-left: initial;
+}
+.ph-blog .sec-title:before {
+    left: auto;
+    right: 0;
+    border: 3px solid #B88306;
+    border-top: 0;
+    border-left: 0;
+}
+.sec-owner-course img {
+    margin-left: 10px;
+    margin-right: auto;
+}
+.title-blog li {
+    padding-right: 15px;
+    padding-left: initial;
+}
+.title-blog li:before {
+    right: 0;
+    left: auto;
+}
+.box-blog figure .sec-title {
+    right: 20px;
+    left: auto;
+}
+.box-blog figure .sec-title h2 {
+    padding-right: 15px;
+    padding-left: initial;
+}
+.box-blog figure .sec-title h2:before {
+    right: 0;
+    left: auto;
+    border: 3px solid #B88306;
+    border-top: 0;
+    border-left: 0;
+}
+.form-group .form-control {
+    padding-left: 50px;
+    padding-right: 10px;
+}
+.flex50 .form-group {
+    margin-left: 15px;
+    margin-right: auto;
+}
+.flex50 .form-group:last-child {
+    margin-left: 0;
+}
+.box-prou figure {
+    margin-left: 15px;
+    margin-right: 0;
+}
+.radio input + span:not(:empty) {
+    padding-right: 30px;
+    padding-left: initial;
+}
+.radio input + span:before, .radio input + span:after {
+    right: 0;
+    left: auto;
+}
+.content-course-details:before {
+    right: 0;
+    left: auto;
+}
+.feat-course ul li {
+    padding-right: 20px;
+    padding-left: initial;
+}
+.feat-course ul li:before {
+    left: auto;
+    right: 0;
+}
+.list-les .accordion {
+    text-align: right;
+}
+.list-les .accordion i {
+    left: 0;
+    right: auto;
+}
+.name-lesson i {
+    margin-left: 15px;
+    margin-right: auto;
+}
+.number-site {
+    display: inline-block;
+}
+.name-attach small {
+    margin-left: 15px;
+    margin-right: auto;
+}
+.act-attach i {
+    color: #B88306;
+    margin-right: 15px;
+    margin-left: auto;
+}
+.sec-presenter .sec-tit {
+    margin-right: 15px;
+    margin-left: initial;
+}
+.head-page .form-group i {
+    transform: scale(-1);
+    left: 20px;
+    right: auto;
+}
+.sec-owner-course {
+    left: auto;
+    right: 15px;
+}
+.content-forgot h2 {
+    padding-right: 50px;
+    padding-left: initial;
+}
+.content-forgot > a {
+    padding-right: 50px;
+    padding-left: initial;
+}
+.content-profile {
+    margin-right: 30px;
+    margin-left: auto;
+}
+.nav-link figure {
+    margin-left: 20px;
+    margin-right: 0;
+    padding-left: 20px;
+    padding-right: initial;
+}
+.nav-link.active figure:before,.nav-link figure:before {
+    left: 0;
+    right: auto;
+}
+.list-data li p {
+    margin-left: 10px;
+    margin-right: initial;
+}
+.change-password {
+    margin-left: 15px;
+    margin-right: initial;
+}
+.colu-right time {
+    margin-left: 40px;
+    margin-right: auto;
+}
+.flex70 select {
+    margin-left: 10px;
+    margin-right: auto;
+}
+.cbx span {
+    margin-left: 10px;
+    margin-right: inherit;
+}
+.form_contact .form-group i {
+    left: 20px;
+    right: auto;
+}
+
+@media screen and (max-width: 767px) {
+	.content-sub .btn-send {
+        left: 0;
+        right: auto
+    }
+}
+
+
+/* change .. */
+
+/* change  */
+
+.Activitation.input[type="checkbox"] {
+    position: relative;
+    width: 60px;
+    height: 30px;
+    -webkit-appearance: none;
+    border-radius: 20px;
+    outline: none;
+    transition: .4s;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+  }
+  
+  input:checked[type="checkbox"] {
+    background: green;
+  }
+  
+  input[type="checkbox"]::before {
+    z-index: 2;
+    position: absolute;
+    content: "";
+    left: 0;
+    width: 30px;
+    height: 30px;
+    background: #8E9AA0;
+    border-radius: 50%;
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: .4s;
+  }
+  
+  input:checked[type="checkbox"]::before {
+    left: 50px;
+    background: #FFFFFF;
+  }
+  
+  .Activitation.toggle {
+    position: relative;
+    display: inline;
+  }
+  
+   label {
+    position: absolute;
+    color: #fff;
+    font-weight: 600;
+    pointer-events: none;
+  }
+  
+  .Activitation.onbtn {
+    bottom: 0px;
+    left: 11px;
+}  
+.Activitation.ofbtn {
+    bottom: 0px;
+    right: 8px;
+    color: #8E9AA0;
+  }

@@ -1,0 +1,218 @@
+@media screen and (max-width: 1199px) {}
+@media screen and (max-width: 991px) {
+	.hamburger{
+		display: block;
+	}
+    .main_menu, .contact-header, .tp-header .lang-site {
+        display: none !important;
+    }
+    .dropdown-menu {
+        transform: translate(-50%, 30px)!important;
+        left: 50% !important;
+    }
+    .profile_list {
+        width: auto;
+    }
+    .site_op {
+        margin-inline-end: 40px;
+    }
+    .section_home {
+        padding-top: 0;
+    }
+    .section_home:before {
+        opacity: .4;
+    }
+    .home_txt {
+        margin-top: 100px;
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .sec_head h2 {
+        font-size: 27px;
+    }
+    .txt-about {
+        margin-bottom: 40px;
+    }
+    .item-serv {
+        display: block;
+    }
+    .item-serv figure, .item-serv figure img {
+        width: 100%
+    }
+    .item-serv .txt-serv {
+        width: 100%;
+    }
+    .btn-viewAll {
+        top: -35px;
+    }
+    .nav-tabs .nav-link {
+        padding: 10px 10px;
+        margin: 0 5px;
+    }
+    .item-port {
+        margin-bottom: 30px;
+    }
+    .l-arrow:before, .about-analysis:after, .r-arrow:before {
+        display: none
+    }
+    .lay-bottom {
+        padding-top: 0rem;
+        display: block;
+    }
+    .lay-bottom  .trans-box,.lay-bottom  .about-box {
+        left: 50%;
+        transform: translateX(-50%) !important;
+        margin: 5px 0 !important
+    }
+    .content-testi {
+        display: block;
+        padding-left: 5%;
+    }
+    .section_testimonials .sec_head {
+        width: 100%;
+    }
+    .section_testimonials .owl-carousel {
+        width: 100%;
+        padding-left: 0;
+    }
+    .item-blog {
+        margin-bottom: 30px;
+    }
+    .content-form-newsletter {
+        width: 100%;
+    }
+    footer {
+        border-top-left-radius: 30px;
+        border-top-right-radius: 30px;
+    }
+    footer .row > * {
+        width: 50%;
+    }
+    .f-box {
+        margin-bottom: 40px;
+    }
+    #similar_slider .owl-nav {
+        display: none;
+    }
+    .opt-product {
+        display: block;
+    }
+    .count-prod  {
+        margin-bottom: 15px;
+    }
+    .opt-product ul {
+        margin: 0;
+    }
+    .slider-nav {
+        bottom: -85px;
+    }
+    .block-product-slide {
+        margin-bottom: 50px;
+    }
+    .form-account {
+        width: 100%;
+    }
+    .body-order {
+        padding: 20px;
+        display: block;
+    }
+    .pric-order {
+        width: 100%;
+    }
+    .order-details {
+        display: block;
+    }
+    .order-details .sec-left, .order-details .sec-right {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    .content-order .list-order {
+        flex-wrap: wrap;
+    }
+    .content-order .list-order li {
+        width: 48%;
+        margin: 0;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .content-order .list-order li span {
+        font-size: 14px;
+    }
+    .dateOrder li {
+        font-size: 14px;
+    }
+    .content-reg, .content-forgot {
+        padding: 30px 10px;
+        width: 100%;
+    }
+    .item-check {
+        display: block;
+        padding: 65px 25px 20px;
+    }
+    .item-check figure, .item-check .txt-product {
+        width: 100%;
+        display: block;
+    }
+    .item-check .txt-product > div {
+        width: 100%;
+        margin: 15px 0;
+    }
+    .item-check .txt-product strong {
+        width: 100%;
+        text-align: center;
+    }
+    .aside-check {
+        margin-top: 30px;
+    }
+    .box-product-fi {
+        padding: 60px 10px 30px;
+    }
+    .item-order .txt-product {
+        position: relative;
+    }
+    .item-order .txt-product strong {
+        position: absolute;
+        width: 100%;
+        text-align: end;
+        padding: 0 20px;
+        bottom: 0px;
+    }
+    .item-order .txt-product {
+        display: block;
+    }
+    .item-order .txt-product div {
+        width: 100%;
+    }
+    
+}
+@media screen and (max-width: 767px) {
+    .hamburger{
+		display: block;
+	}
+    .main_menu, .contact-header {
+        display: none;
+    }
+    .section_home {
+        padding-top: 0;
+    }
+    .section_home:before {
+        opacity: .4;
+    }
+    
+    .d-flex {
+        width: 100%;
+        display: block !important;
+    }
+    .d-flex .form-group {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    .form-join:before {
+        display: none;
+    }
+    
+    
+}
+@media screen and (max-width: 500px) {
+	
+}
