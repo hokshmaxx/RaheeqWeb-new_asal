@@ -2,8 +2,7 @@ name: Deploy Laravel Sail to EC2
 
 on:
   push:
-    branches:
-      - master   # or your default branch
+    branches: [master]
 
 jobs:
   deploy:
@@ -13,22 +12,41 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup SSH key
+      - name: Setup SSH key and known hosts
         run: |
           mkdir -p ~/.ssh
-          printf "%b" "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 15.185.55.55 >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Test SSH connection
-        run: ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@15.185.55.55 "echo connected"
-
-      - name: Deploy to EC2
+      - name: Install dependencies and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@15.185.55.55 << 'EOF'
-            cd ~/raheeq || git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git ~/raheeq
-            cd ~/raheeq
-            git pull origin master
-            ./vendor/bin/sail down || true
-            ./vendor/bin/sail up -d --build
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Update system and install Docker if needed
+            sudo apt-get update -y
+            command -v docker >/dev/null 2>&1 || {
+              sudo apt-get install -y docker.io docker-compose
+              sudo usermod -aG docker $USER
+            }
+
+            # Clone or update repository
+            if [ ! -d ~/raheeq ]; then
+              git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git ~/raheeq
+              cd ~/raheeq
+              cp .env.example .env
+              ./vendor/bin/sail up -d --build
+            else
+              cd ~/raheeq
+              git fetch origin
+              git reset --hard origin/master
+
+              # Update environment if needed
+              ./vendor/bin/sail down || true
+              ./vendor/bin/sail build --no-cache
+              ./vendor/bin/sail up -d
+            fi
+
+            # Run migrations and other deployment tasks
+            ./vendor/bin/sail artisan migrate --force
+            ./vendor/bin/sail artisan optimize:clear
           EOF
