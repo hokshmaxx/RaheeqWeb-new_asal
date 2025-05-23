@@ -1,4 +1,4 @@
-name: Deploy Laravel Sail to EC2
+name: Deploy Laravel Sail to EC2 (AL2023 compatible)
 
 on:
   push:
@@ -16,25 +16,23 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          # Fix formatting and ensure proper key structure
           sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
-          echo "" >> ~/.ssh/id_rsa  # Ensure final newline
+          echo "" >> ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # Verify key
           ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Install dependencies and deploy
         run: |
           ssh -o BatchMode=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            set -e  # Exit immediately if any command fails
+            set -e
             echo "=== Starting Deployment ==="
 
-            # 1. Install required system packages
+            # 1. Install system dependencies (AL2023 compatible)
             echo "Installing system dependencies..."
-            sudo yum update -y
-            sudo yum install -y git docker
-            sudo amazon-linux-extras install -y epel
+            sudo dnf update -y
+            sudo dnf install -y git docker
+            sudo dnf install -y mariadb105-client  # For MySQL client if needed
 
             # 2. Configure Docker
             echo "Setting up Docker..."
@@ -62,26 +60,14 @@ jobs:
               laravelsail/php82-composer:latest \
               composer install --ignore-platform-reqs --no-interaction --prefer-dist
 
-            # 5. Set up environment variables (if needed)
-            echo "DB_HOST=mysql" >> .env
-            echo "DB_DATABASE=${DB_DATABASE}" >> .env
-            echo "DB_USERNAME=${DB_USERNAME}" >> .env
-            echo "DB_PASSWORD=${DB_PASSWORD}" >> .env
-
-            # 6. Start Laravel Sail
+            # 5. Start Laravel Sail
             echo "Starting Laravel Sail..."
             ./vendor/bin/sail down || true
             ./vendor/bin/sail up -d --build
 
-            # 7. Run database migrations
+            # 6. Run database migrations
             echo "Running migrations..."
             ./vendor/bin/sail artisan migrate --force
-
-            # 8. Optimize application
-            echo "Optimizing application..."
-            ./vendor/bin/sail artisan optimize:clear
-            ./vendor/bin/sail artisan view:cache
-            ./vendor/bin/sail artisan route:cache
 
             echo "=== Deployment Complete ==="
           EOF
