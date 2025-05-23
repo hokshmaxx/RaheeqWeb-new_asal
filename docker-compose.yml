@@ -4,10 +4,6 @@ on:
   push:
     branches: [master]
 
-env:
-  DB_PORT: 3306
-  PMA_PORT: 8080
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,16 +12,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure SSH
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          echo "${{ secrets.EC2_HOST }} ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI..." >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy Application
+      - name: Deploy and Start Services
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+          ssh -o BatchMode=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
           #!/bin/bash
           set -ex
 
@@ -37,39 +33,31 @@ jobs:
           newgrp docker <<< $(groups)
 
           # 2. Application setup
-          [ ! -d ~/app ] && git clone ${{ github.repository_url }} ~/app
+          [ ! -d ~/app ] && git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git ~/app
           cd ~/app
           git pull origin master
 
-          # 3. Configure environment
-          cat > .env <<EOL
-          APP_NAME=Laravel
-          APP_ENV=production
-          APP_KEY=
-          APP_DEBUG=false
-          APP_URL=http://${{ secrets.EC2_HOST }}
+          # 3. Ensure Sail permissions
+          chmod +x vendor/bin/sail
 
-          DB_CONNECTION=mysql
-          DB_HOST=mysql
-          DB_PORT=$DB_PORT
-          DB_DATABASE=laravel
-          DB_USERNAME=root
-          DB_PASSWORD=
+          # 4. Start containers (force rebuild if needed)
+          ./vendor/bin/sail down || true
+          ./vendor/bin/sail build --no-cache
+          ./vendor/bin/sail up -d
 
-          PMA_PORT=$PMA_PORT
-          EOL
-
-          # 4. Generate app key if missing
-          grep -q '^APP_KEY=$' .env && \
-            docker run --rm -v $(pwd):/app -w /app php:8.2-cli php artisan key:generate
-
-          # 5. Start containers
-          docker compose up -d --build
+          # 5. Verify services are running
+          timeout 60 bash -c 'until docker compose ps | grep "running"; do sleep 5; done' || \
+            (echo "Containers failed to start"; exit 1)
 
           # 6. Database setup
-          docker compose exec laravel.test php artisan migrate --force
-          docker compose exec laravel.test php artisan optimize:clear
+          ./vendor/bin/sail artisan migrate --force
+          ./vendor/bin/sail artisan optimize:clear
 
-          echo "Application: http://${{ secrets.EC2_HOST }}"
-          echo "phpMyAdmin: http://${{ secrets.EC2_HOST }}:$PMA_PORT"
+          # 7. Verify Sail is operational
+          curl -sSf http://localhost > /dev/null || \
+            (echo "Application failed to start"; exit 1)
+
+          echo "Deployment successful!"
+          echo "App: http://${{ secrets.EC2_HOST }}"
+          echo "phpMyAdmin: http://${{ secrets.EC2_HOST }}:8081"
           ENDSSH
