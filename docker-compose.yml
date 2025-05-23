@@ -19,45 +19,44 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy and Start Services
+      - name: Deploy and Start Sail
         run: |
-          ssh -o BatchMode=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
           #!/bin/bash
           set -ex
 
-          # 1. System setup
+          # 1. Install dependencies
           sudo dnf update -y
           sudo dnf install -y git docker docker-compose-plugin
           sudo systemctl enable --now docker
           sudo usermod -aG docker $USER
           newgrp docker <<< $(groups)
 
-          # 2. Application setup
-          [ ! -d ~/app ] && git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git ~/app
+          # 2. Clone/update repo
+          [ ! -d ~/app ] && git clone ${{ github.repository_url }} ~/app
           cd ~/app
           git pull origin master
 
-          # 3. Ensure Sail permissions
-          chmod +x vendor/bin/sail
+          # 3. Ensure proper permissions
+          sudo chown -R $USER:www-data storage bootstrap/cache
+          sudo chmod -R 775 storage bootstrap/cache
 
-          # 4. Start containers (force rebuild if needed)
+          # 4. Start Sail (with force-recreate to ensure clean state)
           ./vendor/bin/sail down || true
-          ./vendor/bin/sail build --no-cache
-          ./vendor/bin/sail up -d
+          ./vendor/bin/sail up -d --build --force-recreate
 
-          # 5. Verify services are running
-          timeout 60 bash -c 'until docker compose ps | grep "running"; do sleep 5; done' || \
-            (echo "Containers failed to start"; exit 1)
+          # 5. Verify Sail is running
+          if ! ./vendor/bin/sail ps | grep -q 'Up'; then
+            echo "::error::Sail containers failed to start!"
+            ./vendor/bin/sail logs
+            exit 1
+          fi
 
-          # 6. Database setup
+          # 6. Run migrations
           ./vendor/bin/sail artisan migrate --force
           ./vendor/bin/sail artisan optimize:clear
 
-          # 7. Verify Sail is operational
-          curl -sSf http://localhost > /dev/null || \
-            (echo "Application failed to start"; exit 1)
-
-          echo "Deployment successful!"
-          echo "App: http://${{ secrets.EC2_HOST }}"
+          echo "Sail is now running!"
+          echo "Application: http://${{ secrets.EC2_HOST }}"
           echo "phpMyAdmin: http://${{ secrets.EC2_HOST }}:8081"
           ENDSSH
