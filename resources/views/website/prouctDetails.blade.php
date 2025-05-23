@@ -203,7 +203,7 @@
                         <button class="addToCart" data-id="{{ $product->id }}" data-variant-id="{{ $product->variants->first()->id??0 }}" id="addToCartButton">
                             Add to Cart
                         </button>
-
+//
                     @endif
 
                     @if($product->is_favorite)

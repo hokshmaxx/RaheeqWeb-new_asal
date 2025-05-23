@@ -1,62 +1,68 @@
-name: Deploy Laravel Sail with phpMyAdmin
+version: '3'
 
-on:
-  push:
-    branches: [master]
+services:
+  laravel.test:
+    build:
+      context: ./vendor/laravel/sail/runtimes/8.2
+      dockerfile: Dockerfile
+      args:
+        WWWGROUP: '${WWWGROUP:-1000}'  # Default to group ID 1000 if not set
+    image: sail-8.2/app
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    ports:
+      - '${APP_PORT:-80}:80'
+      - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+    environment:
+      WWWUSER: '${WWWUSER:-1000}'  # Default to user ID 1000 if not set
+      LARAVEL_SAIL: 1
+      XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+      XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+    volumes:
+      - '.:/var/www/html'
+    networks:
+      - sail
+    depends_on:
+      - mysql
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  mysql:
+    image: 'mysql/mysql-server:8.0'
+    ports:
+      - '${FORWARD_DB_PORT:-3306}:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - 'sail-mysql:/var/lib/mysql'
+      - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+    networks:
+      - sail
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
+      retries: 3
+      timeout: 5s
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+    networks:
+      - sail
+    depends_on:
+      - mysql
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+networks:
+  sail:
+    driver: bridge
 
-      - name: Deploy and Start Sail
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
-          #!/bin/bash
-          set -ex
-
-          # 1. Install dependencies
-          sudo dnf update -y
-          sudo dnf install -y git docker docker-compose-plugin
-          sudo systemctl enable --now docker
-          sudo usermod -aG docker $USER
-          newgrp docker <<< $(groups)
-
-          # 2. Clone/update repo
-          [ ! -d ~/app ] && git clone ${{ github.repository_url }} ~/app
-          cd ~/app
-          git pull origin master
-
-          # 3. Ensure proper permissions
-          sudo chown -R $USER:www-data storage bootstrap/cache
-          sudo chmod -R 775 storage bootstrap/cache
-
-          # 4. Start Sail (with force-recreate to ensure clean state)
-          ./vendor/bin/sail down || true
-          ./vendor/bin/sail up -d --build --force-recreate
-
-          # 5. Verify Sail is running
-          if ! ./vendor/bin/sail ps | grep -q 'Up'; then
-            echo "::error::Sail containers failed to start!"
-            ./vendor/bin/sail logs
-            exit 1
-          fi
-
-          # 6. Run migrations
-          ./vendor/bin/sail artisan migrate --force
-          ./vendor/bin/sail artisan optimize:clear
-
-          echo "Sail is now running!"
-          echo "Application: http://${{ secrets.EC2_HOST }}"
-          echo "phpMyAdmin: http://${{ secrets.EC2_HOST }}:8081"
-          ENDSSH
+volumes:
+  sail-mysql:
+    driver: local
