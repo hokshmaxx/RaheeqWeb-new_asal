@@ -702,28 +702,34 @@ html.menu-toggle {
 .btn-site {
     height: 45px;
     font-size: 18px;
-    display: flex;
     align-items: center;
     border-radius: 10px;
+    /*margin-left: 30px;*/
+    /*margin-right: 30px;*/
+
     justify-content: center;
     background: var(--main-color);
-    width: 100%;
+    /*width: 100%;*/
+    text-align: center;
+    /*margin-top: 15px;*/
+    display: flex;
     position: relative;
     overflow: hidden;
+    /*overflow: hidden;*/
 }
 
-.btn-site:before {
-    background: var(--main-color);
-    position: absolute;
-    content: "";
-    top: 0;
-    height: 100%;
-    left: -10px;
-    width: 0%;
-    transform: skew(-10deg);
-    transition-duration: .6s;
-    z-index: 0;
-}
+/*.btn-site:before {*/
+/*    background: var(--main-color);*/
+/*    position: absolute;*/
+/*    content: "";*/
+/*    top: 0;*/
+/*    height: 100%;*/
+/*    left: -10px;*/
+/*    width: 0%;*/
+/*    transform: skew(-10deg);*/
+/*    transition-duration: .6s;*/
+/*    z-index: 0;*/
+/*}*/
 
 .btn-site:hover:before {
     position: absolute;
@@ -864,10 +870,10 @@ html.menu-toggle {
     margin: 0 5px
 }
 .item-product .txt-product .btn-site {
-    margin: 0 auto;
-    width: max-content;
-    padding: 7px 45px;
-    margin-bottom: 15px;
+    /*margin: 0 auto;*/
+    /*width: max-content;*/
+    /*padding: 7px 45px;*/
+    /*margin-bottom: 15px;*/
 }
 .item-product .txt-product  {
     color: #fff;

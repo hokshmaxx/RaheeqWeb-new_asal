@@ -4,6 +4,18 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <style>
 
+    .variant-box {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color:white;
+
+    }
+    .variant-box.selected {
+        border-color: var(--main-color);
+        background-color:var(--main-color);
+        font-weight: bold;
+    }
+
     .review-form {
         max-width: 500px;
         margin-top: 20px;
@@ -162,7 +174,7 @@
                 <!-- Pricing -->
                 <div class="product-price">
     <span class="regular-price" id="regularPrice">
-        @if ($product->variants->first()->discount_price??0)
+        @if ($product->variants->first()->discount_price!=null &&$product->variants->first()->discount_price>0&&$product->variants->first()->discount_price<$product->variants->first()->price)
             <del>{{ $product->variants->first()->price??0 }} KWD</del>
         @endif
     </span>
@@ -171,20 +183,40 @@
     </span>
                 </div>
 
-                <!-- Product Variants -->
-                @if ($product->variants->count())
-                    <div class="product-variants">
-                        <label for="variant">Choose a variant:</label>
-                        <select id="variantSelect" class="form-control">
-                            @foreach ($product->variants as $index => $variant)
-                                <option value="{{ $variant->id }}" data-price="{{ $variant->price }}" data-discount-price="{{ $variant->discount_price }}" {{ $index === 0 ? 'selected' : '' }}>
-                                    {{ $variant->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                @if ($groupedVariants->count())
+                    @foreach ($groupedVariants as $variantTypeName => $variants)
+                        <div class="variant-type mb-4">
+                            <h5>{{ $variantTypeName }}</h5>
+                            <div class="variant-scroll-container d-flex overflow-auto gap-2">
+                                @foreach ($variants as $variant)
+                                    <div
+                                        class="variant-box border rounded p-2"
+                                        data-variant-id="{{ $variant->id }}"
+                                        data-price="{{ $variant->price }}"
+                                        data-discount-price="{{ $variant->discount_price }}"
+                                        onclick="selectVariant(this)"
+                                    >
+                                        {{ $variant->name }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
                 @endif
-                <!-- Ratings -->
+                {{--                <!-- Product Variants -->--}}
+{{--                @if ($product->variants->count())--}}
+{{--                    <div class="product-variants">--}}
+{{--                        <label for="variant">Choose a variant:</label>--}}
+{{--                        <select id="variantSelect" class="form-control">--}}
+{{--                            @foreach ($product->variants as $index => $variant)--}}
+{{--                                <option value="{{ $variant->id }}" data-price="{{ $variant->price }}" data-discount-price="{{ $variant->discount_price }}" {{ $index === 0 ? 'selected' : '' }}>--}}
+{{--                                    {{ $variant->name }}--}}
+{{--                                </option>--}}
+{{--                            @endforeach--}}
+{{--                        </select>--}}
+{{--                    </div>--}}
+{{--                @endif--}}
+{{--                <!-- Ratings -->--}}
                 <div class="product-rating">
                     <span class="stars">
                         @for ($i = 1; $i <= 5; $i++)
@@ -197,13 +229,30 @@
                 <!-- Actions -->
                 <div class="product-actions">
                     @if( $product->is_cart)
+                        <div class="quantity-item">
+                            @if($cart->product->quantity > 0)
+                                <div class="quantity">
+                                    <div class="btn button-count dec jsQuantityDecrease" data-id="{{@$cart->product->id}}" minimum="1">
+                                        <i class="fa fa-minus" aria-hidden="true"></i>
+                                    </div>
+                                    <input type="text" name="count-quat1" class="count-quat" value="{{$cart->quantity}}" min="1" max="{{$cart->product->quantity}}">
+                                    <div class="btn button-count inc jsQuantityIncrease" max="{{$cart->product->quantity}}" data-id="{{@$cart->product->id}}">
+                                        <i class="fa fa-plus" aria-hidden="true"></i>
+                                    </div>
+                                </div>
+{{--                            @else--}}
+{{--                                <div class="soldOut">--}}
+{{--                                    <h1>Sold Out</h1>--}}
+{{--                                </div>--}}
+                            @endif
+                        </div>
                         <button class="removeFromCart" data-id="{{$product->id}}"> Remove from Cart </button>
 
                     @else
                         <button class="addToCart" data-id="{{ $product->id }}" data-variant-id="{{ $product->variants->first()->id??0 }}" id="addToCartButton">
                             Add to Cart
                         </button>
-//
+
                     @endif
 
                     @if($product->is_favorite)
@@ -285,30 +334,81 @@
             const finalPrice = document.getElementById('finalPrice');
             const addToCartBtn = document.getElementById('addToCartButton');
 
-            if (variantSelect) {
-                variantSelect.addEventListener('change', function () {
-                    const selectedOption = variantSelect.options[variantSelect.selectedIndex];
-                    const price = selectedOption.getAttribute('data-price');
-                    const discountPrice = selectedOption.getAttribute('data-discount-price');
-                    const variantId = selectedOption.value;
+            // if (variantSelect) {
+            //     variantSelect.addEventListener('change', function () {
+            //         const selectedOption = variantSelect.options[variantSelect.selectedIndex];
+            //         const price = selectedOption.getAttribute('data-price');
+            //         const discountPrice = selectedOption.getAttribute('data-discount-price');
+            //         const variantId = selectedOption.value;
+            //
+            //         // Update price display
+            //         if (discountPrice && discountPrice !== 'null') {
+            //             regularPrice.innerHTML = `<del>${price} KWD</del>`;
+            //             finalPrice.innerHTML = `${discountPrice} KWD`;
+            //         } else {
+            //             regularPrice.innerHTML = '';
+            //             finalPrice.innerHTML = `${price} KWD`;
+            //         }
+            //
+            //         // Update Add to Cart button's data-variant-id
+            //         if (addToCartBtn) {
+            //             addToCartBtn.setAttribute('data-variant-id', variantId);
+            //         }
+            //     });
+            // }
+        });
+        function selectVariant(element) {
+            // 1. First deselect ALL variant boxes in the entire document
+            document.querySelectorAll('.variant-box.selected').forEach(selectedBox => {
+                selectedBox.classList.remove('selected', 'bg-primary', 'text-white');
+            });
 
-                    // Update price display
-                    if (discountPrice && discountPrice !== 'null') {
-                        regularPrice.innerHTML = `<del>${price} KWD</del>`;
-                        finalPrice.innerHTML = `${discountPrice} KWD`;
-                    } else {
-                        regularPrice.innerHTML = '';
-                        finalPrice.innerHTML = `${price} KWD`;
-                    }
+            // 2. Now select the clicked variant
+            element.classList.add('selected', 'bg-primary', 'text-white');
 
-                    // Update Add to Cart button's data-variant-id
-                    if (addToCartBtn) {
-                        addToCartBtn.setAttribute('data-variant-id', variantId);
-                    }
-                });
+            // 3. Get price data from the selected variant
+            const price = parseFloat(element.dataset.price) || 0;
+            const discountPrice = parseFloat(element.dataset.discountPrice) || 0;
+            const hasDiscount = discountPrice > 0 && discountPrice < price;
+
+            // 4. Update price display
+            const regularPriceEl = document.getElementById('regularPrice');
+            const finalPriceEl = document.getElementById('finalPrice');
+
+            if (hasDiscount) {
+                regularPriceEl.innerHTML = `<del>${price.toFixed(2)} KWD</del>`;
+                finalPriceEl.textContent = `${discountPrice.toFixed(2)} KWD`;
+            } else {
+                regularPriceEl.innerHTML = '';
+                finalPriceEl.textContent = `${price.toFixed(2)} KWD`;
+            }
+
+            // 5. Update Add to Cart button
+            const addToCartBtn = document.getElementById('addToCartButton');
+            if (addToCartBtn) {
+                addToCartBtn.dataset.variantId = element.dataset.variantId;
+                addToCartBtn.disabled = false;
+            }
+
+            // Debug logs (can be removed in production)
+            console.log('Selected variant:', {
+                id: element.dataset.variantId,
+                name: element.textContent.trim(),
+                price: price,
+                discountPrice: discountPrice
+            });
+        }
+        // Automatically select the first variant on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const firstVariant = document.querySelector('.variant-box');
+            if (firstVariant) {
+                selectVariant(firstVariant);
             }
         });
+
+
     </script>
+
 
     <script>
         tinymce.init({

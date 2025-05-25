@@ -52,29 +52,50 @@ class CartController extends Controller
 }
     public function myCart()
     {
-        if(auth()->check()){
-            $carts=Cart::where('user_id',Auth::user()->id)->orWhere('user_key',Session::get('cart.ids'))->with('product')->get();
-        }else{
-            $carts=Cart::where('user_key',Session::get('cart.ids'))->with('product')->get();
+        if (auth()->check()) {
+            $carts = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
         }
-        $Total=0;
-        foreach($carts as $cart){
-           if($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString()){
-              $Total += @$cart->product->discount_price * @$cart->quantity;
-           } else {
-              $Total += @$cart->product->price * @$cart->quantity;
-           }
-       }
-        return view('website.user.myCart', [
-            'carts' =>$carts,
-            'total' =>$Total,
 
+        $total = 0;
+
+        foreach ($carts as $cart) {
+            // 1. Use variant price if exists, otherwise apply discount logic
+            $basePrice = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
+                ? $cart->variant->discount_price:$cart->variant->price;
+
+//                (
+//                $cart->product->discount_price > 0
+////                &&
+////                $cart->product->offer_end_date >= now()->toDateString()
+//                    ? $cart->product->discount_price
+//                    : $cart->product->price
+//                );
+
+            // 2. Add gift packaging price if applicable
+            $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
+
+            // 3. Multiply by quantity
+            $total += ($basePrice + $packagingPrice) * $cart->quantity;
+        }
+
+        return view('website.user.myCart', [
+            'carts' => $carts,
+            'total' => $total,
         ]);
     }
 
 
     public function addProductTocart(Request $request ,$id)
     {
+        \Log::info('varints id:', ['vaintid' => $request->input('variant_id')]);
+
 
         try {
 
@@ -269,10 +290,22 @@ class CartController extends Controller
             $total_cart = 0;
 
             foreach ($carts as $cart) {
-                $productPrice = $cart->product->discount_price > 0 &&
-                $cart->product->offer_end_date >= now()->toDateString()
-                    ? $cart->product->discount_price
-                    : $cart->product->price;
+                $productPrice = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
+                    ? $cart->variant->discount_price:$cart->variant->price;
+//                $productPrice = $cart->variant && $cart->variant->price
+//                    ? $cart->variant->price
+//                    : (
+//                    $cart->product->discount_price > 0
+////                &&
+////                $cart->product->offer_end_date >= now()->toDateString()
+//                        ? $cart->product->discount_price
+//                        : $cart->product->price
+//                    );
+//                $productPrice = $cart->product->discount_price > 0
+////                &&
+////                $cart->product->offer_end_date >= now()->toDateString()
+//                    ? $cart->product->discount_price
+//                    : $cart->product->price;
 
                 $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
 
@@ -352,12 +385,15 @@ class CartController extends Controller
 
             foreach ($carts as $cart) {
                 // 🔸 Use variant price if it exists, else fallback to product price
-                $basePrice = $cart->variant && $cart->variant->price
-                    ? $cart->variant->price
-                    : ($cart->product->discount_price > 0 &&
-                    $cart->product->offer_end_date >= now()->toDateString()
-                        ? $cart->product->discount_price
-                        : $cart->product->price);
+                $basePrice = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
+                    ? $cart->variant->discount_price:$cart->variant->price;
+//                $basePrice = $cart->variant && $cart->variant->price
+//                    ? $cart->variant->price
+//                    : ($cart->product->discount_price > 0
+////                    &&
+////                    $cart->product->offer_end_date >= now()->toDateString()
+//                        ? $cart->product->discount_price
+//                        : $cart->product->price);
 
                 $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
 
@@ -530,7 +566,7 @@ class CartController extends Controller
             $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
 
             // Check if variant has discount and offer still valid
-            if ($variant->discount_price > 0 && $variant->offer_end_date >= now()->toDateString()) {
+            if ($variant->discount_price > 0) {
                 $price = $variant->discount_price;
             } else {
                 $price = $variant->price;
@@ -652,12 +688,14 @@ class CartController extends Controller
             $total_cart = 0;
             $vat = $settings->tax_amount;
 
+
+
             foreach($carts as $cart){
                 $discount = $cart->discount;
-               if($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString()){
-                  $total_cart += @$cart->product->discount_price * @$cart->quantity;
+               if($cart->variant->discount_price > 0 ){
+                  $total_cart += @$cart->variant->discount_price * @$cart->quantity;
                } else {
-                  $total_cart += @$cart->product->price * @$cart->quantity;
+                  $total_cart += @$cart->variant->price * @$cart->quantity;
                }
 
            }
@@ -710,14 +748,14 @@ class CartController extends Controller
             foreach($carts as $cart){
                 $discount = $cart->discount;
 
-               if($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString()){
+               if($cart->variant->discount_price > 0 ){
                    $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
 
-                   $total_cart += (@$cart->product->discount_price+$packagingPrice) * @$cart->quantity;
+                   $total_cart += (@$cart->variant->discount_price+$packagingPrice) * @$cart->quantity;
                } else {
                    $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
 
-                   $total_cart += (@$cart->product->price+$packagingPrice) * @$cart->quantity;
+                   $total_cart += (@$cart->variant->price+$packagingPrice) * @$cart->quantity;
                }
            }
            $Total = $total_cart;
@@ -772,13 +810,16 @@ class CartController extends Controller
         $total_cart = 0;
 
         foreach ($carts as $cart) {
+            $basePrice = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
+                ? $cart->variant->discount_price:$cart->variant->price;
             // Use variant price if available, else fallback to product price/discount
-            $basePrice = $cart->variant && $cart->variant->price
-                ? $cart->variant->price
-                : ($cart->product->discount_price > 0 &&
-                $cart->product->offer_end_date >= now()->toDateString()
-                    ? $cart->product->discount_price
-                    : $cart->product->price);
+//            $basePrice = $cart->variant && $cart->variant->price
+//                ? $cart->variant->price
+//                : ($cart->product->discount_price > 0
+////                &&
+////                $cart->product->offer_end_date >= now()->toDateString()
+//                    ? $cart->product->discount_price
+//                    : $cart->product->price);
 
             $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
 
@@ -1078,12 +1119,15 @@ class CartController extends Controller
 
         foreach ($carts as $cart) {
             // Use variant price if exists, otherwise discount price or regular price
-            $basePrice = $cart->variant && $cart->variant->price
-                ? $cart->variant->price
-                : (($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString())
-                    ? $cart->product->discount_price
-                    : $cart->product->price);
-
+//            $basePrice = $cart->variant && $cart->variant->price
+//                ? $cart->variant->price
+//                : (($cart->product->discount_price > 0
+////                    && $cart->product->offer_end_date >= now()->toDateString()
+//                )
+//                    ? $cart->product->discount_price
+//                    : $cart->product->price);
+            $basePrice = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
+                ? $cart->variant->discount_price:$cart->variant->price;
             $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
 
             $total_cart += ($basePrice + $packagingPrice) * $cart->quantity;
@@ -1179,19 +1223,25 @@ class CartController extends Controller
 
         if ($order) {
             foreach ($carts as $one) {
-                $price = $one->variant && $one->variant->price
-                    ? $one->variant->price
-                    : (($one->product->discount_price > 0 && $one->product->offer_end_date >= now()->toDateString())
-                        ? $one->product->discount_price
-                        : $one->product->price);
+
+                $price = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
+                    ? $cart->variant->discount_price:$cart->variant->price;
+
+//                $price = $one->variant && $one->variant->price
+//                    ? $one->variant->price
+//                    : (($one->product->discount_price > 0
+////                        && $one->product->offer_end_date >= now()->toDateString()
+//                    )
+//                        ? $one->product->discount_price
+//                        : $one->product->price);
 
                 $ProductOrder = new OrderProduct();
                 $ProductOrder->order_id = $order->id;
                 $ProductOrder->product_id = $one->product_id;
                 $ProductOrder->quantity = $one->quantity;
                 $ProductOrder->gift_packaging_id = $one->gift_packaging_id;
-                $ProductOrder->offer_price = ($price < $one->product->price) ? $price : 0;
-                $ProductOrder->price = $one->product->price;
+                $ProductOrder->offer_price = ($price < $one->variant->price) ? $price : 0;
+                $ProductOrder->price = $one->variant->price;
                 $ProductOrder->save();
 
                 // Notification for Vendor side.

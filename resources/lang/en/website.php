@@ -100,7 +100,7 @@ return [
     'open' => 'Open',
     'close' => 'Close',
     'addToCart' => 'Add To Cart',
-    'removefromCart' => 'Remove 🗑',
+    'removefromCart' => 'Remove',
     'addToFavorite' => 'Add To Favorite',
     'removeFavorite' => 'Remove from Favorite',
     'currencyLang' => 'QAR',

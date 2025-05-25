@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\WEB\Site;
 
+use App\Models\Cart;
 use App\Models\Category;
 use App\Models\LandingPage;
 use App\Models\Review;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 
 use Dotenv\Exception\ValidationException;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use GuzzleHttp\Exception\RequestException;
@@ -62,8 +64,27 @@ class HomeController extends Controller
     }
     public function prouctDetails (Request $request,$id,$slug)
     {
-        $product=Product::where('status','active')->with('category','images','vitamin')->findOrFail($id);
 
+
+
+        $product=Product::where('status','active')->with('variants','variants.variantType','category','images','vitamin')->findOrFail($id);
+
+        if (auth()->check()) {
+            $cart = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])->where('product_id', '==', $id)
+                ->first();
+        } else {
+            $cart = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])->where('product_id', '==', $id)
+                ->first();
+        }
+
+        $groupedVariants = $product->variants
+            ->filter(fn($v) => $v->variantType) // Avoid nulls
+            ->groupBy(fn($variant) =>app()->getLocale()=='en'?  $variant->variantType->name_en:$variant->variantType->name_ar);
+
+//        dd(app()->getLocale());
         if ($product->vender_id> 0) {
             $visitor = Venders::where('id',$product->vender_id)->first();
             $newVisitorCount=$visitor->visitor + 1;
@@ -85,9 +106,11 @@ class HomeController extends Controller
 
         return view('website.prouctDetails ',[
             'product'           => $product,
+            'cart'=>$cart,
             'products'          => $products,
             'product_image'     => $product_image,
             'products_vitamin'  => $products_vitamin,
+            'groupedVariants'=>$groupedVariants
         ]);
     }
 

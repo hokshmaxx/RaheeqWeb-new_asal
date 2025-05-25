@@ -19,4 +19,9 @@ class ProductVariant extends Model
     {
         return $this->belongsTo(Product::class);
     }
+    public function variantType()
+    {
+        return $this->belongsTo(ProductVariantType::class, 'product_varint_type_id');
+    }
+
 }

@@ -99,7 +99,7 @@ return [
     'open' => 'مفتوح',
     'close' => 'مغلق',
     'addToCart' => ' اضف الى السلة',
-    'removefromCart' => 'حذف 🗑',
+    'removefromCart' => 'حذف',
     'addToFavorite' => ' اضف الى المفضلة',
     'removeFavorite' => 'حذف من المفضلة',
     'currencyLang' => ' ر.ق ',

@@ -8,18 +8,18 @@
             padding: 60px 0;
         }
 
-        .sec_head {
-            text-align: center;
-            margin-bottom: 50px;
-        }
+        /*.sec_head {*/
+        /*    text-align: center;*/
+        /*    margin-bottom: 50px;*/
+        /*}*/
 
-        .sec_head h2 {
-            font-size: 36px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #222;
-            margin: 0;
-        }
+        /*.sec_head h2 {*/
+        /*    font-size: 36px;*/
+        /*    font-weight: 800;*/
+        /*    text-transform: uppercase;*/
+        /*    color: #222;*/
+        /*    margin: 0;*/
+        /*}*/
 
         /* ==== Home Slider ==== */
         #home_slider {
@@ -411,7 +411,7 @@
     <section class="section_categoris">
         <div class="container" id="vendersSection">
             <div class="sec_head wow fadeInUp">
-                <h2>@lang('website.vender')</h2>
+                <h2 >@lang('website.vender')</h2>
             </div>
             <div class="owl-carousel" id="venders_slider">
                 @foreach($venders as $vender)
@@ -437,67 +437,63 @@
             </div>
             <div class="row">
                 @foreach($products as $product)
+                    @php
+                        $variant = $product->variants->first(); // You can customize this to get the default one
+                    @endphp
                     <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-4">
                         <div class="item-product procard wow fadeInUp">
                             <figure>
-                                <a href="{{route('prouctDetails',[$product->id,Str::slug($product->name)])}}">
-                                    <img src="{{$product->image}}" alt="{{$product->name}}" loading="lazy" />
+                                <a href="{{ route('prouctDetails', [$product->id, Str::slug($product->name)]) }}">
+                                    <img src="{{ $product->image }}" alt="{{ $product->name }}" loading="lazy" />
                                 </a>
+
                                 @if($product->is_favorite == 1)
                                     <a class="btn_favorite item_fav removeFromFavorite" data-id="{{ $product->id }}">
-                                        <i class="fas fa-heart"></i> {{-- Solid heart (filled) --}}
+                                        <i class="fas fa-heart"></i>
                                     </a>
                                 @else
                                     <a class="btn_favorite addToFavorite" data-id="{{ $product->id }}">
-                                        <i class="far fa-heart"></i> {{-- Regular heart (empty) --}}
+                                        <i class="far fa-heart"></i>
                                     </a>
                                 @endif
-                                @if($product->discount_price > 0 && $product->offer_end_date >= now()->toDateString())
-                                        <?php
-                                        $dis_percent = ($product->price - $product->discount_price)/$product->price * 100;
+
+                                @if($variant && $variant->discount_price > 0 )
+                                    @php
+                                        $dis_percent = ($variant->price - $variant->discount_price) / $variant->price * 100;
                                         $dis_percent = round($dis_percent);
-                                        ?>
-                                    <span class="offer-product">{{$dis_percent}}% OFF</span>
+                                    @endphp
+                                    <span class="offer-product">{{ $dis_percent }}% OFF</span>
                                 @endif
                             </figure>
+
                             <div class="txt-product">
-                                <a href="{{route('prouctDetails',[$product->id,Str::slug($product->name)])}}">
-                                    <p>{{$product->name}}</p>
+                                <a href="{{ route('prouctDetails', [$product->id, Str::slug($product->name)]) }}">
+                                    <p>{{ $product->name }}</p>
                                 </a>
+
                                 <div>
-                                    @if($product->discount_price > 0 && $product->offer_end_date >= now()->toDateString())
-                                        <del>{{$product->price}} @lang('website.KWD')</del>
-                                        <strong>{{$product->discount_price}} @lang('website.KWD')</strong>
+                                    @if($variant && $variant->discount_price > 0 &&$variant->discount_price< $variant->price)
+                                        <del>{{ $variant->price }} @lang('website.KWD')</del>
+                                        <strong>{{ $variant->discount_price }} @lang('website.KWD')</strong>
+                                    @elseif($variant)
+                                        <strong>{{ $variant->price }} @lang('website.KWD')</strong>
                                     @else
-                                        <strong>{{$product->price}} @lang('website.KWD')</strong>
+                                        <strong>{{ $product->price }} @lang('website.KWD')</strong>
                                     @endif
                                 </div>
+
                                 <div>
-                                    @if($product->quantity > 1)
-                                            @if($product->is_cart==0)
-                                                <a class="btn-site addToCart" data-id="{{$product->id}}">
-
-                                                    <span>@lang('website.addToCart')</span>
-                                                </a>
-                                            @else
-
-                                                <a class="btn-site removeFromCart" data-id="{{$product->id}}">
-                                                    <span>@lang('website.removefromCart')</span>
-                                                </a>
-{{--                                            <div class="quantity-item">--}}
-{{--                                                <div class="quantity">--}}
-{{--                                                    <div class="btn button-count dec jsQuantityDecrease" data-id="{{$product->id}}" minimum="1">--}}
-{{--                                                        <i class="fa fa-minus" aria-hidden="true"></i>--}}
-{{--                                                    </div>--}}
-{{--                                                    <input type="text" name="count-quat1" class="count-quat" value="1" min="0" max="{{$product->quantity}}">--}}
-{{--                                                    <div class="btn button-count inc jsQuantityIncrease" max="{{$product->quantity}}" data-id="{{$product->id}}">--}}
-{{--                                                        <i class="fa fa-plus" aria-hidden="true"></i>--}}
-{{--                                                    </div>--}}
-{{--                                                </div>--}}
-{{--                                            </div>--}}
+                                    @if($variant && $variant->quantity > 0)
+                                        @if($product->is_cart == 0)
+                                            <a class="btn-site addToCart" data-id="{{ $product->id }} "  data-variant-id="{{ $product->variants->first()->id??0 }}">
+                                                <span>@lang('website.addToCart')</span>
+                                            </a>
+                                        @else
+                                            <a class="btn-site removeFromCart" data-id="{{ $product->id }}">
+                                                <span>@lang('website.removefromCart')</span>
+                                            </a>
                                         @endif
                                     @else
-{{--                                        <div class="soldOut">--}}
                                         <div class="soldOut">
                                             <strong>@lang('website.Sold Out')</strong>
                                         </div>

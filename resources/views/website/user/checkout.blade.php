@@ -176,10 +176,10 @@
                                                     <span>@lang('website.QTY') : {{ $cart->quantity }}</span>
                                                 </div>
 
-                                                @if($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString())
-                                                    <strong>{{ $cart->product->discount_price }} @lang('website.KWD')</strong>
+                                                @if($cart->variant->discount_price > 0)
+                                                    <strong>{{ $cart->variant->discount_price }} @lang('website.KWD')</strong>
                                                 @else
-                                                    <strong>{{ $cart->product->price }} @lang('website.KWD')</strong>
+                                                    <strong>{{ $cart->variant->price }} @lang('website.KWD')</strong>
                                                 @endif
 
                                                 {{-- Gift Packaging --}}
