@@ -12,7 +12,6 @@ class ProductsImport implements ToCollection
 {
     public function collection(Collection $rows)
     {
-        dd($rows); // Debugging line, remove in production
         $locales = Language::all()->pluck('lang');
 
         foreach ($rows->skip(1) as $row) {
