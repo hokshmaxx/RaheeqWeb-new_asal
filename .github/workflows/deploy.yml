@@ -1,4 +1,4 @@
-name: Deploy Laravel Sail to EC2 (AL2023)
+name: Deploy Laravel Sail to EC2 (AL2023) #gggg
 
 on:
   push:
@@ -16,19 +16,14 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          # Properly format the key by replacing escaped newlines
           sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # Verify the key is valid
-          ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
-          # Add host to known_hosts
+          ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
 
       - name: Deploy Application
         run: |
-          ssh -o StrictHostKeyChecking=no -o BatchMode=yes \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+          ssh -o BatchMode=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -ex
 
             # 1. Update system and install core dependencies
@@ -39,39 +34,37 @@ jobs:
             # 2. Configure Docker
             sudo systemctl enable --now docker
             sudo usermod -aG docker $USER
-            # No need for newgrp in non-interactive shell, use sg instead
-            sg docker -c ' '
+            newgrp docker  # Refresh group permissions
 
             # 3. Set up application directory
-            APP_DIR=~/raheeq
-            if [ ! -d "$APP_DIR" ]; then
-              git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git "$APP_DIR"
-              cd "$APP_DIR"
+            if [ ! -d ~/raheeq ]; then
+              git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git ~/raheeq
+              cd ~/raheeq
               cp .env.example .env
             else
-              cd "$APP_DIR"
+              cd ~/raheeq
               git fetch origin
               git reset --hard origin/master
             fi
 
             # 4. Install PHP dependencies via Docker
             docker run --rm \
-              -v "$(pwd):/opt" \
+              -v $(pwd):/opt \
               -w /opt \
               laravelsail/php82-composer:latest \
               composer install --ignore-platform-reqs --no-interaction
 
-            # 5. Configure environment (ensure these aren't duplicated)
-            grep -qF 'APP_ENV=production' .env || echo "APP_ENV=production" >> .env
-            grep -qF 'APP_DEBUG=false' .env || echo "APP_DEBUG=false" >> .env
+            # 5. Configure environment (example)
+            echo "APP_ENV=production" >> .env
+            echo "APP_DEBUG=false" >> .env
 
             # 6. Start Laravel Sail
             ./vendor/bin/sail down || true
             ./vendor/bin/sail up -d --build
 
-            # 7. Run database migrations and optimizations
+            # 7. Run database migrations
             ./vendor/bin/sail artisan migrate --force
             ./vendor/bin/sail artisan optimize:clear
 
             echo "Deployment completed successfully"
-          ENDSSH
+          EOF
