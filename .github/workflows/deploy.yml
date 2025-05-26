@@ -14,6 +14,7 @@ jobs:
 
       - name: Setup SSH
         run: |
+          set -x
           mkdir -p $HOME/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
           sed -i 's/\\n/\n/g' $HOME/.ssh/id_rsa
