@@ -70,15 +70,18 @@ class HomeController extends Controller
         $product=Product::where('status','active')->with('variants','variants.variantType','category','images','vitamin')->findOrFail($id);
 
         if (auth()->check()) {
-            $cart = Cart::where('user_id', Auth::user()->id)
+            $carts = Cart::where('user_id', Auth::user()->id)
                 ->orWhere('user_key', Session::get('cart.ids'))
-                ->with(['product', 'variant', 'giftPackaging'])->where('product_id', '==', $id)
-                ->first();
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
         } else {
-            $cart = Cart::where('user_key', Session::get('cart.ids'))
-                ->with(['product', 'variant', 'giftPackaging'])->where('product_id', '==', $id)
-                ->first();
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
         }
+
+        $cart=$carts->where('product_id',$id)->first();
+
 
         $groupedVariants = $product->variants
             ->filter(fn($v) => $v->variantType) // Avoid nulls
