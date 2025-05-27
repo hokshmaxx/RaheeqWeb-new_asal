@@ -10,15 +10,8 @@ services:
     image: sail-8.2/app
     extra_hosts:
       - 'host.docker.internal:host-gateway'
-    ports:
-      - target: 80
-        published: ${APP_PORT:-80}
-        protocol: tcp
-        mode: host
-      - target: 5173
-        published: ${VITE_PORT:-5173}
-        protocol: tcp
-        mode: host
+    expose:
+      - "80"
     environment:
       WWWUSER: '${WWWUSER:-1000}'
       LARAVEL_SAIL: 1
@@ -35,6 +28,29 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    depends_on:
+      - laravel.test
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/letsencrypt
+    networks:
+      - sail
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./nginx/ssl:/etc/letsencrypt
+    command: certonly --standalone --preferred-challenges http -d ec2-16-24-171-144.me-south-1.compute.amazonaws.com --agree-tos --email hokshmax1@gmail.com --non-interactive
+    ports:
+      - "8081:80" # Needed temporarily for Let's Encrypt standalone mode
 
   mysql:
     image: 'mysql/mysql-server:8.0'
