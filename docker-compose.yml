@@ -36,31 +36,38 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - certbot-ssl:/etc/letsencrypt
+      - ./public:/var/www/html
     depends_on:
       - laravel.test
     networks:
       - sail
+    command: [nginx-debug, '-g', 'daemon off;']
 
   certbot:
     image: certbot/certbot
     container_name: sail-certbot
     volumes:
       - certbot-ssl:/etc/letsencrypt
-      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - ./public:/var/www/html
+    entrypoint: "/bin/sh -c"
     command: >
-      certbot certonly --webroot
-      -w /var/www/html
-      --preferred-challenges http
-      --agree-tos
-      --no-eff-email
-      --email hokshmax1@gmail.com
-      -d raheeq.app -d www.raheeq.app
-      --dry-run  # Remove for real issuance
+      "if [ ! -f /etc/letsencrypt/live/raheeq.app/fullchain.pem ]; then
+        certbot certonly --webroot -w /var/www/html \
+        --preferred-challenges http \
+        --agree-tos \
+        --no-eff-email \
+        --email hokshmax1@gmail.com \
+        -d raheeq.app -d www.raheeq.app \
+        --non-interactive;
+      else
+        certbot renew --quiet --no-self-upgrade;
+      fi"
     depends_on:
       - nginx
+
   mysql:
     image: 'mysql/mysql-server:8.0'
     ports:
