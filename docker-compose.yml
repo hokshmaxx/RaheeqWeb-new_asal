@@ -49,15 +49,17 @@ services:
     volumes:
       - certbot-ssl:/etc/letsencrypt
       - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./public:/var/www/html  # Certbot needs webroot access
     entrypoint: "/bin/sh -c"
     command: >
-      "certbot certonly --standalone
+      "certbot certonly --webroot
+       -w /var/www/html
        --preferred-challenges http
        --agree-tos
        --no-eff-email
        --email hokshmax1@gmail.com
-       -d ec2-16-24-105-243.me-south-1.compute.amazonaws.com"
-
+       -d raheeq.app -d www.raheeq.app
+       --dry-run"  # Remove --dry-run for real issuance
   mysql:
     image: 'mysql/mysql-server:8.0'
     ports:
