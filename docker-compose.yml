@@ -31,26 +31,32 @@ services:
 
   nginx:
     image: nginx:latest
-    container_name: nginx
-    depends_on:
-      - laravel.test
+    container_name: sail-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/letsencrypt
+      - certbot-ssl:/etc/letsencrypt
+    depends_on:
+      - laravel.test
     networks:
       - sail
 
   certbot:
     image: certbot/certbot
-    container_name: certbot
+    container_name: sail-certbot
     volumes:
-      - ./nginx/ssl:/etc/letsencrypt
-    command: certonly --standalone --preferred-challenges http -d ec2-16-24-171-144.me-south-1.compute.amazonaws.com --agree-tos --email hokshmax1@gmail.com --non-interactive
-    ports:
-      - "8081:80" # Needed temporarily for Let's Encrypt standalone mode
+      - certbot-ssl:/etc/letsencrypt
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    entrypoint: "/bin/sh -c"
+    command: >
+      "certbot certonly --standalone
+       --preferred-challenges http
+       --agree-tos
+       --no-eff-email
+       --email hokshmax1@gmail.com
+       -d ec2-16-24-105-243.me-south-1.compute.amazonaws.com"
 
   mysql:
     image: 'mysql/mysql-server:8.0'
@@ -102,4 +108,6 @@ networks:
 
 volumes:
   sail-mysql:
+    driver: local
+  certbot-ssl:
     driver: local
