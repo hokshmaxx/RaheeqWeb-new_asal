@@ -25,19 +25,31 @@ jobs:
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
           set -ex
 
-          DOMAIN="raheeq.app"        # <-- Change to your domain
-          EMAIL="hokshmax1@gmail.com" # <-- Change to your email
+          DOMAIN="raheeq.app"
+          EMAIL="hokshmax1@gmail.com"
           APP_DIR="/var/www/html/raheeq"
 
           # 1. Update and install required packages
           sudo dnf update -y
-          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git wget composer
+          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl php-gd php-zip unzip git wget
 
-          # Install MariaDB in Amazon Linux 2023
+          # Install MariaDB
           sudo dnf install -y mariadb105-server
           sudo systemctl enable --now mariadb
 
-          # 2. Setup MySQL (run only if fresh setup)
+          # Install Composer globally
+          EXPECTED_CHECKSUM="$(wget -q -O - https://composer.github.io/installer.sig)"
+          php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+          ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+          if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
+              >&2 echo 'ERROR: Invalid installer checksum'
+              rm composer-setup.php
+              exit 1
+          fi
+          php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+          rm composer-setup.php
+
+          # 2. Setup MySQL
           /usr/bin/mysql -u root <<EOSQL || true
           CREATE DATABASE IF NOT EXISTS laravel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
           CREATE USER IF NOT EXISTS 'laraveluser'@'localhost' IDENTIFIED BY 'securepassword';
@@ -48,35 +60,7 @@ jobs:
           # 3. Install Certbot for SSL
           sudo dnf install -y certbot python3-certbot-nginx
 
-          # 4. Install Adminer (accessible from any IP)
-          sudo mkdir -p /var/www/adminer
-          sudo wget https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php -O /var/www/adminer/index.php
-          sudo chown -R nginx:nginx /var/www/adminer
-          sudo chmod -R 755 /var/www/adminer
-
-          # Create Nginx config for Adminer (open access)
-          sudo tee /etc/nginx/conf.d/adminer.conf > /dev/null <<EOL
-          server {
-              listen 8080;
-              server_name _;
-
-              root /var/www/adminer;
-              index index.php;
-
-              location / {
-                  try_files \$uri \$uri/ /index.php?\$query_string;
-              }
-
-              location ~ \.php\$ {
-                  include fastcgi_params;
-                  fastcgi_pass unix:/run/php-fpm/www.sock;
-                  fastcgi_index index.php;
-                  fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-              }
-          }
-          EOL
-
-          # 5. Clone or update Laravel app
+          # 4. Clone or update Laravel app
           if [ ! -d "$APP_DIR" ]; then
             sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
             sudo chown -R ec2-user:ec2-user $APP_DIR
@@ -88,25 +72,27 @@ jobs:
             git reset --hard origin/master
           fi
 
-          # 6. Update .env for database connection
+          # 5. Update .env for database connection
           cd $APP_DIR
           sed -i 's/DB_HOST=mysql/DB_HOST=127.0.0.1/' .env
           sed -i 's/DB_USERNAME=root/DB_USERNAME=laraveluser/' .env
           sed -i 's/DB_PASSWORD=/DB_PASSWORD=securepassword/' .env
 
-          # 7. Install composer dependencies and run migrations
+          # 6. Install composer dependencies (with platform check ignore if needed)
+          composer install --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-req=ext-gd || \
           composer install --no-interaction --prefer-dist --optimize-autoloader
+
           php artisan key:generate
           php artisan migrate --force
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
 
-          # 8. Set permissions for Laravel storage and cache
+          # 7. Set permissions
           sudo chown -R nginx:nginx $APP_DIR
           sudo chmod -R 755 $APP_DIR/storage $APP_DIR/bootstrap/cache
 
-          # 9. Configure Nginx for Laravel
+          # 8. Configure Nginx
           sudo tee /etc/nginx/conf.d/laravel.conf > /dev/null <<EOL
           server {
             listen 80;
@@ -132,14 +118,30 @@ jobs:
           }
           EOL
 
-          # Test and reload Nginx
+          # 9. Test and reload Nginx
           sudo nginx -t
           sudo systemctl reload nginx
 
-          # 10. Obtain SSL certificate via Let's Encrypt
+          # 10. Obtain SSL certificate
           sudo certbot --nginx --non-interactive --agree-tos -m $EMAIL -d $DOMAIN || true
 
+          # 11. Configure PHP-FPM
+          sudo tee /etc/php-fpm.d/www.conf > /dev/null <<PHPFPM
+          [www]
+          user = nginx
+          group = nginx
+          listen = /run/php-fpm/www.sock
+          listen.owner = nginx
+          listen.group = nginx
+          pm = dynamic
+          pm.max_children = 5
+          pm.start_servers = 2
+          pm.min_spare_servers = 1
+          pm.max_spare_servers = 3
+          PHPFPM
+
+          sudo systemctl restart php-fpm
+
           echo "✅ Deployment complete"
-          echo "⚠️ WARNING: Adminer is open to any IP at http://$(curl -s ifconfig.me):8080"
-          echo "Use strong database credentials and consider restricting access later"
+          echo "Application available at https://$DOMAIN"
           EOF
