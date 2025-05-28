@@ -23,88 +23,88 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-  set -ex
+          set -ex
 
-  DOMAIN="raheeq.app"        # <-- Change to your domain
-  EMAIL="hokshmax1@gmail.com" # <-- Change to your email
-  APP_DIR="/var/www/html/raheeq"
+          DOMAIN="raheeq.app"        # <-- Change to your domain
+          EMAIL="hokshmax1@gmail.com" # <-- Change to your email
+          APP_DIR="/var/www/html/raheeq"
 
-  # 1. Update and install required packages
-  sudo dnf update -y
-  sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git mariadb-server certbot phpMyAdmin composer
+          # 1. Update and install required packages
+          sudo dnf update -y
+          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git mariadb-server certbot phpMyAdmin composer
 
-  # 2. Enable and start services
-  sudo systemctl enable --now nginx php-fpm mariadb
+          # 2. Enable and start services
+          sudo systemctl enable --now nginx php-fpm mariadb
 
-  # 3. Setup MySQL (run only if fresh setup)
-  /usr/bin/mysql -u root <<EOSQL || true
-  CREATE DATABASE IF NOT EXISTS laravel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-  CREATE USER IF NOT EXISTS 'laraveluser'@'localhost' IDENTIFIED BY 'securepassword';
-  GRANT ALL PRIVILEGES ON laravel.* TO 'laraveluser'@'localhost';
-  FLUSH PRIVILEGES;
-  EOSQL
+          # 3. Setup MySQL (run only if fresh setup)
+          /usr/bin/mysql -u root <<EOSQL || true
+          CREATE DATABASE IF NOT EXISTS laravel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'laraveluser'@'localhost' IDENTIFIED BY 'securepassword';
+          GRANT ALL PRIVILEGES ON laravel.* TO 'laraveluser'@'localhost';
+          FLUSH PRIVILEGES;
+          EOSQL
 
-  # 4. Clone or update Laravel app
-  if [ ! -d "$APP_DIR" ]; then
-  sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
-  sudo chown -R ec2-user:ec2-user $APP_DIR
-  cd $APP_DIR
-  cp .env.example .env
-  else
-  cd $APP_DIR
-  git fetch origin
-  git reset --hard origin/master
-  fi
+          # 4. Clone or update Laravel app
+          if [ ! -d "$APP_DIR" ]; then
+            sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
+            sudo chown -R ec2-user:ec2-user $APP_DIR
+            cd $APP_DIR
+            cp .env.example .env
+          else
+            cd $APP_DIR
+            git fetch origin
+            git reset --hard origin/master
+          fi
 
-  # 5. Update .env for database connection
-  cd $APP_DIR
-  sed -i 's/DB_HOST=mysql/DB_HOST=127.0.0.1/' .env
-  sed -i 's/DB_USERNAME=root/DB_USERNAME=laraveluser/' .env
-  sed -i 's/DB_PASSWORD=/DB_PASSWORD=securepassword/' .env
+          # 5. Update .env for database connection
+          cd $APP_DIR
+          sed -i 's/DB_HOST=mysql/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_USERNAME=root/DB_USERNAME=laraveluser/' .env
+          sed -i 's/DB_PASSWORD=/DB_PASSWORD=securepassword/' .env
 
-  # 6. Install composer dependencies and run migrations
-  composer install --no-interaction --prefer-dist --optimize-autoloader
-  php artisan key:generate
-  php artisan migrate --force
-  php artisan config:cache
-  php artisan route:cache
-  php artisan view:cache
+          # 6. Install composer dependencies and run migrations
+          composer install --no-interaction --prefer-dist --optimize-autoloader
+          php artisan key:generate
+          php artisan migrate --force
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
 
-  # 7. Set permissions for Laravel storage and cache
-  sudo chown -R nginx:nginx $APP_DIR
-  sudo chmod -R 755 $APP_DIR/storage $APP_DIR/bootstrap/cache
+          # 7. Set permissions for Laravel storage and cache
+          sudo chown -R nginx:nginx $APP_DIR
+          sudo chmod -R 755 $APP_DIR/storage $APP_DIR/bootstrap/cache
 
-  # 8. Configure Nginx for Laravel
-  sudo tee /etc/nginx/conf.d/laravel.conf > /dev/null <<EOL
-  server {
-  listen 80;
-  server_name $DOMAIN;
+          # 8. Configure Nginx for Laravel
+          sudo tee /etc/nginx/conf.d/laravel.conf > /dev/null <<EOL
+          server {
+            listen 80;
+            server_name $DOMAIN;
 
-  root $APP_DIR/public;
-  index index.php index.html;
+            root $APP_DIR/public;
+            index index.php index.html;
 
-  location / {
-  try_files \$uri \$uri/ /index.php?\$query_string;
-}
+            location / {
+              try_files \$uri \$uri/ /index.php?\$query_string;
+            }
 
-  location ~ \.php\$ {
-  include fastcgi_params;
-  fastcgi_pass unix:/run/php-fpm/www.sock;
-  fastcgi_index index.php;
-  fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-}
+            location ~ \.php\$ {
+              include fastcgi_params;
+              fastcgi_pass unix:/run/php-fpm/www.sock;
+              fastcgi_index index.php;
+              fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+            }
 
-  location ~ /\.ht {
-  deny all;
-}
-}
-  EOL
+            location ~ /\.ht {
+              deny all;
+            }
+          }
+          EOL
 
-  sudo nginx -t
-  sudo systemctl reload nginx
+          sudo nginx -t
+          sudo systemctl reload nginx
 
-  # 9. Obtain SSL certificate via Let's Encrypt (auto-renew enabled)
-  sudo certbot --nginx --non-interactive --agree-tos -m $EMAIL -d $DOMAIN || true
+          # 9. Obtain SSL certificate via Let's Encrypt (auto-renew enabled)
+          sudo certbot --nginx --non-interactive --agree-tos -m $EMAIL -d $DOMAIN || true
 
-  echo "✅ Deployment complete"
-  EOF
+          echo "✅ Deployment complete"
+          EOF
