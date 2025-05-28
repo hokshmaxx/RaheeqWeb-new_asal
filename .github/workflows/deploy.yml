@@ -1,4 +1,4 @@
-name: Deploy Laravel Sail to EC2 (AL2023) #gggg
+name: Deploy Laravel App to EC2 (No Docker)
 
 on:
   push:
@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Setup SSH
@@ -18,53 +18,93 @@ jobs:
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy Application
+      - name: Deploy to EC2
         run: |
-          ssh -o BatchMode=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -ex
 
-            # 1. Update system and install core dependencies
+            DOMAIN="raheeq.app" # <-- CHANGE THIS
+            EMAIL="hokshmax1@gmail.com"   # <-- CHANGE THIS
+            APP_DIR="/var/www/html/raheeq"
+
+            # 1. Install Required Packages
             sudo dnf update -y
-            sudo dnf install -y git docker
-            sudo dnf install -y mariadb-connector-c  # MySQL client library
+            sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git mariadb-server certbot phpMyAdmin composer
 
-            # 2. Configure Docker
-            sudo systemctl enable --now docker
-            sudo usermod -aG docker $USER
-            newgrp docker  # Refresh group permissions
+            # 2. Start & Enable Services
+            sudo systemctl enable --now nginx php-fpm mariadb
 
-            # 3. Set up application directory
-            if [ ! -d ~/raheeq ]; then
-              git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git ~/raheeq
-              cd ~/raheeq
-              cp .env.example .env
-            else
-              cd ~/raheeq
-              git fetch origin
-              git reset --hard origin/master
-            fi
+            # 3. Set up MySQL (First Time Only)
+            sudo systemctl start mariadb
+            mysql -u root <<EOSQL
+  CREATE DATABASE IF NOT EXISTS laravel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  CREATE USER IF NOT EXISTS 'laraveluser'@'localhost' IDENTIFIED BY 'securepassword';
+  GRANT ALL PRIVILEGES ON laravel.* TO 'laraveluser'@'localhost';
+  FLUSH PRIVILEGES;
+  EOSQL
 
-            # 4. Install PHP dependencies via Docker
-            docker run --rm \
-              -v $(pwd):/opt \
-              -w /opt \
-              laravelsail/php82-composer:latest \
-              composer install --ignore-platform-reqs --no-interaction
+  # 4. Clone/Update Laravel App
+  if [ ! -d "$APP_DIR" ]; then
+  sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
+  sudo chown -R ec2-user:ec2-user $APP_DIR
+  cd $APP_DIR
+  cp .env.example .env
+  else
+  cd $APP_DIR
+  git fetch origin
+  git reset --hard origin/master
+  fi
 
-            # 5. Configure environment (example)
-            echo "APP_ENV=production" >> .env
-            echo "APP_DEBUG=false" >> .env
+  # 5. Update .env for MySQL connection
+  cd $APP_DIR
+  sed -i 's/DB_HOST=mysql/DB_HOST=127.0.0.1/' .env
+  sed -i 's/DB_USERNAME=root/DB_USERNAME=laraveluser/' .env
+  sed -i 's/DB_PASSWORD=/DB_PASSWORD=securepassword/' .env
 
-            # 6. Start Laravel Sail
-            ./vendor/bin/sail down || true
-            ./vendor/bin/sail up -d --build
+  # 6. Laravel Setup
+  composer install --no-interaction --prefer-dist --optimize-autoloader
+  php artisan key:generate
+  php artisan migrate --force
+  php artisan config:cache
+  php artisan route:cache
+  php artisan view:cache
 
-            # 7. Run database migrations
-            ./vendor/bin/sail artisan migrate --force
-            ./vendor/bin/sail artisan optimize:clear
+  # 7. Set Permissions
+  sudo chown -R nginx:nginx $APP_DIR
+  sudo chmod -R 755 $APP_DIR/storage $APP_DIR/bootstrap/cache
 
-            echo "Deployment completed successfully"
-          EOF
+  # 8. Configure Nginx
+  sudo tee /etc/nginx/conf.d/laravel.conf > /dev/null <<EOL
+  server {
+  listen 80;
+  server_name $DOMAIN;
+
+  root $APP_DIR/public;
+  index index.php index.html;
+
+  location / {
+  try_files \$uri \$uri/ /index.php?\$query_string;
+}
+
+  location ~ \.php\$ {
+  include fastcgi_params;
+  fastcgi_pass unix:/run/php-fpm/www.sock;
+  fastcgi_index index.php;
+  fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+}
+
+  location ~ /\.ht {
+  deny all;
+}
+}
+  EOL
+
+  sudo nginx -t && sudo systemctl reload nginx
+
+  # 9. SSL with Let's Encrypt
+  sudo certbot --nginx --non-interactive --agree-tos -m $EMAIL -d $DOMAIN
+
+  echo "✅ Deployment complete"
+  EOF
