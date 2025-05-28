@@ -31,23 +31,22 @@ jobs:
 
           # 1. Update and install required packages
           sudo dnf update -y
-          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git certbot composer wget
+          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git wget composer
 
-          # Install MariaDB from Amazon Linux extras
-          sudo amazon-linux-extras enable mariadb10.5
-          sudo dnf clean metadata
-          sudo dnf install -y mariadb-server
+          # Install MariaDB in Amazon Linux 2023
+          sudo dnf install -y mariadb105-server
+          sudo systemctl enable --now mariadb
 
-          # 2. Enable and start services
-          sudo systemctl enable --now nginx php-fpm mariadb
-
-          # 3. Setup MySQL (run only if fresh setup)
+          # 2. Setup MySQL (run only if fresh setup)
           /usr/bin/mysql -u root <<EOSQL || true
           CREATE DATABASE IF NOT EXISTS laravel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
           CREATE USER IF NOT EXISTS 'laraveluser'@'localhost' IDENTIFIED BY 'securepassword';
           GRANT ALL PRIVILEGES ON laravel.* TO 'laraveluser'@'localhost';
           FLUSH PRIVILEGES;
           EOSQL
+
+          # 3. Install Certbot for SSL
+          sudo dnf install -y certbot python3-certbot-nginx
 
           # 4. Install Adminer (accessible from any IP)
           sudo mkdir -p /var/www/adminer
@@ -137,10 +136,10 @@ jobs:
           sudo nginx -t
           sudo systemctl reload nginx
 
-          # 10. Obtain SSL certificate via Let's Encrypt (auto-renew enabled)
+          # 10. Obtain SSL certificate via Let's Encrypt
           sudo certbot --nginx --non-interactive --agree-tos -m $EMAIL -d $DOMAIN || true
 
           echo "✅ Deployment complete"
-          echo "⚠️ WARNING: Adminer is open to any IP at http://${{ secrets.EC2_HOST }}:8080"
+          echo "⚠️ WARNING: Adminer is open to any IP at http://$(curl -s ifconfig.me):8080"
           echo "Use strong database credentials and consider restricting access later"
           EOF
