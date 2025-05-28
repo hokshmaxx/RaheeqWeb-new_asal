@@ -31,7 +31,12 @@ jobs:
 
           # 1. Update and install required packages
           sudo dnf update -y
-          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git mariadb certbot composer wget
+          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git certbot composer wget
+
+          # Install MariaDB from Amazon Linux extras
+          sudo amazon-linux-extras enable mariadb10.5
+          sudo dnf clean metadata
+          sudo dnf install -y mariadb-server
 
           # 2. Enable and start services
           sudo systemctl enable --now nginx php-fpm mariadb
