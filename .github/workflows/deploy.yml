@@ -31,7 +31,7 @@ jobs:
 
           # 1. Update and install required packages
           sudo dnf update -y
-          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git mariadb-server certbot phpMyAdmin composer
+          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl unzip git mariadb certbot composer wget
 
           # 2. Enable and start services
           sudo systemctl enable --now nginx php-fpm mariadb
@@ -44,7 +44,35 @@ jobs:
           FLUSH PRIVILEGES;
           EOSQL
 
-          # 4. Clone or update Laravel app
+          # 4. Install Adminer (accessible from any IP)
+          sudo mkdir -p /var/www/adminer
+          sudo wget https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php -O /var/www/adminer/index.php
+          sudo chown -R nginx:nginx /var/www/adminer
+          sudo chmod -R 755 /var/www/adminer
+
+          # Create Nginx config for Adminer (open access)
+          sudo tee /etc/nginx/conf.d/adminer.conf > /dev/null <<EOL
+          server {
+              listen 8080;
+              server_name _;
+
+              root /var/www/adminer;
+              index index.php;
+
+              location / {
+                  try_files \$uri \$uri/ /index.php?\$query_string;
+              }
+
+              location ~ \.php\$ {
+                  include fastcgi_params;
+                  fastcgi_pass unix:/run/php-fpm/www.sock;
+                  fastcgi_index index.php;
+                  fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+              }
+          }
+          EOL
+
+          # 5. Clone or update Laravel app
           if [ ! -d "$APP_DIR" ]; then
             sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
             sudo chown -R ec2-user:ec2-user $APP_DIR
@@ -56,13 +84,13 @@ jobs:
             git reset --hard origin/master
           fi
 
-          # 5. Update .env for database connection
+          # 6. Update .env for database connection
           cd $APP_DIR
           sed -i 's/DB_HOST=mysql/DB_HOST=127.0.0.1/' .env
           sed -i 's/DB_USERNAME=root/DB_USERNAME=laraveluser/' .env
           sed -i 's/DB_PASSWORD=/DB_PASSWORD=securepassword/' .env
 
-          # 6. Install composer dependencies and run migrations
+          # 7. Install composer dependencies and run migrations
           composer install --no-interaction --prefer-dist --optimize-autoloader
           php artisan key:generate
           php artisan migrate --force
@@ -70,11 +98,11 @@ jobs:
           php artisan route:cache
           php artisan view:cache
 
-          # 7. Set permissions for Laravel storage and cache
+          # 8. Set permissions for Laravel storage and cache
           sudo chown -R nginx:nginx $APP_DIR
           sudo chmod -R 755 $APP_DIR/storage $APP_DIR/bootstrap/cache
 
-          # 8. Configure Nginx for Laravel
+          # 9. Configure Nginx for Laravel
           sudo tee /etc/nginx/conf.d/laravel.conf > /dev/null <<EOL
           server {
             listen 80;
@@ -100,11 +128,14 @@ jobs:
           }
           EOL
 
+          # Test and reload Nginx
           sudo nginx -t
           sudo systemctl reload nginx
 
-          # 9. Obtain SSL certificate via Let's Encrypt (auto-renew enabled)
+          # 10. Obtain SSL certificate via Let's Encrypt (auto-renew enabled)
           sudo certbot --nginx --non-interactive --agree-tos -m $EMAIL -d $DOMAIN || true
 
           echo "✅ Deployment complete"
+          echo "⚠️ WARNING: Adminer is open to any IP at http://${{ secrets.EC2_HOST }}:8080"
+          echo "Use strong database credentials and consider restricting access later"
           EOF
