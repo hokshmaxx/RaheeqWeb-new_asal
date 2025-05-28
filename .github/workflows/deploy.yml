@@ -166,9 +166,19 @@ jobs:
           # Run migrations
           php artisan migrate --force || echo "⚠️ Migration failed, continuing..."
 
-          # Cache for production
+          # MODIFIED: Skip route caching if there are duplicate route names
+          echo "🔍 Checking for route conflicts..."
+          if php artisan route:cache 2>&1 | grep -q "Another route has already been assigned name"; then
+            echo "⚠️ Duplicate route names detected. Skipping route caching for now."
+            echo "📝 Please fix duplicate route names in your Laravel application:"
+            php artisan route:list --name=admin.admins.edit_password 2>/dev/null || echo "   Check routes/web.php and routes/admin.php for duplicate route names"
+          else
+            php artisan route:cache
+            echo "✅ Routes cached successfully"
+          fi
+
+          # Cache config and views (these should work fine)
           php artisan config:cache
-          php artisan route:cache
           php artisan view:cache
 
           # 8. Setup phpMyAdmin configuration
@@ -380,6 +390,9 @@ jobs:
               echo "   ⚠️ phpMyAdmin may have issues"
           fi
 
+          echo ""
+          echo "⚠️ IMPORTANT: If route caching was skipped, please fix duplicate route names in your Laravel application."
+          echo "   You can check for duplicates by running: php artisan route:list | grep 'admin.admins.edit_password'"
           echo ""
           echo "🎉 Deployment completed! Your Laravel application with phpMyAdmin is ready!"
           EOF
