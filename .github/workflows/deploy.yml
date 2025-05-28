@@ -28,16 +28,29 @@ jobs:
           DOMAIN="raheeq.app"
           EMAIL="hokshmax1@gmail.com"
           APP_DIR="/var/www/html/raheeq"
+          PHPMYADMIN_DIR="/usr/share/phpmyadmin"
+          PHPMYADMIN_ALIAS="/phpmyadmin"
 
           # 1. Update and install required packages
-          sudo dnf update -y
-          sudo dnf install -y nginx php php-fpm php-mysqlnd php-cli php-mbstring php-xml php-curl php-gd php-zip unzip git wget
+          sudo apt-get update
+          sudo apt-get install -y nginx php-fpm php-mysql php-cli php-mbstring php-xml php-curl php-gd php-zip unzip git wget mariadb-server
 
-          # Install MariaDB
-          sudo dnf install -y mariadb105-server
-          sudo systemctl enable --now mariadb
+          # 2. Install phpMyAdmin
+          sudo apt-get install -y phpmyadmin
+          sudo ln -s $PHPMYADMIN_DIR $APP_DIR/public$PHPMYADMIN_ALIAS
 
-          # Install Composer globally
+          # 3. Secure phpMyAdmin (optional but recommended)
+          sudo tee $APP_DIR/public$PHPMYADMIN_ALIAS/.htaccess > /dev/null <<HTACCESS
+          AuthType Basic
+          AuthName "Restricted Access"
+          AuthUserFile /etc/phpmyadmin/.htpasswd
+          Require valid-user
+          HTACCESS
+
+          # Create password file (change 'admin' and 'password' to your credentials)
+          echo "admin:$(openssl passwd -apr1 password)" | sudo tee /etc/phpmyadmin/.htpasswd
+
+          # 4. Install Composer
           EXPECTED_CHECKSUM="$(wget -q -O - https://composer.github.io/installer.sig)"
           php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
           ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
@@ -46,24 +59,24 @@ jobs:
               rm composer-setup.php
               exit 1
           fi
-          php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+          sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
           rm composer-setup.php
 
-          # 2. Setup MySQL
-          /usr/bin/mysql -u root <<EOSQL || true
+          # 5. Setup MySQL
+          sudo mysql -u root <<EOSQL || true
           CREATE DATABASE IF NOT EXISTS laravel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
           CREATE USER IF NOT EXISTS 'laraveluser'@'localhost' IDENTIFIED BY 'securepassword';
           GRANT ALL PRIVILEGES ON laravel.* TO 'laraveluser'@'localhost';
           FLUSH PRIVILEGES;
           EOSQL
 
-          # 3. Install Certbot for SSL
-          sudo dnf install -y certbot python3-certbot-nginx
+          # 6. Install Certbot for SSL
+          sudo apt-get install -y certbot python3-certbot-nginx
 
-          # 4. Clone or update Laravel app
+          # 7. Clone or update Laravel app
           if [ ! -d "$APP_DIR" ]; then
             sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
-            sudo chown -R ec2-user:ec2-user $APP_DIR
+            sudo chown -R $USER:$USER $APP_DIR
             cd $APP_DIR
             cp .env.example .env
           else
@@ -72,13 +85,13 @@ jobs:
             git reset --hard origin/master
           fi
 
-          # 5. Update .env for database connection
+          # 8. Update .env for database connection
           cd $APP_DIR
           sed -i 's/DB_HOST=mysql/DB_HOST=127.0.0.1/' .env
           sed -i 's/DB_USERNAME=root/DB_USERNAME=laraveluser/' .env
           sed -i 's/DB_PASSWORD=/DB_PASSWORD=securepassword/' .env
 
-          # 6. Install composer dependencies (with platform check ignore if needed)
+          # 9. Install composer dependencies
           composer install --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-req=ext-gd || \
           composer install --no-interaction --prefer-dist --optimize-autoloader
 
@@ -88,12 +101,12 @@ jobs:
           php artisan route:cache
           php artisan view:cache
 
-          # 7. Set permissions
-          sudo chown -R nginx:nginx $APP_DIR
+          # 10. Set permissions
+          sudo chown -R www-data:www-data $APP_DIR
           sudo chmod -R 755 $APP_DIR/storage $APP_DIR/bootstrap/cache
 
-          # 8. Configure Nginx
-          sudo tee /etc/nginx/conf.d/laravel.conf > /dev/null <<EOL
+          # 11. Configure Nginx
+          sudo tee /etc/nginx/sites-available/laravel.conf > /dev/null <<EOL
           server {
             listen 80;
             server_name $DOMAIN;
@@ -106,42 +119,48 @@ jobs:
             }
 
             location ~ \.php\$ {
-              include fastcgi_params;
-              fastcgi_pass unix:/run/php-fpm/www.sock;
-              fastcgi_index index.php;
-              fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/run/php/php-fpm.sock;
             }
 
             location ~ /\.ht {
               deny all;
             }
+
+            location $PHPMYADMIN_ALIAS {
+              alias $PHPMYADMIN_DIR;
+              index index.php;
+
+              location ~ ^$PHPMYADMIN_ALIAS/(.+\.php)\$ {
+                alias $PHPMYADMIN_DIR/\$1;
+                include snippets/fastcgi-php.conf;
+                fastcgi_pass unix:/run/php/php-fpm.sock;
+              }
+
+              location ~* ^$PHPMYADMIN_ALIAS/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))\$ {
+                alias $PHPMYADMIN_DIR/\$1;
+              }
+            }
           }
           EOL
 
-          # 9. Test and reload Nginx
+          sudo ln -s /etc/nginx/sites-available/laravel.conf /etc/nginx/sites-enabled/
+          sudo rm /etc/nginx/sites-enabled/default
+
+          # 12. Test and reload Nginx
           sudo nginx -t
           sudo systemctl reload nginx
 
-          # 10. Obtain SSL certificate
+          # 13. Obtain SSL certificate
           sudo certbot --nginx --non-interactive --agree-tos -m $EMAIL -d $DOMAIN || true
 
-          # 11. Configure PHP-FPM
-          sudo tee /etc/php-fpm.d/www.conf > /dev/null <<PHPFPM
-          [www]
-          user = nginx
-          group = nginx
-          listen = /run/php-fpm/www.sock
-          listen.owner = nginx
-          listen.group = nginx
-          pm = dynamic
-          pm.max_children = 5
-          pm.start_servers = 2
-          pm.min_spare_servers = 1
-          pm.max_spare_servers = 3
-          PHPFPM
-
+          # 14. Configure PHP-FPM
+          sudo sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/' /etc/php/*/fpm/php.ini
           sudo systemctl restart php-fpm
 
           echo "✅ Deployment complete"
           echo "Application available at https://$DOMAIN"
+          echo "phpMyAdmin available at https://$DOMAIN$PHPMYADMIN_ALIAS"
+          echo "Username: admin"
+          echo "Password: password"
           EOF
