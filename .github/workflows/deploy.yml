@@ -396,7 +396,6 @@
 #          echo ""
 #          echo "🎉 Deployment completed! Your Laravel application with phpMyAdmin is ready!"
 #          EOF
-
 name: Deploy Laravel App to EC2 with phpMyAdmin
 
 on:
