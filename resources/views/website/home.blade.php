@@ -123,7 +123,7 @@
             margin: 15px 8px;
             font-size: 15px;
             font-weight: 600;
-            color: #333;
+            color: var(--text-color);
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
@@ -462,7 +462,10 @@
                                         $dis_percent = ($variant->price - $variant->discount_price) / $variant->price * 100;
                                         $dis_percent = round($dis_percent);
                                     @endphp
+                                @if($dis_percent>0)
                                     <span class="offer-product">{{ $dis_percent }}% OFF</span>
+                                    @endif
+
                                 @endif
                             </figure>
 

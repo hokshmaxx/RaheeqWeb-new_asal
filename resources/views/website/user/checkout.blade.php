@@ -4,7 +4,7 @@
 @endsection
 @section('content')
 
-//
+
         <section class="section_page_site">
 		    <div class="container">
 
@@ -240,7 +240,7 @@
              formData.append('delivery_note', $('textarea[name="delivery_note"]').val());
             $('.guestForm , .time_date').find( 'select, textarea, input' ).each(function(){
                   if($(this).prop('required') && !$(this).val() && !$(this).is(":hidden")){
-                      $(this).css("border", "#ff0000 solid 1px").next('span.errorSpan').remove(); //
+                      $(this).css("border", "#ff0000 solid 1px").next('span.errorSpan').remove();
                            $(this).css("border", "#bd1616 solid 1px").after('<span style="color:#bd1616" class="errorSpan">{{__("website.requiredField")}}</span>');
                       preventSubmit = true;
                       e.preventDefault();

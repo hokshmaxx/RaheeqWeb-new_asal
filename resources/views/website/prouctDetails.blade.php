@@ -6,6 +6,7 @@
 
     .variant-box {
         cursor: pointer;
+        width: fit-content;
         transition: all 0.2s ease;
         background-color:white;
 
@@ -17,7 +18,8 @@
     }
 
     .review-form {
-        max-width: 500px;
+        /*width: 100px;*/
+
         margin-top: 20px;
     }
 
@@ -29,21 +31,23 @@
 
     .star-rating {
         display: flex;
+
         flex-direction: row-reverse;
-        justify-content: center;
+        justify-content: start;
         gap: 8px;
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
 
     /* Override for LTR languages */
 
 
     .star-rating input[type="radio"] {
+
         display: none;
     }
 
     .star-rating label {
-        font-size: 2em;
+        font-size: 1.5em;
         color: #ccc;
         cursor: pointer;
         transition: color 0.2s ease-in-out;
@@ -73,9 +77,9 @@
     /* Breadcrumbs */
 
     .breadcrumb-container { background: #f9f9f9; padding: 10px 15px; margin-bottom: 25px; border-radius: 5px; }
-    .breadcrumb-item a { color: #6c757d; }
+    .breadcrumb-item a { color: var(--text-color) }
     .breadcrumb-item a:hover { text-decoration: underline; color: var(--main-color); }
-    .breadcrumb-item.active { color: #333; font-weight: bold; }
+    .breadcrumb-item.active { color:   var(--text-color); font-weight: bold; }
 
     /* Product Gallery */
     .product-gallery { display: flex; flex-direction: column; gap: 10px; }
@@ -107,14 +111,12 @@
 
     /* Product Description */
     .product-description { margin-top: 25px; padding: 20px; background: #f9f9f9; border-radius: 10px; }
-    .product-description h5 { font-size: 20px; font-weight: 600; color: #333; margin-bottom: 15px; }
+    .product-description h5 { font-size: 20px; font-weight: 600; color: var(--text-color); margin-bottom: 15px; }
 
     /* Reviews */
-    .product-reviews { margin-top: 50px; }
-    .review-form { margin-bottom: 20px; }
-    .review-item { padding: 15px; border: 1px solid #eee; border-radius: 5px; margin-bottom: 15px; }
-    .review-item .reviewer-name { font-weight: bold; }
-    .review-item .review-stars i { color: #ffd700; margin-right: 5px; }
+    .product-reviews { margin: 25px; }
+    /*.review-form { margin-bottom: 20px; }*/
+    /*.review-item { padding: 15px; border: 1px solid #eee; border-radius: 5px; margin-bottom: 15px; }*/
 
 
 </style>
@@ -277,7 +279,7 @@
 
     <!-- Reviews -->
     <div class="product-reviews">
-        <h3>Customer Reviews</h3>
+        <h1>Customer Reviews</h1>
 
         <!-- Review Form (if user is logged in) -->
 
@@ -286,7 +288,7 @@
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
 
-                <div style="margin-bottom: 20px;">
+                <div >
                     <label style="font-weight: bold; display: block; margin-bottom: 8px;">Rating:</label>
 
                     <div class="star-rating ">
@@ -300,10 +302,10 @@
 
                 <div>
                     <label for="review">Review:</label>
-                    <textarea name="review" id="review" rows="4" class="form-control" required></textarea>
+                    <textarea name="review" id="review" rows="4" class="form-control " required></textarea>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Submit Review</button>
+                <button type="submit" class="btn-site ">Submit Review</button>
             </form>
         @endauth
 

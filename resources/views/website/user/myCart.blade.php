@@ -245,7 +245,6 @@
     $(document).on('click','.removeProductFromCartPage',function (e) {
         // $(".remove-from-cart").click(function (e) {
             e.preventDefault();
-alert()
             var ele = $(this);
             var id = $(this).data("id");
             // var product_id = $(this).data("product_id");
