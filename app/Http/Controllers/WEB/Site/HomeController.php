@@ -79,7 +79,7 @@ class HomeController extends Controller
                 ->with(['product', 'variant', 'giftPackaging'])
                 ->get();
         }
-
+//
         $cart=$carts->where('product_id',$id)->first();
 
 
