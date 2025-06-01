@@ -648,6 +648,13 @@ jobs:
           php artisan config:cache
           php artisan view:cache
 
+          # Warm up the application
+          echo "🔥 Warming up application cache..."
+          php artisan optimize
+
+          # Optional: Create a route cache if no conflicts
+          php artisan route:cache 2>/dev/null || echo "⚠️ Route cache skipped due to conflicts"
+
           # 8. Setup phpMyAdmin configuration
           echo "🔧 Configuring phpMyAdmin..."
 
@@ -809,10 +816,32 @@ jobs:
           sudo chmod -R 755 $APP_DIR/bootstrap/cache
           sudo find $APP_DIR -type f -name "*.php" -exec chmod 644 {} \;
 
-          # 16. Clean up
+          # 16. Clean up and restart services
           echo "🧹 Cleaning up..."
           sudo apt-get autoremove -y
           sudo apt-get autoclean
+
+          # Clear PHP opcache and restart services
+          echo "🔄 Restarting services to apply changes..."
+
+          # Clear opcache
+          echo "<?php opcache_reset(); echo 'OPcache cleared';" > /tmp/opcache_clear.php
+          php /tmp/opcache_clear.php
+          rm -f /tmp/opcache_clear.php
+
+          # Restart PHP-FPM to apply all changes
+          sudo systemctl restart php7.4-fpm
+          echo "✅ PHP-FPM restarted"
+
+          # Reload Nginx (safer than restart)
+          sudo systemctl reload nginx
+          echo "✅ Nginx reloaded"
+
+          # Optional: Restart Nginx if reload fails
+          if [ $? -ne 0 ]; then
+            sudo systemctl restart nginx
+            echo "✅ Nginx restarted (reload failed)"
+          fi
 
           # 17. Display final information
           echo ""
