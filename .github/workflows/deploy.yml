@@ -522,9 +522,6 @@ jobs:
             sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
             sudo chown -R $USER:$USER $APP_DIR
             cd $APP_DIR
-            if [ -f .env.example ]; then
-              cp .env.example .env
-            fi
           else
             cd $APP_DIR
 
@@ -577,14 +574,30 @@ jobs:
           echo "⚙️ Configuring Laravel environment..."
           cd $APP_DIR
 
-          # Update .env file
-          if [ -f .env ]; then
-            sed -i "s/^DB_HOST=.*/DB_HOST=127.0.0.1/" .env
-            sed -i "s/^DB_DATABASE=.*/DB_DATABASE=$DB_NAME/" .env
-            sed -i "s/^DB_USERNAME=.*/DB_USERNAME=$DB_USER/" .env
-            sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$DB_PASS/" .env
-            sed -i "s/^APP_URL=.*/APP_URL=https:\/\/$DOMAIN/" .env
+          # ALWAYS copy from .env.example to get latest configuration
+          echo "📝 Creating .env file from .env.example..."
+          if [ -f .env.example ]; then
+            cp .env.example .env
+            echo "✅ .env file created from .env.example"
+          else
+            echo "❌ ERROR: .env.example file not found!"
+            exit 1
           fi
+
+          # Update .env file with correct database and app settings
+          echo "📝 Updating .env file with production settings..."
+          sed -i "s/^DB_HOST=.*/DB_HOST=127.0.0.1/" .env
+          sed -i "s/^DB_DATABASE=.*/DB_DATABASE=$DB_NAME/" .env
+          sed -i "s/^DB_USERNAME=.*/DB_USERNAME=$DB_USER/" .env
+          sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$DB_PASS/" .env
+          sed -i "s/^APP_URL=.*/APP_URL=https:\/\/$DOMAIN/" .env
+          sed -i "s/^APP_ENV=.*/APP_ENV=production/" .env
+          sed -i "s/^APP_DEBUG=.*/APP_DEBUG=false/" .env
+
+          # Ensure the file has proper permissions
+          chmod 644 .env
+
+          echo "✅ .env file configured successfully"
 
           # 7. Install Laravel dependencies (should work perfectly with PHP 7.4)
           echo "📦 Installing Laravel dependencies..."
