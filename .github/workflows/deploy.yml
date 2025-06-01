@@ -1,412 +1,3 @@
-name: Deploy Laravel App to EC2 with phpMyAdmin
-
-on:
-  push:
-    branches: [master]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Deploy to EC2
-        run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          set -ex
-
-          # Configuration variables
-          DOMAIN="raheeq.app"
-          EMAIL="hokshmax1@gmail.com"
-          APP_DIR="/var/www/html/raheeq"
-          PHPMYADMIN_DIR="/usr/share/phpmyadmin"
-          PHPMYADMIN_ALIAS="/phpmyadmin"
-          DB_NAME="laravel"
-          DB_USER="laraveluser"
-          DB_PASS="securepassword"
-          PHPMYADMIN_USER="admin"
-          PHPMYADMIN_PASS="SecurePhpMyAdminPass123!"
-
-          echo "🚀 Starting deployment..."
-
-          # 1. Update system and install PHP 7.4 for better compatibility
-          echo "📦 Installing system packages with PHP 7.4..."
-          sudo apt-get update
-
-          # Add PHP repository for PHP 7.4
-          sudo apt-get install -y software-properties-common
-          sudo add-apt-repository ppa:ondrej/php -y
-          sudo apt-get update
-
-          # Install PHP 7.4 and required extensions
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            nginx \
-            php7.4-fpm \
-            php7.4-mysql \
-            php7.4-cli \
-            php7.4-mbstring \
-            php7.4-xml \
-            php7.4-curl \
-            php7.4-gd \
-            php7.4-zip \
-            php7.4-bcmath \
-            php7.4-json \
-            php7.4-tokenizer \
-            php7.4-intl \
-            php7.4-soap \
-            php7.4-redis \
-            php7.4-common \
-            php7.4-opcache \
-            unzip \
-            git \
-            wget \
-            mariadb-server \
-            certbot \
-            python3-certbot-nginx
-
-          # Set PHP 7.4 as default
-          sudo update-alternatives --set php /usr/bin/php7.4
-
-          # Disable other PHP versions if they exist
-          sudo systemctl stop php8.*-fpm 2>/dev/null || true
-          sudo systemctl disable php8.*-fpm 2>/dev/null || true
-
-          # Get PHP version for later use (should be 7.4 now)
-          PHP_VERSION="7.4"
-          echo "📋 Using PHP version: $PHP_VERSION"
-
-          # 2. Install phpMyAdmin
-          echo "🗄️ Installing phpMyAdmin..."
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y phpmyadmin
-
-          # 3. Install Composer
-          echo "🎼 Installing Composer..."
-          if ! command -v composer &> /dev/null; then
-            EXPECTED_CHECKSUM="$(wget -q -O - https://composer.github.io/installer.sig)"
-            php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-            ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
-            if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
-                >&2 echo 'ERROR: Invalid installer checksum'
-                rm composer-setup.php
-                exit 1
-            fi
-            sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-            rm composer-setup.php
-          fi
-
-          # 4. Setup MariaDB
-          echo "🗃️ Setting up MariaDB..."
-          sudo systemctl start mariadb
-          sudo systemctl enable mariadb
-
-          # Create database and user
-          sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" || true
-          sudo mysql -u root -e "CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';" || true
-          sudo mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';" || true
-          sudo mysql -u root -e "FLUSH PRIVILEGES;" || true
-
-          # 5. Clone or update Laravel application
-          echo "📥 Setting up Laravel application..."
-          if [ ! -d "$APP_DIR" ]; then
-            sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
-            sudo chown -R $USER:$USER $APP_DIR
-            cd $APP_DIR
-            if [ -f .env.example ]; then
-              cp .env.example .env
-            fi
-          else
-            cd $APP_DIR
-            sudo chown -R $USER:$USER $APP_DIR
-
-            # IMPORTANT: Pull latest changes from repository
-            echo "📥 Pulling latest changes..."
-            git fetch origin
-            git reset --hard origin/master
-            git pull origin master
-
-            # Clear any local changes that might prevent pulling
-            git clean -fd
-          fi
-
-          # 6. Configure Laravel environment
-          echo "⚙️ Configuring Laravel environment..."
-          cd $APP_DIR
-
-          # Update .env file
-          if [ -f .env ]; then
-            sed -i "s/^DB_HOST=.*/DB_HOST=127.0.0.1/" .env
-            sed -i "s/^DB_DATABASE=.*/DB_DATABASE=$DB_NAME/" .env
-            sed -i "s/^DB_USERNAME=.*/DB_USERNAME=$DB_USER/" .env
-            sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$DB_PASS/" .env
-            sed -i "s/^APP_URL=.*/APP_URL=https:\/\/$DOMAIN/" .env
-          fi
-
-          # 7. Install Laravel dependencies
-          echo "📦 Installing Laravel dependencies..."
-
-          # Clear composer cache first
-          composer clear-cache
-
-          # Install dependencies
-          composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
-
-          # Generate application key if not exists
-          if ! grep -q "APP_KEY=" .env || [ -z "$(grep "APP_KEY=" .env | cut -d'=' -f2)" ]; then
-            php artisan key:generate --force
-          fi
-
-          # Clear all caches before running new commands
-          php artisan config:clear
-          php artisan cache:clear
-          php artisan route:clear
-          php artisan view:clear
-          php artisan optimize:clear
-
-          # Run migrations
-          php artisan migrate --force || echo "⚠️ Migration failed, continuing..."
-
-          # Check for route conflicts
-          echo "🔍 Checking for route conflicts..."
-          if php artisan route:cache 2>&1 | grep -q "Another route has already been assigned name"; then
-            echo "⚠️ Duplicate route names detected. Skipping route caching for now."
-            echo "📝 Please fix duplicate route names in your Laravel application:"
-            php artisan route:list --name=admin.admins.edit_password 2>/dev/null || echo "   Check routes/web.php and routes/admin.php for duplicate route names"
-          else
-            php artisan route:cache
-            echo "✅ Routes cached successfully"
-          fi
-
-          # Cache config and views
-          php artisan config:cache
-          php artisan view:cache
-
-          # 8. Setup phpMyAdmin configuration
-          echo "🔧 Configuring phpMyAdmin..."
-
-          # Create phpMyAdmin config
-          sudo tee $PHPMYADMIN_DIR/config.inc.php > /dev/null <<PHPCONFIG
-  <?php
-  \$cfg['blowfish_secret'] = '$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)';
-  \$i = 0;
-
-  \$i++;
-  \$cfg['Servers'][\$i]['auth_type'] = 'cookie';
-  \$cfg['Servers'][\$i]['host'] = 'localhost';
-  \$cfg['Servers'][\$i]['compress'] = false;
-  \$cfg['Servers'][\$i]['AllowNoPassword'] = false;
-
-  \$cfg['DefaultLang'] = 'en';
-  \$cfg['ServerDefault'] = 1;
-  \$cfg['UploadDir'] = '';
-  \$cfg['SaveDir'] = '';
-  ?>
-  PHPCONFIG
-
-  # IMPORTANT: Remove old symlink approach and copy phpMyAdmin to public directory
-  sudo rm -rf $APP_DIR/public/phpmyadmin
-  sudo cp -R $PHPMYADMIN_DIR $APP_DIR/public/phpmyadmin
-
-  # 9. Set proper permissions
-  echo "🔐 Setting permissions..."
-  sudo chown -R www-data:www-data $APP_DIR
-  sudo chmod -R 755 $APP_DIR/storage
-  sudo chmod -R 755 $APP_DIR/bootstrap/cache
-  sudo chmod -R 755 $APP_DIR/public/phpmyadmin
-
-  # 10. Configure Nginx
-  echo "🌐 Configuring Nginx..."
-  sudo tee /etc/nginx/sites-available/laravel.conf > /dev/null <<NGINXCONFIG
-  server {
-  listen 80;
-  server_name $DOMAIN www.$DOMAIN;
-
-  root $APP_DIR/public;
-  index index.php index.html index.htm;
-
-  # Security headers
-  add_header X-Frame-Options "SAMEORIGIN" always;
-  add_header X-XSS-Protection "1; mode=block" always;
-  add_header X-Content-Type-Options "nosniff" always;
-  add_header Referrer-Policy "no-referrer-when-downgrade" always;
-add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
-
-    # Laravel application
-    location / {
-        try_files \$uri \$uri/ /index.php?\$query_string;
-    }
-
-    # phpMyAdmin - Fixed configuration
-    location /phpmyadmin {
-        root $APP_DIR/public;
-        index index.php;
-
-        location ~ ^/phpmyadmin/(.+\.php)$ {
-            try_files \$uri =404;
-            include snippets/fastcgi-php.conf;
-            fastcgi_pass unix:/run/php/php$PHP_VERSION-fpm.sock;
-            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-        }
-
-        location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))$ {
-            root $APP_DIR/public;
-        }
-    }
-
-    # PHP files for Laravel
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php$PHP_VERSION-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
-        fastcgi_param DOCUMENT_ROOT \$realpath_root;
-    }
-
-    # Deny access to hidden files
-    location ~ /\. {
-        deny all;
-    }
-
-    # Deny access to Laravel sensitive files
-    location ~ /(\.env|\.git|storage|tests|database|resources/views) {
-        deny all;
-    }
-
-    # Optimize static files
-    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-}
-}
-  NGINXCONFIG
-
-  # Enable the site and disable default
-  sudo ln -sf /etc/nginx/sites-available/laravel.conf /etc/nginx/sites-enabled/
-  sudo rm -f /etc/nginx/sites-enabled/default
-
-  # 11. Configure PHP-FPM
-  echo "🐘 Configuring PHP-FPM..."
-  sudo sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/' /etc/php/$PHP_VERSION/fpm/php.ini
-  sudo sed -i 's/upload_max_filesize = .*/upload_max_filesize = 100M/' /etc/php/$PHP_VERSION/fpm/php.ini
-  sudo sed -i 's/post_max_size = .*/post_max_size = 100M/' /etc/php/$PHP_VERSION/fpm/php.ini
-  sudo sed -i 's/max_execution_time = .*/max_execution_time = 300/' /etc/php/$PHP_VERSION/fpm/php.ini
-  sudo sed -i 's/memory_limit = .*/memory_limit = 512M/' /etc/php/$PHP_VERSION/fpm/php.ini
-
-  # 12. Test and start services
-  echo "🔄 Starting services..."
-  sudo systemctl enable nginx
-  sudo systemctl enable php7.4-fpm
-  sudo systemctl enable mariadb
-
-  sudo systemctl restart php7.4-fpm
-  sudo systemctl restart mariadb
-
-  # Test Nginx configuration
-  if sudo nginx -t; then
-  sudo systemctl restart nginx
-  echo "✅ Nginx configuration is valid"
-  else
-  echo "❌ Nginx configuration error"
-  sudo nginx -t
-  exit 1
-  fi
-
-  # 13. Setup SSL with Certbot
-  echo "🔒 Setting up SSL certificate..."
-  sudo certbot --nginx --non-interactive --agree-tos --redirect -m $EMAIL -d $DOMAIN -d www.$DOMAIN || {
-  echo "⚠️ SSL setup failed, continuing without SSL"
-}
-
-# 14. Create phpMyAdmin htaccess protection
-  echo "🔐 Setting up phpMyAdmin password protection..."
-  sudo apt-get install -y apache2-utils
-  sudo htpasswd -cb /etc/nginx/.htpasswd $PHPMYADMIN_USER $PHPMYADMIN_PASS
-
-  # Update Nginx config to add basic auth for phpMyAdmin
-  sudo sed -i '/location \/phpmyadmin {/a\    auth_basic "phpMyAdmin Access";\n    auth_basic_user_file /etc/nginx/.htpasswd;' /etc/nginx/sites-available/laravel.conf
-
-  # Reload Nginx with new config
-  sudo nginx -t && sudo systemctl reload nginx
-
-  # 15. Final permissions check
-  echo "🔧 Final permission adjustments..."
-  sudo chown -R www-data:www-data $APP_DIR
-  sudo chmod -R 755 $APP_DIR/storage
-  sudo chmod -R 755 $APP_DIR/bootstrap/cache
-  sudo find $APP_DIR -type f -name "*.php" -exec chmod 644 {} \;
-
-  # 16. Clean up
-  echo "🧹 Cleaning up..."
-  sudo apt-get autoremove -y
-  sudo apt-get autoclean
-
-  # 17. Display final information
-  echo ""
-  echo "✅ =================================="
-  echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY!"
-  echo "✅ =================================="
-  echo ""
-echo "🌐 Application URL: https://$DOMAIN"
-echo "🗄️ phpMyAdmin URL: https://$DOMAIN/phpmyadmin"
-  echo ""
-  echo "📋 Database Information:"
-echo "   Database: $DB_NAME"
-echo "   Username: $DB_USER"
-echo "   Password: $DB_PASS"
-  echo ""
-  echo "🔐 phpMyAdmin Credentials:"
-echo "   Username: $PHPMYADMIN_USER"
-echo "   Password: $PHPMYADMIN_PASS"
-  echo ""
-  echo "🔧 Services Status:"
-sudo systemctl is-active nginx && echo "   ✅ Nginx: Running" || echo "   ❌ Nginx: Not Running"
-sudo systemctl is-active php7.4-fpm && echo "   ✅ PHP 7.4-FPM: Running" || echo "   ❌ PHP 7.4-FPM: Not Running"
-sudo systemctl is-active mariadb && echo "   ✅ MariaDB: Running" || echo "   ❌ MariaDB: Not Running"
-  echo ""
-  echo "📝 To troubleshoot issues, check logs:"
-echo "   Nginx: sudo tail -f /var/log/nginx/error.log"
-echo "   PHP-FPM: sudo tail -f /var/log/php7.4-fpm.log"
-echo "   MariaDB: sudo tail -f /var/log/mysql/error.log"
-echo "   Laravel: sudo tail -f $APP_DIR/storage/logs/laravel.log"
-  echo ""
-
-  # Test URLs
-  echo "🧪 Testing application..."
-  if curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200\|301\|302"; then
-  echo "   ✅ Laravel application is responding"
-  else
-  echo "   ⚠️ Laravel application may have issues"
-  echo "   Checking Laravel logs..."
-  sudo tail -n 20 $APP_DIR/storage/logs/laravel.log 2>/dev/null || echo "   No Laravel logs found"
-  fi
-
-  if curl -s -o /dev/null -w "%{http_code}" http://localhost/phpmyadmin/ | grep -q "200\|401"; then
-  echo "   ✅ phpMyAdmin is accessible"
-  else
-  echo "   ⚠️ phpMyAdmin may have issues"
-  echo "   Checking Nginx error log..."
-  sudo tail -n 10 /var/log/nginx/error.log | grep phpmyadmin
-  fi
-
-  echo ""
-echo "⚠️ IMPORTANT: If route caching was skipped, please fix duplicate route names in your Laravel application."
-  echo ""
-  echo "🎉 Deployment completed! Your Laravel application with phpMyAdmin is ready!"
-
-  EOF
-
-
-
-
-
 #name: Deploy Laravel App to EC2 with phpMyAdmin
 #
 #on:
@@ -805,3 +396,425 @@ echo "⚠️ IMPORTANT: If route caching was skipped, please fix duplicate route
 #          echo ""
 #          echo "🎉 Deployment completed! Your Laravel application with phpMyAdmin is ready!"
 #          EOF
+
+name: Deploy Laravel App to EC2 with phpMyAdmin
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          set -ex
+
+          # Configuration variables
+          DOMAIN="raheeq.app"
+          EMAIL="hokshmax1@gmail.com"
+          APP_DIR="/var/www/html/raheeq"
+          PHPMYADMIN_DIR="/usr/share/phpmyadmin"
+          PHPMYADMIN_ALIAS="/phpmyadmin"
+          DB_NAME="laravel"
+          DB_USER="laraveluser"
+          DB_PASS="securepassword"
+          PHPMYADMIN_USER="admin"
+          PHPMYADMIN_PASS="SecurePhpMyAdminPass123!"
+
+          echo "🚀 Starting deployment..."
+
+          # 1. Update system and install PHP 7.4 for better compatibility
+          echo "📦 Installing system packages with PHP 7.4..."
+          sudo apt-get update
+
+          # Add PHP repository for PHP 7.4
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository ppa:ondrej/php -y
+          sudo apt-get update
+
+          # Install PHP 7.4 and required extensions
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            nginx \
+            php7.4-fpm \
+            php7.4-mysql \
+            php7.4-cli \
+            php7.4-mbstring \
+            php7.4-xml \
+            php7.4-curl \
+            php7.4-gd \
+            php7.4-zip \
+            php7.4-bcmath \
+            php7.4-json \
+            php7.4-tokenizer \
+            php7.4-intl \
+            php7.4-soap \
+            php7.4-redis \
+            php7.4-common \
+            php7.4-opcache \
+            unzip \
+            git \
+            wget \
+            mariadb-server \
+            certbot \
+            python3-certbot-nginx
+
+          # Set PHP 7.4 as default
+          sudo update-alternatives --set php /usr/bin/php7.4
+
+          # Disable other PHP versions if they exist
+          sudo systemctl stop php8.*-fpm 2>/dev/null || true
+          sudo systemctl disable php8.*-fpm 2>/dev/null || true
+
+          # Get PHP version for later use (should be 7.4 now)
+          PHP_VERSION="7.4"
+          echo "📋 Using PHP version: $PHP_VERSION"
+
+          # 2. Install phpMyAdmin
+          echo "🗄️ Installing phpMyAdmin..."
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y phpmyadmin
+
+          # 3. Install Composer
+          echo "🎼 Installing Composer..."
+          if ! command -v composer &> /dev/null; then
+            EXPECTED_CHECKSUM="$(wget -q -O - https://composer.github.io/installer.sig)"
+            php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+            ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+            if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
+                >&2 echo 'ERROR: Invalid installer checksum'
+                rm composer-setup.php
+                exit 1
+            fi
+            sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+            rm composer-setup.php
+          fi
+
+          # 4. Setup MariaDB
+          echo "🗃️ Setting up MariaDB..."
+          sudo systemctl start mariadb
+          sudo systemctl enable mariadb
+
+          # Create database and user
+          sudo mysql -u root <<EOSQL || true
+          CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';
+          GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';
+          FLUSH PRIVILEGES;
+          EOSQL
+
+          # 5. Clone or update Laravel application
+          echo "📥 Setting up Laravel application..."
+          if [ ! -d "$APP_DIR" ]; then
+            sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
+            sudo chown -R $USER:$USER $APP_DIR
+            cd $APP_DIR
+            if [ -f .env.example ]; then
+              cp .env.example .env
+            fi
+          else
+            cd $APP_DIR
+            sudo chown -R $USER:$USER $APP_DIR
+
+            # IMPORTANT: Properly update the repository
+            echo "📥 Pulling latest changes from repository..."
+
+            # Stash any local changes
+            git stash
+
+            # Fetch latest changes
+            git fetch origin
+
+            # Reset to origin/master
+            git reset --hard origin/master
+
+            # Pull latest changes
+            git pull origin master
+
+            # Clean untracked files
+            git clean -fd
+
+            echo "✅ Repository updated to latest commit"
+          fi
+
+          # 6. Configure Laravel environment
+          echo "⚙️ Configuring Laravel environment..."
+          cd $APP_DIR
+
+          # Update .env file
+          if [ -f .env ]; then
+            sed -i "s/^DB_HOST=.*/DB_HOST=127.0.0.1/" .env
+            sed -i "s/^DB_DATABASE=.*/DB_DATABASE=$DB_NAME/" .env
+            sed -i "s/^DB_USERNAME=.*/DB_USERNAME=$DB_USER/" .env
+            sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$DB_PASS/" .env
+            sed -i "s/^APP_URL=.*/APP_URL=https:\/\/$DOMAIN/" .env
+          fi
+
+          # 7. Install Laravel dependencies (should work perfectly with PHP 7.4)
+          echo "📦 Installing Laravel dependencies..."
+
+          # Clear composer cache
+          composer clear-cache
+
+          # Standard installation should work fine with PHP 7.4
+          composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+          # Generate application key if not exists
+          if ! grep -q "APP_KEY=" .env || [ -z "$(grep "APP_KEY=" .env | cut -d'=' -f2)" ]; then
+            php artisan key:generate --force
+          fi
+
+          # Clear all Laravel caches
+          echo "🧹 Clearing all Laravel caches..."
+          php artisan config:clear
+          php artisan cache:clear
+          php artisan route:clear
+          php artisan view:clear
+          php artisan optimize:clear
+
+          # Run migrations
+          php artisan migrate --force || echo "⚠️ Migration failed, continuing..."
+
+          # MODIFIED: Skip route caching if there are duplicate route names
+          echo "🔍 Checking for route conflicts..."
+          if php artisan route:cache 2>&1 | grep -q "Another route has already been assigned name"; then
+            echo "⚠️ Duplicate route names detected. Skipping route caching for now."
+            echo "📝 Please fix duplicate route names in your Laravel application:"
+            php artisan route:list --name=admin.admins.edit_password 2>/dev/null || echo "   Check routes/web.php and routes/admin.php for duplicate route names"
+          else
+            php artisan route:cache
+            echo "✅ Routes cached successfully"
+          fi
+
+          # Cache config and views (these should work fine)
+          php artisan config:cache
+          php artisan view:cache
+
+          # 8. Setup phpMyAdmin configuration
+          echo "🔧 Configuring phpMyAdmin..."
+
+          # Create phpMyAdmin config
+          sudo tee $PHPMYADMIN_DIR/config.inc.php > /dev/null <<PHPCONFIG
+          <?php
+          \$cfg['blowfish_secret'] = '$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)';
+          \$i = 0;
+
+          \$i++;
+          \$cfg['Servers'][\$i]['auth_type'] = 'cookie';
+          \$cfg['Servers'][\$i]['host'] = 'localhost';
+          \$cfg['Servers'][\$i]['compress'] = false;
+          \$cfg['Servers'][\$i]['AllowNoPassword'] = false;
+
+          \$cfg['DefaultLang'] = 'en';
+          \$cfg['ServerDefault'] = 1;
+          \$cfg['UploadDir'] = '';
+          \$cfg['SaveDir'] = '';
+          ?>
+          PHPCONFIG
+
+          # Create symlink for phpMyAdmin
+          sudo mkdir -p $APP_DIR/public
+          sudo rm -f $APP_DIR/public$PHPMYADMIN_ALIAS
+          sudo ln -sf $PHPMYADMIN_DIR $APP_DIR/public$PHPMYADMIN_ALIAS
+
+          # 9. Set proper permissions
+          echo "🔐 Setting permissions..."
+          sudo chown -R www-data:www-data $APP_DIR
+          sudo chown -R www-data:www-data $PHPMYADMIN_DIR
+          sudo chmod -R 755 $APP_DIR/storage
+          sudo chmod -R 755 $APP_DIR/bootstrap/cache
+          sudo chmod -R 755 $PHPMYADMIN_DIR
+
+          # 10. Configure Nginx
+          echo "🌐 Configuring Nginx..."
+          sudo tee /etc/nginx/sites-available/laravel.conf > /dev/null <<NGINXCONFIG
+          server {
+              listen 80;
+              server_name $DOMAIN www.$DOMAIN;
+
+              root $APP_DIR/public;
+              index index.php index.html index.htm;
+
+              # Security headers
+              add_header X-Frame-Options "SAMEORIGIN" always;
+              add_header X-XSS-Protection "1; mode=block" always;
+              add_header X-Content-Type-Options "nosniff" always;
+              add_header Referrer-Policy "no-referrer-when-downgrade" always;
+              add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+              # Laravel application
+              location / {
+                  try_files \$uri \$uri/ /index.php?\$query_string;
+              }
+
+              # phpMyAdmin
+              location $PHPMYADMIN_ALIAS {
+                  alias $PHPMYADMIN_DIR;
+                  index index.php;
+
+                  location ~ ^$PHPMYADMIN_ALIAS/(.+\.php)\$ {
+                      alias $PHPMYADMIN_DIR/\$1;
+                      include snippets/fastcgi-php.conf;
+                      fastcgi_pass unix:/run/php/php$PHP_VERSION-fpm.sock;
+                      fastcgi_param SCRIPT_FILENAME \$request_filename;
+                      fastcgi_param PATH_INFO \$fastcgi_path_info;
+                      fastcgi_param PATH_TRANSLATED \$document_root\$fastcgi_path_info;
+                  }
+
+                  location ~* ^$PHPMYADMIN_ALIAS/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))\$ {
+                      alias $PHPMYADMIN_DIR/\$1;
+                      expires 1y;
+                      add_header Cache-Control "public, immutable";
+                  }
+              }
+
+              # PHP files for Laravel
+              location ~ \.php\$ {
+                  include snippets/fastcgi-php.conf;
+                  fastcgi_pass unix:/run/php/php$PHP_VERSION-fpm.sock;
+                  fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
+                  fastcgi_param DOCUMENT_ROOT \$realpath_root;
+              }
+
+              # Deny access to hidden files
+              location ~ /\. {
+                  deny all;
+              }
+
+              # Deny access to Laravel sensitive files
+              location ~ /(\.env|\.git|storage|tests|database|resources/views) {
+                  deny all;
+              }
+
+              # Optimize static files
+              location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg)\$ {
+                  expires 1y;
+                  add_header Cache-Control "public, immutable";
+              }
+          }
+          NGINXCONFIG
+
+          # Enable the site and disable default
+          sudo ln -sf /etc/nginx/sites-available/laravel.conf /etc/nginx/sites-enabled/
+          sudo rm -f /etc/nginx/sites-enabled/default
+
+          # 11. Configure PHP-FPM
+          echo "🐘 Configuring PHP-FPM..."
+          sudo sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/' /etc/php/$PHP_VERSION/fpm/php.ini
+          sudo sed -i 's/upload_max_filesize = .*/upload_max_filesize = 100M/' /etc/php/$PHP_VERSION/fpm/php.ini
+          sudo sed -i 's/post_max_size = .*/post_max_size = 100M/' /etc/php/$PHP_VERSION/fpm/php.ini
+          sudo sed -i 's/max_execution_time = .*/max_execution_time = 300/' /etc/php/$PHP_VERSION/fpm/php.ini
+          sudo sed -i 's/memory_limit = .*/memory_limit = 512M/' /etc/php/$PHP_VERSION/fpm/php.ini
+
+          # 12. Test and start services
+          echo "🔄 Starting services..."
+          sudo systemctl enable nginx
+          sudo systemctl enable php7.4-fpm
+          sudo systemctl enable mariadb
+
+          sudo systemctl restart php7.4-fpm
+          sudo systemctl restart mariadb
+
+          # Test Nginx configuration
+          if sudo nginx -t; then
+              sudo systemctl restart nginx
+              echo "✅ Nginx configuration is valid"
+          else
+              echo "❌ Nginx configuration error"
+              exit 1
+          fi
+
+          # 13. Setup SSL with Certbot
+          echo "🔒 Setting up SSL certificate..."
+          sudo certbot --nginx --non-interactive --agree-tos --redirect -m $EMAIL -d $DOMAIN -d www.$DOMAIN || {
+              echo "⚠️ SSL setup failed, continuing without SSL"
+          }
+
+          # 14. Create phpMyAdmin htaccess protection (optional)
+          echo "🔐 Setting up phpMyAdmin password protection..."
+          sudo tee $APP_DIR/public$PHPMYADMIN_ALIAS/.htaccess > /dev/null <<HTACCESS
+          AuthType Basic
+          AuthName "phpMyAdmin Access"
+          AuthUserFile /etc/phpmyadmin/.htpasswd
+          Require valid-user
+          HTACCESS
+
+          # Create htpasswd file
+          sudo mkdir -p /etc/phpmyadmin
+          echo "$PHPMYADMIN_USER:$(openssl passwd -apr1 $PHPMYADMIN_PASS)" | sudo tee /etc/phpmyadmin/.htpasswd
+
+          # 15. Final permissions check
+          echo "🔧 Final permission adjustments..."
+          sudo chown -R www-data:www-data $APP_DIR
+          sudo chown -R www-data:www-data $PHPMYADMIN_DIR
+          sudo chmod -R 755 $APP_DIR/storage
+          sudo chmod -R 755 $APP_DIR/bootstrap/cache
+          sudo find $APP_DIR -type f -name "*.php" -exec chmod 644 {} \;
+
+          # 16. Clean up
+          echo "🧹 Cleaning up..."
+          sudo apt-get autoremove -y
+          sudo apt-get autoclean
+
+          # 17. Display final information
+          echo ""
+          echo "✅ =================================="
+          echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY!"
+          echo "✅ =================================="
+          echo ""
+          echo "🌐 Application URL: https://$DOMAIN"
+          echo "🗄️ phpMyAdmin URL: https://$DOMAIN$PHPMYADMIN_ALIAS"
+          echo ""
+          echo "📋 Database Information:"
+          echo "   Database: $DB_NAME"
+          echo "   Username: $DB_USER"
+          echo "   Password: $DB_PASS"
+          echo ""
+          echo "🔐 phpMyAdmin Credentials:"
+          echo "   Username: $PHPMYADMIN_USER"
+          echo "   Password: $PHPMYADMIN_PASS"
+          echo ""
+          echo "🔧 Services Status:"
+          sudo systemctl is-active nginx && echo "   ✅ Nginx: Running" || echo "   ❌ Nginx: Not Running"
+          sudo systemctl is-active php7.4-fpm && echo "   ✅ PHP 7.4-FPM: Running" || echo "   ❌ PHP 7.4-FPM: Not Running"
+          sudo systemctl is-active mariadb && echo "   ✅ MariaDB: Running" || echo "   ❌ MariaDB: Not Running"
+          echo ""
+          echo "📝 To troubleshoot issues, check logs:"
+          echo "   Nginx: sudo tail -f /var/log/nginx/error.log"
+          echo "   PHP-FPM: sudo tail -f /var/log/php7.4-fpm.log"
+          echo "   MariaDB: sudo tail -f /var/log/mysql/error.log"
+          echo ""
+
+          # Test URLs
+          echo "🧪 Testing application..."
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200\|301\|302"; then
+              echo "   ✅ Laravel application is responding"
+          else
+              echo "   ⚠️ Laravel application may have issues"
+          fi
+
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost$PHPMYADMIN_ALIAS/ | grep -q "200\|401"; then
+              echo "   ✅ phpMyAdmin is accessible"
+          else
+              echo "   ⚠️ phpMyAdmin may have issues"
+          fi
+
+          echo ""
+          echo "⚠️ IMPORTANT: If route caching was skipped, please fix duplicate route names in your Laravel application."
+          echo "   You can check for duplicates by running: php artisan route:list | grep 'admin.admins.edit_password'"
+          echo ""
+          echo "🎉 Deployment completed! Your Laravel application with phpMyAdmin is ready!"
+          EOF
