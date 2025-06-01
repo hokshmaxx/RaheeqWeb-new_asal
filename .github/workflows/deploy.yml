@@ -527,25 +527,48 @@ jobs:
             fi
           else
             cd $APP_DIR
-            sudo chown -R $USER:$USER $APP_DIR
 
-            # IMPORTANT: Properly update the repository
+            # IMPORTANT: Fix permissions and update repository
             echo "📥 Pulling latest changes from repository..."
 
-            # Stash any local changes
-            git stash
+            # Change ownership to current user for git operations
+            sudo chown -R $USER:$USER $APP_DIR
 
-            # Fetch latest changes
-            git fetch origin
+            # Show current commit before update
+            echo "Current commit:"
+            git log -1 --oneline
 
-            # Reset to origin/master
+            # Remove any local changes and untracked files
+            git reset --hard HEAD
+            git clean -fdx
+
+            # Configure git to avoid issues
+            git config --global --add safe.directory $APP_DIR
+
+            # Fetch all branches and tags
+            git fetch --all --tags --prune
+
+            # Force checkout to master branch
+            git checkout master || git checkout -b master origin/master
+
+            # Reset to latest master
             git reset --hard origin/master
 
-            # Pull latest changes
-            git pull origin master
+            # Pull with rebase to ensure we get latest
+            git pull --rebase origin master
 
-            # Clean untracked files
-            git clean -fd
+            # Show new commit after update
+            echo "New commit:"
+            git log -1 --oneline
+
+            # Verify we have the specific commit
+            if git log --oneline | grep -q "f1fc730c278a8ec95feb5eacdacd129852c677aa"; then
+              echo "✅ Successfully updated to latest commit including f1fc730"
+            else
+              echo "⚠️ Warning: Expected commit f1fc730 not found, fetching again..."
+              git fetch origin master
+              git reset --hard origin/master
+            fi
 
             echo "✅ Repository updated to latest commit"
           fi
@@ -566,8 +589,10 @@ jobs:
           # 7. Install Laravel dependencies (should work perfectly with PHP 7.4)
           echo "📦 Installing Laravel dependencies..."
 
-          # Clear composer cache
+          # Clear composer cache and remove vendor directory
           composer clear-cache
+          rm -rf vendor
+          rm -f composer.lock
 
           # Standard installation should work fine with PHP 7.4
           composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
@@ -577,13 +602,20 @@ jobs:
             php artisan key:generate --force
           fi
 
-          # Clear all Laravel caches
+          # Clear all Laravel caches and compiled files
           echo "🧹 Clearing all Laravel caches..."
+          rm -rf bootstrap/cache/*
           php artisan config:clear
           php artisan cache:clear
           php artisan route:clear
           php artisan view:clear
           php artisan optimize:clear
+
+          # Remove compiled class file
+          rm -f bootstrap/compiled.php
+
+          # Clear any opcache
+          php -r "opcache_reset();" || true
 
           # Run migrations
           php artisan migrate --force || echo "⚠️ Migration failed, continuing..."
@@ -811,6 +843,16 @@ jobs:
           else
               echo "   ⚠️ phpMyAdmin may have issues"
           fi
+
+          echo ""
+          echo "📋 Deployment verification:"
+          cd $APP_DIR
+          echo "   Current git commit:"
+          git log -1 --oneline
+          echo "   Laravel version:"
+          php artisan --version
+          echo "   Environment:"
+          php artisan env
 
           echo ""
           echo "⚠️ IMPORTANT: If route caching was skipped, please fix duplicate route names in your Laravel application."
