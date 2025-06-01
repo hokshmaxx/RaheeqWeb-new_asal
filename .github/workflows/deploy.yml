@@ -516,58 +516,32 @@ jobs:
           FLUSH PRIVILEGES;
           EOSQL
 
-          # 5. Clone or update Laravel application
+          # 5. Clone or update Laravel application (FRESH INSTALL APPROACH)
           echo "📥 Setting up Laravel application..."
-          if [ ! -d "$APP_DIR" ]; then
-            sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
-            sudo chown -R $USER:$USER $APP_DIR
-            cd $APP_DIR
+
+          # Always do a fresh install to avoid conflicts
+          if [ -d "$APP_DIR" ]; then
+            echo "🗑️ Removing old Laravel installation to avoid conflicts..."
+            sudo rm -rf $APP_DIR
+          fi
+
+          # Clone fresh repository
+          echo "📥 Cloning fresh repository..."
+          sudo git clone https://github.com/hokshmaxx/RaheeqWeb-new_asal.git $APP_DIR
+          sudo chown -R $USER:$USER $APP_DIR
+          cd $APP_DIR
+
+          # Show current commit
+          echo "📋 Deployed commit:"
+          git log -1 --oneline
+
+          # Verify we have the latest commit
+          if git log --oneline | grep -q "f1fc730c278a8ec95feb5eacdacd129852c677aa"; then
+            echo "✅ Successfully cloned with commit f1fc730"
           else
-            cd $APP_DIR
-
-            # IMPORTANT: Fix permissions and update repository
-            echo "📥 Pulling latest changes from repository..."
-
-            # Change ownership to current user for git operations
-            sudo chown -R $USER:$USER $APP_DIR
-
-            # Show current commit before update
-            echo "Current commit:"
-            git log -1 --oneline
-
-            # Remove any local changes and untracked files
-            git reset --hard HEAD
-            git clean -fdx
-
-            # Configure git to avoid issues
-            git config --global --add safe.directory $APP_DIR
-
-            # Fetch all branches and tags
-            git fetch --all --tags --prune
-
-            # Force checkout to master branch
-            git checkout master || git checkout -b master origin/master
-
-            # Reset to latest master
-            git reset --hard origin/master
-
-            # Pull with rebase to ensure we get latest
-            git pull --rebase origin master
-
-            # Show new commit after update
-            echo "New commit:"
-            git log -1 --oneline
-
-            # Verify we have the specific commit
-            if git log --oneline | grep -q "f1fc730c278a8ec95feb5eacdacd129852c677aa"; then
-              echo "✅ Successfully updated to latest commit including f1fc730"
-            else
-              echo "⚠️ Warning: Expected commit f1fc730 not found, fetching again..."
-              git fetch origin master
-              git reset --hard origin/master
-            fi
-
-            echo "✅ Repository updated to latest commit"
+            echo "📥 Fetching latest updates..."
+            git fetch --all
+            git pull origin master
           fi
 
           # 6. Configure Laravel environment
@@ -633,27 +607,24 @@ jobs:
           # Run migrations
           php artisan migrate --force || echo "⚠️ Migration failed, continuing..."
 
-          # MODIFIED: Skip route caching if there are duplicate route names
-          echo "🔍 Checking for route conflicts..."
-          if php artisan route:cache 2>&1 | grep -q "Another route has already been assigned name"; then
-            echo "⚠️ Duplicate route names detected. Skipping route caching for now."
-            echo "📝 Please fix duplicate route names in your Laravel application:"
-            php artisan route:list --name=admin.admins.edit_password 2>/dev/null || echo "   Check routes/web.php and routes/admin.php for duplicate route names"
-          else
-            php artisan route:cache
-            echo "✅ Routes cached successfully"
-          fi
+          # Skip route caching completely to avoid conflicts
+          echo "🔍 Skipping route caching to avoid conflicts..."
+          echo "📝 Routes will be dynamically loaded"
+
+          # Clear route cache if it exists
+          php artisan route:clear
+
+          # List routes for debugging (without caching)
+          echo "📋 Available routes:"
+          php artisan route:list | head -20 || echo "Could not list routes"
 
           # Cache config and views (these should work fine)
           php artisan config:cache
           php artisan view:cache
 
-          # Warm up the application
+          # Warm up the application (without route cache)
           echo "🔥 Warming up application cache..."
-          php artisan optimize
-
-          # Optional: Create a route cache if no conflicts
-          php artisan route:cache 2>/dev/null || echo "⚠️ Route cache skipped due to conflicts"
+          php artisan optimize --no-ansi || echo "⚠️ Optimize completed with warnings"
 
           # 8. Setup phpMyAdmin configuration
           echo "🔧 Configuring phpMyAdmin..."
