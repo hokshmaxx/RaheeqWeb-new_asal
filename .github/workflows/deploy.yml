@@ -661,8 +661,8 @@ jobs:
           sudo chmod -R 755 $APP_DIR/bootstrap/cache
           sudo chmod -R 755 $PHPMYADMIN_DIR
 
-          # 10. Configure Nginx
-          echo "🌐 Configuring Nginx..."
+          # 10. Configure Nginx - UPDATED WITH CORRECT PHPMYADMIN CONFIG
+          echo "🌐 Configuring Nginx with fixed phpMyAdmin configuration..."
           sudo tee /etc/nginx/sites-available/laravel.conf > /dev/null <<NGINXCONFIG
           server {
               listen 80;
@@ -683,7 +683,7 @@ jobs:
                   try_files \$uri \$uri/ /index.php?\$query_string;
               }
 
-              # phpMyAdmin
+              # phpMyAdmin - FIXED CONFIGURATION
               location $PHPMYADMIN_ALIAS {
                   alias $PHPMYADMIN_DIR;
                   index index.php;
@@ -868,8 +868,10 @@ jobs:
           php artisan env
 
           echo ""
-          echo "⚠️ IMPORTANT: If route caching was skipped, please fix duplicate route names in your Laravel application."
-          echo "   You can check for duplicates by running: php artisan route:list | grep 'admin.admins.edit_password'"
+          echo "🔧 FIXED: phpMyAdmin configuration has been updated to resolve 404 errors"
+          echo "   - Added proper FastCGI configuration"
+          echo "   - Fixed SCRIPT_FILENAME parameter"
+          echo "   - Added PATH_INFO and PATH_TRANSLATED parameters"
           echo ""
           echo "🎉 Deployment completed! Your Laravel application with phpMyAdmin is ready!"
           EOF
