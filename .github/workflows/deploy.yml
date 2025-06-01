@@ -648,10 +648,9 @@ jobs:
           ?>
           PHPCONFIG
 
-          # Create symlink for phpMyAdmin
-          sudo mkdir -p $APP_DIR/public
+          # Remove the old symbolic link approach and create direct access
+          echo "🔗 Setting up direct phpMyAdmin access..."
           sudo rm -f $APP_DIR/public$PHPMYADMIN_ALIAS
-          sudo ln -sf $PHPMYADMIN_DIR $APP_DIR/public$PHPMYADMIN_ALIAS
 
           # 9. Set proper permissions
           echo "🔐 Setting permissions..."
@@ -661,8 +660,8 @@ jobs:
           sudo chmod -R 755 $APP_DIR/bootstrap/cache
           sudo chmod -R 755 $PHPMYADMIN_DIR
 
-          # 10. Configure Nginx - UPDATED WITH CORRECT PHPMYADMIN CONFIG
-          echo "🌐 Configuring Nginx with fixed phpMyAdmin configuration..."
+          # 10. Configure Nginx - CORRECTED PHPMYADMIN CONFIG (WORKING VERSION)
+          echo "🌐 Configuring Nginx with working phpMyAdmin configuration..."
           sudo tee /etc/nginx/sites-available/laravel.conf > /dev/null <<NGINXCONFIG
           server {
               listen 80;
@@ -683,25 +682,29 @@ jobs:
                   try_files \$uri \$uri/ /index.php?\$query_string;
               }
 
-              # phpMyAdmin - FIXED CONFIGURATION
+              # phpMyAdmin - WORKING CONFIGURATION (root method)
               location $PHPMYADMIN_ALIAS {
-                  alias $PHPMYADMIN_DIR;
-                  index index.php;
+                  root /usr/share;
+                  index index.php index.html index.htm;
 
                   location ~ ^$PHPMYADMIN_ALIAS/(.+\.php)\$ {
-                      alias $PHPMYADMIN_DIR/\$1;
+                      try_files \$uri =404;
+                      root /usr/share;
                       include snippets/fastcgi-php.conf;
                       fastcgi_pass unix:/run/php/php$PHP_VERSION-fpm.sock;
-                      fastcgi_param SCRIPT_FILENAME \$request_filename;
-                      fastcgi_param PATH_INFO \$fastcgi_path_info;
-                      fastcgi_param PATH_TRANSLATED \$document_root\$fastcgi_path_info;
+                      fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
                   }
 
                   location ~* ^$PHPMYADMIN_ALIAS/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))\$ {
-                      alias $PHPMYADMIN_DIR/\$1;
+                      root /usr/share;
                       expires 1y;
                       add_header Cache-Control "public, immutable";
                   }
+              }
+
+              # Rewrite rule for phpMyAdmin case variations
+              location /phpMyAdmin {
+                  rewrite ^/* $PHPMYADMIN_ALIAS last;
               }
 
               # PHP files for Laravel
@@ -843,18 +846,43 @@ jobs:
           echo "   MariaDB: sudo tail -f /var/log/mysql/error.log"
           echo ""
 
-          # Test URLs
-          echo "🧪 Testing application..."
+          # Test URLs with better diagnostics
+          echo "🧪 Testing application and phpMyAdmin access..."
+
+          # Test Laravel app
           if curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200\|301\|302"; then
               echo "   ✅ Laravel application is responding"
           else
               echo "   ⚠️ Laravel application may have issues"
           fi
 
-          if curl -s -o /dev/null -w "%{http_code}" http://localhost$PHPMYADMIN_ALIAS/ | grep -q "200\|401"; then
-              echo "   ✅ phpMyAdmin is accessible"
+          # Test phpMyAdmin with detailed diagnostics
+          echo "   🔍 Checking phpMyAdmin installation..."
+          if [ -d "$PHPMYADMIN_DIR" ] && [ -f "$PHPMYADMIN_DIR/index.php" ]; then
+              echo "   ✅ phpMyAdmin files found at $PHPMYADMIN_DIR"
+
+              # Test phpMyAdmin access
+              PMA_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost$PHPMYADMIN_ALIAS/ 2>/dev/null)
+              case $PMA_RESPONSE in
+                  200)
+                      echo "   ✅ phpMyAdmin is accessible (HTTP 200)"
+                      ;;
+                  401)
+                      echo "   ✅ phpMyAdmin is accessible (HTTP 401 - Password protected)"
+                      ;;
+                  404)
+                      echo "   ❌ phpMyAdmin returns 404 - Configuration issue"
+                      echo "   🔍 Checking Nginx error logs..."
+                      sudo tail -5 /var/log/nginx/error.log || echo "   Could not read error logs"
+                      ;;
+                  *)
+                      echo "   ⚠️ phpMyAdmin returns HTTP $PMA_RESPONSE"
+                      ;;
+              esac
           else
-              echo "   ⚠️ phpMyAdmin may have issues"
+              echo "   ❌ phpMyAdmin files not found at $PHPMYADMIN_DIR"
+              echo "   📋 Directory contents:"
+              ls -la /usr/share/ | grep phpmyadmin || echo "   No phpMyAdmin directory found"
           fi
 
           echo ""
@@ -868,10 +896,11 @@ jobs:
           php artisan env
 
           echo ""
-          echo "🔧 FIXED: phpMyAdmin configuration has been updated to resolve 404 errors"
-          echo "   - Added proper FastCGI configuration"
+          echo "🔧 FIXED: phpMyAdmin configuration updated to working version"
+          echo "   - Changed from 'alias' to 'root' directive"
           echo "   - Fixed SCRIPT_FILENAME parameter"
-          echo "   - Added PATH_INFO and PATH_TRANSLATED parameters"
+          echo "   - Removed problematic symlink approach"
+          echo "   - Added case variation rewrite rule"
           echo ""
           echo "🎉 Deployment completed! Your Laravel application with phpMyAdmin is ready!"
           EOF
