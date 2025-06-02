@@ -140,12 +140,16 @@
                         </a>
                     @endif
 
+
                     @if($variant && $variant->discount_price > 0 )
                         @php
                             $dis_percent = ($variant->price - $variant->discount_price) / $variant->price * 100;
                             $dis_percent = round($dis_percent);
                         @endphp
-                        <span class="offer-product">{{ $dis_percent }}% OFF</span>
+                        @if($dis_percent>0)
+                            <span class="offer-product">{{ $dis_percent }}% OFF</span>
+                        @endif
+
                     @endif
                 </figure>
 

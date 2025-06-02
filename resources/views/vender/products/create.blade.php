@@ -12,7 +12,7 @@
 @endsection
 @section('content')
 
-					
+
         <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
             <!--begin::Subheader-->
             <div class="subheader py-2 py-lg-4 subheader-solid" id="kt_subheader">
@@ -42,7 +42,7 @@
                         <form class="form-horizontal" method="post" action="{{url(app()->getLocale().'/vender/products')}}"
                             id="form" role="form" enctype="multipart/form-data" >
                             @csrf
- 
+
                           <input type="hidden" name="vender_id" value= {{auth()->guard('vender')->user()->id }} />
 
                             <div class="card-header">
@@ -70,7 +70,7 @@
                                     @endforeach
                                 </div>
                             </div>
-                         
+
 
                              <div class="card-body">
                                    <div class="row">
@@ -81,7 +81,7 @@
                                                 class="form-control form-control-solid" name="sku" value="{{ old('sku')}}" required/>
                                             </div>
                                        </div>
-                                       
+
                                       <div class="col-md-6">
                                         <div class="form-group ">
                                             <label>{{__('cp.quantity')}}</label>
@@ -99,11 +99,11 @@
                                                       @foreach ($ages as $age)
                                                       <option value="{{$age->id}}">{{$age->name}}</option>
                                                       @endforeach
-                                                       
+
                                                 </select>
                                             </div>
                                        </div> --}}
-                                       
+
                                       <div class="col-md-6">
                                             <div class="form-group ">
                                                 <label>{{__('cp.category')}}</label>
@@ -146,7 +146,7 @@
                                                class="form-control form-control-solid" name="offer_end_date" value="{{ old('offer_end_date')}}"/>
                                           </div>
                                      </div>
-      
+
                                </div>
                                  {{-- <div class="row">
                                     <div class="col-md-6">
@@ -161,10 +161,10 @@
                                         </div>
                                    </div>
                                  </div> --}}
-            
-                                </div>  
 
-                            
+                                </div>
+
+
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
@@ -185,7 +185,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>  
+                            </div>
 
 
                             <div class="card-body">
@@ -204,18 +204,18 @@
                                             </div>
                                             <!--<input type="file" type="hidden" class="form-control "  accept="image/*" id="all_images"  multiple />-->
                                         </div>
-                                        
+
                                         <div class="input-group control-group increment" >
-                                        <div class="input-group-btn"  onclick="document.getElementById('all_images').click()"> 
+                                        <div class="input-group-btn"  onclick="document.getElementById('all_images').click()">
                                           <button class="btn btn-success" type="button"><i class="glyphicon glyphicon-plus"></i>{{__("cp.addMoreImages")}}</button>
                                         </div>
                                         <input type="file" class="custom-file-input form-control form-control-solid hidden"  accept="image/*" id="all_images"  multiple />
                                     </div>
-                                    
+
                                     </div>
-                              
+
                                 </div>
-                            </div>  
+                            </div>
                             <h3>Select Vitamins</h3>
                                 @foreach($vitamins as $vitamin)
                                     <div>
@@ -233,8 +233,8 @@
             </div>
             <!--end::Entry-->
         </div>
-				
-					
+
+
 @endsection
 @section('js')
 <script>

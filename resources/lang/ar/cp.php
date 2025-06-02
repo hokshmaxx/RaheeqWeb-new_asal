@@ -536,6 +536,11 @@ return [
     'how_it_work_ar' =>'كيف يعمل التطبيق عربي',
     'my_orders' => 'طلباتي',
     'remove' => 'ازالة',
+    "varianten"=> "اسم النوع english ",
+    "Delivery_note"=>"تعليق علي التوصيل",
+    "deliverynote"=>"تعليق علي التوصيل",
+
+    "variantar"=>"اسم النوع عربي  ",
     'change' => 'تغيير',
     'order_id' => 'رقم الطلب',
     'user' => 'مستخدم',

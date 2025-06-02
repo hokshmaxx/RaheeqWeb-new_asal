@@ -283,6 +283,7 @@ Route::group([
             Route::resource('/editProductPriceRequests', 'WEB\Admin\EditProductPriceController');
             Route::post('/accept_product_price_request/{id}', 'WEB\Admin\EditProductPriceController@acceptProductPriceRequest');
             Route::post('/delete-gift-packaging','WEB\Admin\ProductsController@deleteGiftPackaging')->name('delete.gift.packaging');
+            Route::post('/remove-varint','WEB\Admin\ProductsController@removeVarint')->name('delete.varint');
 
             //   Route::get('/storeProducts', 'WEB\Admin\ProductsController@store');
             Route::resource('/productoffers', 'WEB\Admin\ProductofferController');

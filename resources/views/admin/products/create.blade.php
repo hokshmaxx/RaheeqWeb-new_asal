@@ -218,6 +218,110 @@
                                         </label>
                                     </div>
                                 @endforeach
+
+
+                                 <div class="card-body">
+                                     <h3>خيارات التغليف كهدية</h3>
+
+                                     <div class="form-group">
+                                         <label>
+                                             <input type="checkbox" name="gift_packaging_enabled" value="1"     >
+                                             تفعيل خيار التغليف كهدية لهذا المنتج
+                                         </label>
+                                     </div>
+
+
+                                     <div id="giftPackagingOptions" style="display:none;" aria-hidden="true">
+                                         <div id="giftPackagingContainer">
+                                             <!-- الخيارات الجديدة -->
+                                             <div class="form-group gift-option d-flex align-items-center gap-3 mb-3">
+                                                 <input type="file" name="gift_packaging_images[]" class="form-control" accept="image/*" required>
+                                                 <input type="number" name="gift_packaging_prices[]" class="form-control" placeholder="السعر" step="0.01" min="0" required>
+                                                 <input type="text" name="gift_packaging_titles_ar[]" class="form-control" placeholder="العنوان بالعربية" required>
+                                                 <input type="text" name="gift_packaging_titles_en[]" class="form-control" placeholder="Title in English" required>
+
+                                                 <button type="button" class="btn btn-danger btn-sm remove-option">حذف</button>
+                                             </div>
+                                         </div>
+
+                                         <button type="button" class="btn btn-success btn-sm" id="addGiftOption">إضافة خيار آخر</button>
+
+{{--                                         @if($item->giftPackagings && $item->giftPackagings->count())--}}
+{{--                                             <hr>--}}
+{{--                                             <h5 class="mt-3">الخيارات السابقة</h5>--}}
+{{--                                             <div class="row" id="existingGiftPackagings">--}}
+{{--                                                 @foreach($item->giftPackagings as $index => $gift)--}}
+{{--                                                     <div class="col-md-3 text-center old-gift" data-id="{{ $gift->id }}">--}}
+{{--                                                         <img src="{{ asset( $gift->image) }}" style="width:100%; height:120px; object-fit:cover;" class="mb-2">--}}
+{{--                                                         <input type="hidden" name="oldGiftPackagings[{{ $gift->id }}][id]" value="{{ $gift->id }}">--}}
+{{--                                                         <input type="number" name="oldGiftPackagings[{{ $gift->id }}][price]" class="form-control mb-1" value="{{ $gift->price }}" step="0.01" min="0">--}}
+{{--                                                         <button type="button" class="btn btn-danger btn-sm remove-old-option" data-id="{{ $gift->id }}">حذف</button>--}}
+{{--                                                     </div>--}}
+{{--                                                 @endforeach--}}
+{{--                                             </div>--}}
+{{--                                         @endif--}}
+                                     </div>
+
+
+                                 </div>
+
+                                 <div class="card-body">
+                                     <h3>خيارات المنتج حسب الأنواع</h3>
+
+                                     @foreach ($variantTypes as $variantType)
+                                         <div class="border p-3 mb-4">
+                                             <h5>{{ $variantType->name_ar }} / {{ $variantType->name_en }}</h5>
+
+                                             <div class="variant-container" data-type-id="{{ $variantType->id }}">
+                                                 {{-- Existing Variants --}}
+                                                 @if (isset($groupedVariants[$variantType->id]))
+                                                     @foreach ($groupedVariants[$variantType->id] as $variant)
+                                                         <div class="variant-item d-flex align-items-center gap-3 mb-2">
+                                                             <input type="hidden" name="variants[][id]" value="{{ $variant->id }}" required>
+                                                             <input type="hidden" name="variants[][variantTypeId]" value="{{ $variantType->id }}" required>
+                                                             <input type="text" name="variants[][name]" class="form-control" placeholder="الاسم" value="{{ $variant->name }}" required>
+                                                             <input type="text" name="variants[][sku]" class="form-control" placeholder="SKU" value="{{ $variant->sku }}" required>
+                                                             <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="السعر" value="{{ $variant->price }}" required>
+                                                             <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder="سعر الخصم" value="{{ $variant->discount_price }}" required>
+                                                             <input type="number" name="variants[][quantity]" class="form-control" placeholder="الكمية" value="{{ $variant->quantity }}" required>
+                                                             <button type="button" class="btn btn-danger remove-variant">X</button>
+                                                         </div>
+                                                     @endforeach
+                                                 @endif
+                                             </div>
+
+                                             <button type="button" class="btn btn-success add-variant" data-type-id="{{ $variantType->id }}">+ إضافة خيار</button>
+                                         </div>
+                                     @endforeach
+                                 </div>
+
+{{--                                 <script>--}}
+{{--                                     document.querySelectorAll('.add-variant').forEach(button => {--}}
+{{--                                         button.addEventListener('click', function () {--}}
+{{--                                             const typeId = this.dataset.typeId;--}}
+{{--                                             const container = document.querySelector(`.variant-container[data-type-id="${typeId}"]`);--}}
+
+{{--                                             const row = document.createElement('div');--}}
+{{--                                             row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');--}}
+{{--                                             row.innerHTML = `--}}
+{{--            <input type="hidden" name="variants[${typeId}][id][]" value="">--}}
+{{--            <input type="text" name="variants[${typeId}][name][]" class="form-control" placeholder="الاسم">--}}
+{{--            <input type="text" name="variants[${typeId}][sku][]" class="form-control" placeholder="SKU">--}}
+{{--            <input type="number" step="0.01" name="variants[${typeId}][price][]" class="form-control" placeholder="السعر">--}}
+{{--            <input type="number" step="0.01" name="variants[${typeId}][discount_price][]" class="form-control" placeholder="سعر الخصم">--}}
+{{--            <input type="number" name="variants[${typeId}][quantity][]" class="form-control" placeholder="الكمية">--}}
+{{--            <button type="button" class="btn btn-danger remove-variant">X</button>--}}
+{{--        `;--}}
+{{--                                             container.appendChild(row);--}}
+{{--                                         });--}}
+{{--                                     });--}}
+
+{{--                                     document.addEventListener('click', function (e) {--}}
+{{--                                         if (e.target.classList.contains('remove-variant')) {--}}
+{{--                                             e.target.closest('.variant-item').remove();--}}
+{{--                                         }--}}
+{{--                                     });--}}
+{{--                                 </script>--}}
                             <button type="submit" id="submitForm" style="display:none"></button>
                         </form>
                     </div>
@@ -231,75 +335,272 @@
 
 @endsection
 @section('js')
-<script>
+    <script>
         $(document).on('click', '#submitButton', function(){
-           // $('#submitButton').addClass('spinner spinner-white spinner-left');
-        $('#submitForm').click();
-    });
-
-    $('#all_images').on('change', function (e) {
-        readURLMultiple(this, $('.imageupload'));
-     });
-
-    $('#edit_image').on('change', function (e) {
-
-readURL(this, $('#editImage'));
-
-});
-
-</script>
-<script>
-    $(document).ready(function(){
-        let fieldCount = 1;
-
-        $('#add-field-btn').click(function(){
-            fieldCount++;
-            let newField = $(' <div class="row"> <div class="form-group col-md-6">' +
-                                ' <label>Title</label><input type="text" name="field_title[]" class="form-control" placeholder="title ' + fieldCount + '">' +
-                            '</div><div class="form-group  col-md-6">' +
-                                '<label>Title Arabic</label><input type="text" name="field_title_ar[]" class="form-control" placeholder="title Arabic' + fieldCount + '">' +
-                                '</div> </div> <div class="row"> <div class="form-group  col-md-6"> ' +
-
-                                '<label>Description</label><input type="text" name="field_description[]" class="form-control" placeholder="description ' + fieldCount + '">' +
-                                '</div><div class="form-group  col-md-6">' +
-                                '<label>Description Arabic</label><input type="text" name="field_description_ar[]" class="form-control" placeholder="description Arabic' + fieldCount + '">' +
-                                '</div> </div> <div class="form-group "> ' +
-                                '<input type="file" name="field_image[]" class="form-control" placeholder="title ' + fieldCount + '">' +
-                                '<button type="button" class="btn btn-danger remove-field-btn">Remove</button>' +
-                                '</div>');
-            $('#fields-container').append(newField);
-        });
-        $('#fields-container').on('click', '.remove-field-btn', function(){
-            $(this).closest('.form-group').remove(); // Remove the closest .form-group containing the clicked button
+            // $('#submitButton').addClass('spinner spinner-white spinner-left');
+            $('#submitForm').click();
         });
 
-    });
-</script>
+        $('#all_images').on('change', function (e) {
+            readURLMultiple(this, $('.imageupload'));
+        });
 
-<script>
-    @foreach($locales as $locale)
-    tinymce.init({
-        selector: '#description_{{ $locale->lang }}',
-        plugins: 'lists link image table code',
-        toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | code',
-        height: 300,
-        directionality: '{{ $locale->lang == 'ar' ? 'rtl' : 'ltr' }}',
-        language: '{{ $locale->lang == 'ar' ? 'ar' : 'en' }}',
-        branding: false
-    });
-    @endforeach
-</script>
-<script>
-    if (!Promise.allSettled) {
-        Promise.allSettled = function (promises) {
-            return Promise.all(promises.map(p =>
-                p
-                    .then(value => ({ status: 'fulfilled', value }))
-                    .catch(reason => ({ status: 'rejected', reason }))
-            ));
-        };
-    }
-</script>
+        $('#edit_image').on('change', function (e) {
+            readURL(this, $('#editImage'));
+        });
+
+    </script>
+    <script>
+        $(document).ready(function(){
+            let fieldCount = 1;
+
+            $('#edit_add-field-btn').click(function(){
+                fieldCount++;
+                let newField = $(' <div class="row"> <div class="form-group col-md-6">' +
+                    ' <label>Title</label><input type="text" name="field_title[]" class="form-control" placeholder="title ' + fieldCount + '">' +
+                    '</div><div class="form-group  col-md-6">' +
+                    '<label>Title Arabic</label><input type="text" name="field_title_ar[]" class="form-control" placeholder="title Arabic' + fieldCount + '">' +
+                    '</div> </div> <div class="row"> <div class="form-group  col-md-6"> ' +
+
+                    '<label>Description</label><input type="text" name="field_description[]" class="form-control" placeholder="description ' + fieldCount + '">' +
+                    '</div><div class="form-group  col-md-6">' +
+                    '<label>Description Arabic</label><input type="text" name="field_description_ar[]" class="form-control" placeholder="description Arabic' + fieldCount + '">' +
+                    '</div> </div> <div class="form-group "> ' +
+                    '<input type="file" name="field_image[]" class="form-control" placeholder="title ' + fieldCount + '">' +
+                    '<button type="button" class="btn btn-danger remove-field-btn">Remove</button>' +
+                    '</div>');
+                $('#fields-container').append(newField);
+            });
+            $('#fields-container').on('click', '.remove-field-btn', function(){
+                $(this).closest('.form-group').remove(); // Remove the closest .form-group containing the clicked button
+            });
+
+        });
+    </script>
+
+    <script>
+        $(document).ready(function(){
+            $('input[name="gift_packaging_enabled"]').on('change', function(){
+                if($(this).is(':checked')) {
+                    $('#giftPackagingOptions').slideDown();
+                } else {
+                    $('#giftPackagingOptions').slideUp();
+                }
+            });
+        });
+    </script>
+
+    <script>
+        // إضافة خيار جديد
+        document.getElementById('addGiftOption').addEventListener('click', function () {
+            const container = document.getElementById('giftPackagingContainer');
+            const newOption = document.createElement('div');
+            newOption.className = 'form-group gift-option d-flex align-items-center gap-3 mb-3';
+            newOption.innerHTML = `
+            <input type="file" name="gift_packaging_images[]" class="form-control" accept="image/*" required>
+            <input type="number" name="gift_packaging_prices[]" class="form-control" placeholder="السعر" step="0.01" min="0" required>
+ <input type="text" name="gift_packaging_titles_ar[]" class="form-control" placeholder="العنوان بالعربية" required>
+            <input type="text" name="gift_packaging_titles_en[]" class="form-control" placeholder="Title in English" required>
+
+            <button type="button" class="btn btn-danger btn-sm remove-option">حذف</button>
+        `;
+            container.appendChild(newOption);
+        });
+
+        // حذف خيار جديد
+        document.addEventListener('click', function (e) {
+            if (e.target && e.target.classList.contains('remove-option')) {
+                e.target.closest('.gift-option').remove();
+            }
+        });
+
+        // حذف خيار قديم
+        // document.addEventListener('click', function (e) {
+        //     if (e.target && e.target.classList.contains('remove-old-option')) {
+        //         const parent = e.target.closest('.old-gift');
+        //         const giftId = parent.dataset.id;
+        //         const input = document.createElement('input');
+        //         input.type = 'hidden';
+        //         input.name = 'deletedGiftPackagings[]';
+        //         input.value = giftId;
+        //         parent.remove(); // Remove visually
+        //         document.querySelector('form').appendChild(input); // Add hidden input to mark as deleted
+        //     }
+        // });
+
+        $(document).on('click', '.remove-old-option', function () {
+            const giftId = $(this).data('id');
+
+            if (confirm('هل أنت متأكد من حذف هذا الخيار؟')) {
+                var requestUrl = '{{ url("admin/delete-gift-packaging") }}';
+
+                console.log('Request URL:', requestUrl);
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        gift_id: giftId,
+                    },
+                    success: function (response) {
+                        console.log('Response:', response);
+                        if (response.success) {
+                            $('.old-gift[data-id="' + giftId + '"]').remove();
+                            alert('تم الحذف بنجاح');
+                        } else {
+                            alert('حدث خطأ أثناء الحذف');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error Status:', status);
+                        console.error('Error Message:', error);
+                        console.error('Response:', xhr.responseText);
+                        alert('حدث خطأ أثناء الاتصال بالخادم');
+                    }
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const giftPackagingCheckbox = document.querySelector('input[name="gift_packaging_enabled"]');
+            const giftPackagingFields = document.querySelectorAll('input[name^="gift_packaging_images"], input[name^="gift_packaging_prices"], input[name^="gift_packaging_titles_ar"], input[name^="gift_packaging_titles_en"]');
+
+            // Function to toggle required fields
+            function toggleGiftPackagingFields() {
+                if (giftPackagingCheckbox.checked) {
+                    giftPackagingFields.forEach(field => {
+                        field.setAttribute('required', 'required');
+                    });
+                } else {
+                    giftPackagingFields.forEach(field => {
+                        field.removeAttribute('required');
+                    });
+                }
+            }
+
+            // Listen for changes to the checkbox
+            giftPackagingCheckbox.addEventListener('change', toggleGiftPackagingFields);
+
+            // Call on page load to initialize
+            toggleGiftPackagingFields();
+        });
+
+
+        document.querySelectorAll('.add-variant').forEach(button => {
+            button.addEventListener('click', function () {
+                const typeId = this.dataset.typeId;
+                const container = document.querySelector(`.variant-container[data-type-id="${typeId}"]`);
+
+                const row = document.createElement('div');
+                row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
+                row.innerHTML = `
+            <input type="hidden" name="variants[${typeId}][id][]" value="">
+            <input type="text" name="variants[${typeId}][name][]" class="form-control" placeholder="الاسم">
+            <input type="text" name="variants[${typeId}][sku][]" class="form-control" placeholder="SKU">
+            <input type="number" step="0.01" name="variants[${typeId}][price][]" class="form-control" placeholder="السعر">
+            <input type="number" step="0.01" name="variants[${typeId}][discount_price][]" class="form-control" placeholder="سعر الخصم">
+            <input type="number" name="variants[${typeId}][quantity][]" class="form-control" placeholder="الكمية">
+            <button type="button" class="btn btn-danger remove-variant">X</button>
+        `;
+                container.appendChild(row);
+            });
+        });
+
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-variant')) {
+                e.target.closest('.variant-item').remove();
+            }
+        });
+
+        // document.querySelectorAll('.add-variant').forEach(button => {
+        //     button.addEventListener('click', function () {
+        //         const typeId = this.dataset.typeId;
+        //         const container = this.previousElementSibling;
+        //
+        //         const row = document.createElement('div');
+        //         row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
+        //
+        //         row.innerHTML = `
+        //     <input type="hidden" name="variants[][variantTypeId]" value="${typeId}">
+        //     <input type="text" name="variants[][name]" class="form-control" placeholder="الاسم">
+        //     <input type="text" name="variants[][sku]" class="form-control" placeholder="SKU">
+        //     <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="السعر">
+        //     <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder="سعر الخصم">
+        //     <input type="number" name="variants[][quantity]" class="form-control" placeholder="الكمية">
+        //     <button type="button" class="btn btn-danger remove-variant">X</button>
+        // `;
+        //
+        //         container.appendChild(row);
+        //     });
+        // });
+
+        // Optional: Remove button functionality
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-variant')) {
+                e.target.closest('.variant-item').remove();
+            }
+        });
+    </script>
+    <script>
+        if (!Promise.allSettled) {
+            Promise.allSettled = function (promises) {
+                return Promise.all(promises.map(p =>
+                    p
+                        .then(value => ({ status: 'fulfilled', value }))
+                        .catch(reason => ({ status: 'rejected', reason }))
+                ));
+            };
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            @foreach($locales as $locale)
+            tinymce.init({
+                selector: '#description_{{ $locale->lang }}',
+                plugins: 'lists link image table code',
+                toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | code',
+                height: 300,
+                directionality: '{{ $locale->lang == 'ar' ? 'rtl' : 'ltr' }}',
+                language: '{{ $locale->lang == 'ar' ? 'ar' : 'en' }}',
+                branding: false
+            });
+            @endforeach
+
+
+        });
+    </script>
+
+    <script>
+        document.querySelectorAll('.add-variant').forEach(button => {
+            button.addEventListener('click', function () {
+                const typeId = this.dataset.typeId;
+                const container = document.querySelector(`.variant-container[data-type-id="${typeId}"]`);
+
+                const row = document.createElement('div');
+                row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
+                row.innerHTML = `
+            <input type="hidden" name="variants[${typeId}][id][]" value="">
+            <input type="text" name="variants[${typeId}][name][]" class="form-control" placeholder="الاسم">
+            <input type="text" name="variants[${typeId}][sku][]" class="form-control" placeholder="SKU">
+            <input type="number" step="0.01" name="variants[${typeId}][price][]" class="form-control" placeholder="السعر">
+            <input type="number" step="0.01" name="variants[${typeId}][discount_price][]" class="form-control" placeholder="سعر الخصم">
+            <input type="number" name="variants[${typeId}][quantity][]" class="form-control" placeholder="الكمية">
+            <button type="button" class="btn btn-danger remove-variant">X</button>
+        `;
+                container.appendChild(row);
+            });
+        });
+
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-variant')) {
+                e.target.closest('.variant-item').remove();
+            }
+        });
+    </script>
+
+
 @endsection
 @section('validation')
     offer_end_date:{

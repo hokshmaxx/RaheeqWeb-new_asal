@@ -339,14 +339,14 @@
                                             @if (isset($groupedVariants[$variantType->id]))
                                                 @foreach ($groupedVariants[$variantType->id] as $variant)
                                                     <div class="variant-item d-flex align-items-center gap-3 mb-2">
-                                                        <input type="hidden" name="variants[][id]" value="{{ $variant->id }}">
-                                                        <input type="hidden" name="variants[][variantTypeId]" value="{{ $variantType->id }}">
-                                                        <input type="text" name="variants[][name]" class="form-control" placeholder="الاسم" value="{{ $variant->name }}">
-                                                        <input type="text" name="variants[][sku]" class="form-control" placeholder="SKU" value="{{ $variant->sku }}">
-                                                        <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="السعر" value="{{ $variant->price }}">
-                                                        <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder="سعر الخصم" value="{{ $variant->discount_price }}">
-                                                        <input type="number" name="variants[][quantity]" class="form-control" placeholder="الكمية" value="{{ $variant->quantity }}">
-                                                        <button type="button" class="btn btn-danger remove-variant">X</button>
+                                                        <input type="hidden" name="variants[][id]" value="{{ $variant->id }}" required>
+                                                        <input type="hidden" name="variants[][variantTypeId]" value="{{ $variantType->id }}" required>
+                                                        <input type="text" name="variants[][name]" class="form-control" placeholder="الاسم" value="{{ $variant->name }}" >
+                                                        <input type="text" name="variants[][sku]" class="form-control" placeholder="SKU" value="{{ $variant->sku }}" >
+                                                        <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="السعر" value="{{ $variant->price }}" >
+                                                        <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder="سعر الخصم" value="{{ $variant->discount_price }}" >
+                                                        <input type="number" name="variants[][quantity]" class="form-control" placeholder="الكمية" value="{{ $variant->quantity }}" >
+                                                        <button type="button" class="btn btn-danger remove-variant" data-id="{{$variant->id}}">X</button>
                                                     </div>
                                                 @endforeach
                                             @endif
@@ -358,31 +358,31 @@
                             </div>
 
                             <script>
-                                document.querySelectorAll('.add-variant').forEach(button => {
-                                    button.addEventListener('click', function () {
-                                        const typeId = this.dataset.typeId;
-                                        const container = document.querySelector(`.variant-container[data-type-id="${typeId}"]`);
-
-                                        const row = document.createElement('div');
-                                        row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
-                                        row.innerHTML = `
-            <input type="hidden" name="variants[${typeId}][id][]" value="">
-            <input type="text" name="variants[${typeId}][name][]" class="form-control" placeholder="الاسم">
-            <input type="text" name="variants[${typeId}][sku][]" class="form-control" placeholder="SKU">
-            <input type="number" step="0.01" name="variants[${typeId}][price][]" class="form-control" placeholder="السعر">
-            <input type="number" step="0.01" name="variants[${typeId}][discount_price][]" class="form-control" placeholder="سعر الخصم">
-            <input type="number" name="variants[${typeId}][quantity][]" class="form-control" placeholder="الكمية">
-            <button type="button" class="btn btn-danger remove-variant">X</button>
-        `;
-                                        container.appendChild(row);
-                                    });
-                                });
-
-                                document.addEventListener('click', function (e) {
-                                    if (e.target.classList.contains('remove-variant')) {
-                                        e.target.closest('.variant-item').remove();
-                                    }
-                                });
+        //                         document.querySelectorAll('.add-variant').forEach(button => {
+        //                             button.addEventListener('click', function () {
+        //                                 const typeId = this.dataset.typeId;
+        //                                 const container = document.querySelector(`.variant-container[data-type-id="${typeId}"]`);
+        //
+        //                                 const row = document.createElement('div');
+        //                                 row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
+        //                                 row.innerHTML = `
+        //     <input type="hidden" name="variants[${typeId}][id][]" value="">
+        //     <input type="text" name="variants[${typeId}][name][]" class="form-control" placeholder="الاسم">
+        //     <input type="text" name="variants[${typeId}][sku][]" class="form-control" placeholder="SKU">
+        //     <input type="number" step="0.01" name="variants[${typeId}][price][]" class="form-control" placeholder="السعر">
+        //     <input type="number" step="0.01" name="variants[${typeId}][discount_price][]" class="form-control" placeholder="سعر الخصم">
+        //     <input type="number" name="variants[${typeId}][quantity][]" class="form-control" placeholder="الكمية">
+        //     <button type="button" class="btn btn-danger remove-variant"  >X</button>
+        // `;
+        //                                 container.appendChild(row);
+        //                             });
+        //                         });
+        //
+        //                         document.addEventListener('click', function (e) {
+        //                             if (e.target.classList.contains('remove-variant')) {
+        //                                 e.target.closest('.variant-item').remove();
+        //                             }
+        //                         });
                             </script>
 
 
@@ -557,6 +557,45 @@
         }
     });
 
+
+    $(document).on('click', '.remove-variant', function (e) {
+        const varint_id = $(this).data('id');
+
+        console.log(varint_id);
+        if (confirm('هل أنت متأكد من حذف هذا الخيار؟')) {
+            var requestUrl = '{{ url("admin/remove-varint") }}';
+
+            console.log('Request URL:', requestUrl);
+
+            $.ajax({
+                url: requestUrl,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    varint_id: varint_id,
+                },
+                success: function (response) {
+                    console.log('Response:', response);
+                    if (response.success) {
+                        e.target.closest('.variant-item').remove();
+
+                        // $('.old-gift[data-id="' + giftId + '"]').remove();
+                        alert('تم الحذف بنجاح');
+                    } else {
+                        alert('حدث خطأ أثناء الحذف');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error Status:', status);
+                    console.error('Error Message:', error);
+                    console.error('Response:', xhr.responseText);
+                    alert('حدث خطأ أثناء الاتصال بالخادم');
+                }
+            });
+        }
+    });
+
+
     document.addEventListener('DOMContentLoaded', function() {
         const giftPackagingCheckbox = document.querySelector('input[name="gift_packaging_enabled"]');
         const giftPackagingFields = document.querySelectorAll('input[name^="gift_packaging_images"], input[name^="gift_packaging_prices"], input[name^="gift_packaging_titles_ar"], input[name^="gift_packaging_titles_en"]');
@@ -581,33 +620,54 @@
         toggleGiftPackagingFields();
     });
 
+
     document.querySelectorAll('.add-variant').forEach(button => {
         button.addEventListener('click', function () {
             const typeId = this.dataset.typeId;
-            const container = this.previousElementSibling;
+            const container = document.querySelector(`.variant-container[data-type-id="${typeId}"]`);
 
             const row = document.createElement('div');
             row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
-
             row.innerHTML = `
-            <input type="hidden" name="variants[][variantTypeId]" value="${typeId}">
-            <input type="text" name="variants[][name]" class="form-control" placeholder="الاسم">
-            <input type="text" name="variants[][sku]" class="form-control" placeholder="SKU">
-            <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="السعر">
-            <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder="سعر الخصم">
-            <input type="number" name="variants[][quantity]" class="form-control" placeholder="الكمية">
-            <button type="button" class="btn btn-danger remove-variant">X</button>
+            <input type="hidden" name="variants[${typeId}][id][]" value="">
+            <input type="text" name="variants[${typeId}][name][]" class="form-control" placeholder="الاسم">
+            <input type="text" name="variants[${typeId}][sku][]" class="form-control" placeholder="SKU">
+            <input type="number" step="0.01" name="variants[${typeId}][price][]" class="form-control" placeholder="السعر">
+            <input type="number" step="0.01" name="variants[${typeId}][discount_price][]" class="form-control" placeholder="سعر الخصم">
+            <input type="number" name="variants[${typeId}][quantity][]" class="form-control" placeholder="الكمية">
+            <button type="button" class="btn btn-danger remove-variant"  >X</button>
         `;
-
             container.appendChild(row);
         });
     });
 
+    // document.querySelectorAll('.add-variant').forEach(button => {
+    //     button.addEventListener('click', function () {
+    //         const typeId = this.dataset.typeId;
+    //         const container = this.previousElementSibling;
+    //
+    //         const row = document.createElement('div');
+    //         row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
+    //
+    //         row.innerHTML = `
+    //         <input type="hidden" name="variants[][variantTypeId]" value="${typeId}">
+    //         <input type="text" name="variants[][name]" class="form-control" placeholder="الاسم">
+    //         <input type="text" name="variants[][sku]" class="form-control" placeholder="SKU">
+    //         <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="السعر">
+    //         <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder="سعر الخصم">
+    //         <input type="number" name="variants[][quantity]" class="form-control" placeholder="الكمية">
+    //         <button type="button" class="btn btn-danger remove-variant">X</button>
+    //     `;
+    //
+    //         container.appendChild(row);
+    //     });
+    // });
+
     // Optional: Remove button functionality
     document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('remove-variant')) {
-            e.target.closest('.variant-item').remove();
-        }
+        // if (e.target.classList.contains('remove-variant')) {
+            // e.target.closest('.variant-item').remove();
+      //  }
     });
 </script>
 <script>

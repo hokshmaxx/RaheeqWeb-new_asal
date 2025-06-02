@@ -23,6 +23,7 @@ use App\Models\ProductAddition;
 use App\Models\Cart;
 use App\Models\Age;
 use App\User;
+use GPBMetadata\Google\Api\Log;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Image;
@@ -164,7 +165,7 @@ class ProductsController extends Controller
 
     public function store(Request $request)
     {
-
+        // Step 1: Base validation rules
         $roles = [
             'sku' => 'required',
             'category_id' => 'required',
@@ -173,38 +174,58 @@ class ProductsController extends Controller
             'quantity' => 'required|numeric',
         ];
 
-
-
+        // Step 2: Add validation for each locale
         $locales = Language::all()->pluck('lang');
         foreach ($locales as $locale) {
             $roles['name_' . $locale] = 'required';
             $roles['description_' . $locale] = 'required';
         }
 
+        // Step 3: Validate that at least one variant exists
+        $hasAtLeastOneVariant = false;
+        if ($request->has('variants') && is_array($request->variants)) {
+            foreach ($request->variants as $variant) {
+                if (isset($variant['name']) && is_array($variant['name'])) {
+                    foreach ($variant['name'] as $name) {
+                        if (!empty($name)) {
+                            $hasAtLeastOneVariant = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!$hasAtLeastOneVariant) {
+            return redirect()->back()->withErrors(['variants' => 'At least one variant is required.'])->withInput();
+        }
+
+        // Step 4: Run validation
         $this->validate($request, $roles);
-        $product= new Product();
+
+        // Step 5: Create product
+        $product = new Product();
         $product->price = $request->price;
         $product->sku = $request->sku;
         $product->category_id = $request->category_id;
         $product->quantity = $request->quantity;
         $product->age_id = 1;
         $product->discount_price = $request->discount_price;
-        if($request->offer_end_date!=''){
+        $product->allow_gift_packaging = $request->gift_packaging_enabled??false;
+
+        if ($request->offer_end_date != '') {
             $product->offer_end_date = $request->offer_end_date;
         }
 
         $product->gender = $request->gender;
 
-        foreach ($locales as $locale)
-        {
+        foreach ($locales as $locale) {
             $product->translateOrNew($locale)->name = $request->get('name_' . $locale);
             $product->translateOrNew($locale)->description = $request->get('description_' . $locale);
-
         }
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            //$extention = $image->getClientOriginalExtension();
             $file_name = str_random(15) . "" . rand(1000000, 9999999) . "" . time() . "_" . rand(1000000, 9999999) . '.jpg';
             Image::make($image)->resize(800, null, function ($constraint) {
                 $constraint->aspectRatio();
@@ -213,6 +234,42 @@ class ProductsController extends Controller
         }
         $product->save();
 
+        // Step 6: Delete old gift packaging options
+        if ($request->has('delete_gift_packagings')) {
+            GiftPackaging::whereIn('id', $request->delete_gift_packagings)->each(function ($item) {
+                if (File::exists(public_path($item->image))) {
+                    File::delete(public_path($item->image));
+                }
+                $item->delete();
+            });
+        }
+
+        // Step 7: Save new gift packaging
+        if ($request->hasFile('gift_packaging_images') && $request->has('gift_packaging_prices')) {
+            foreach ($request->file('gift_packaging_images') as $index => $image) {
+                if ($image && isset($request->gift_packaging_prices[$index])) {
+                    $filename = uniqid() . '_' . time() . '.jpg';
+                    $imagePath = "uploads/images/gift_packaging/$filename";
+                    Image::make($image)->resize(600, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                    })->save(public_path($imagePath));
+
+                    $giftpack = GiftPackaging::create([
+                        'image' => $imagePath,
+                        'title_en' => $request->gift_packaging_titles_en[$index],
+                        'title_ar' => $request->gift_packaging_titles_ar[$index],
+                        'price' => $request->gift_packaging_prices[$index],
+                    ]);
+
+                    $product->giftPackagings()->attach($giftpack->id, [
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+        }
+
+        // Step 8: Save variants
         if ($request->has('variants')) {
             foreach ($request->variants as $typeId => $variants) {
                 foreach ($variants['name'] as $i => $name) {
@@ -231,67 +288,58 @@ class ProductsController extends Controller
             }
         }
 
-
-
-        if($request->has('filename')  && !empty($request->filename)) {
-           foreach($request->filename as $one)
-           {
-               if (isset(explode('/', explode(';', explode(',', $one)[0])[0])[1])) {
+        // Step 9: Save additional product images
+        if ($request->has('filename') && !empty($request->filename)) {
+            foreach ($request->filename as $one) {
+                if (isset(explode('/', explode(';', explode(',', $one)[0])[0])[1])) {
                     $fileType = strtolower(explode('/', explode(';', explode(',', $one)[0])[0])[1]);
-                    $name = auth()->guard('admin')->user()->id. "_" .str_random(8) . "_" .  "_" . time() . "_" . rand(1000000, 9999999);
+                    $name = auth()->guard('admin')->user()->id . "_" . str_random(8) . "_" . "_" . time() . "_" . rand(1000000, 9999999);
                     $attachType = 0;
-                    if (in_array($fileType, ['jpg','jpeg','png','pmb'])){
-                        $newName = $name. ".jpg";
+                    if (in_array($fileType, ['jpg', 'jpeg', 'png', 'pmb'])) {
+                        $newName = $name . ".jpg";
                         $attachType = 1;
-                        Image::make($one)->resize(800, null, function ($constraint) {$constraint->aspectRatio();})->save("uploads/images/products/$newName");
+                        Image::make($one)->resize(800, null, function ($constraint) {
+                            $constraint->aspectRatio();
+                        })->save("uploads/images/products/$newName");
                     }
-                    $product_image=new ProductImage();
+                    $product_image = new ProductImage();
                     $product_image->product_id = $product->id;
                     $product_image->image = $newName;
                     $product_image->save();
                 }
-           }
+            }
         }
 
+        // Step 10: Save field images with titles and descriptions
         if ($request->has('field_image') && !empty($request->file('field_image'))) {
             foreach ($request->file('field_image') as $index => $image) {
-                // Generate a unique filename
                 $field_image = uniqid() . "_" . time() . "_" . $index . '.jpg';
 
-                // Resize and save the image
                 Image::make($image)->resize(800, null, function ($constraint) {
                     $constraint->aspectRatio();
                 })->save("uploads/images/products/$field_image");
 
-                // Retrieve corresponding title and description
                 $product_title = $request->input('field_title')[$index] ?? '';
                 $product_title_ar = $request->input('field_title_ar')[$index] ?? '';
                 $product_description = $request->input('field_description')[$index] ?? '';
                 $product_description_ar = $request->input('field_description_ar')[$index] ?? '';
 
-                // Insert into the database
-                // ProductVitamin::create([
-                //     'product_id'        => $product->id,
-                //     'title'             => $product_title,
-                //     'title_ar'          => $product_title_ar,
-                //     'description'       => $product_description,
-                //     'description_ar'    => $product_description_ar,
-                //     'image'             => $field_image,
-                // ]);
+                // Uncomment if needed
+                // ProductVitamin::create([...]);
             }
         }
-        if( !empty($request->vitamins)){
 
-            foreach ($request->vitamins as $vitamin)
-            {
-
+        // Step 11: Save vitamins
+        if (!empty($request->vitamins)) {
+            foreach ($request->vitamins as $vitamin) {
                 Vitamin::create([
                     'product_id' => $product->id,
-                    'vitamin_id' =>$vitamin,
+                    'vitamin_id' => $vitamin,
                 ]);
             }
         }
 
+        // Step 12: Redirect with success
         return redirect()->back()->with('status', __('cp.create'));
     }
 
@@ -362,6 +410,23 @@ class ProductsController extends Controller
             $roles['name_' . $locale] = 'required';
             $roles['description_' . $locale] = 'required';
         }
+
+        // Step 3: Validate that at least one variant exists
+        $hasAtLeastOneVariant = false;
+
+        if ($request->has('variants')) {
+
+                $hasAtLeastOneVariant = true;
+
+
+
+
+        }
+
+        if (!$hasAtLeastOneVariant) {
+            return redirect()->back()->withErrors(['variants' => 'At least one variant is required.'])->withInput();
+        }
+
 
         $this->validate($request, $roles);
 
@@ -436,12 +501,13 @@ class ProductsController extends Controller
             $variantsGrouped = $request->input('variants', []);
 
             foreach ($variantsGrouped as $typeId => $variantsData) {
-                $ids = $variantsData['id'] ?? [];
-                $names = $variantsData['name'] ?? [];
-                $skus = $variantsData['sku'] ?? [];
-                $prices = $variantsData['price'] ?? [];
-                $discounts = $variantsData['discount_price'] ?? [];
-                $quantities = $variantsData['quantity'] ?? [];
+                // Ensure all values are arrays
+                $ids = (array) ($variantsData['id'] ?? []);
+                $names = (array) ($variantsData['name'] ?? []);
+                $skus = (array) ($variantsData['sku'] ?? []);
+                $prices = (array) ($variantsData['price'] ?? []);
+                $discounts = (array) ($variantsData['discount_price'] ?? []);
+                $quantities = (array) ($variantsData['quantity'] ?? []);
 
                 for ($i = 0; $i < count($names); $i++) {
                     $data = [
@@ -449,7 +515,7 @@ class ProductsController extends Controller
                         'name' => $names[$i],
                         'sku' => $skus[$i] ?? null,
                         'price' => $prices[$i] ?? 0,
-                        'product_id'=>$product->id,
+                        'product_id' => $product->id,
                         'discount_price' => $discounts[$i] ?? 0,
                         'quantity' => $quantities[$i] ?? 0,
                     ];
@@ -462,6 +528,37 @@ class ProductsController extends Controller
                 }
             }
         }
+
+//        if ($request->has('variants')) {
+//            $variantsGrouped = $request->input('variants', []);
+//
+//            foreach ($variantsGrouped as $typeId => $variantsData) {
+//                $ids = $variantsData['id'] ?? [];
+//                $names = $variantsData['name'] ?? [];
+//                $skus = $variantsData['sku'] ?? [];
+//                $prices = $variantsData['price'] ?? [];
+//                $discounts = $variantsData['discount_price'] ?? [];
+//                $quantities = $variantsData['quantity'] ?? [];
+//
+//                for ($i = 0; $i < count($names); $i++) {
+//                    $data = [
+//                        'product_varint_type_id' => $typeId,
+//                        'name' => $names[$i],
+//                        'sku' => $skus[$i] ?? null,
+//                        'price' => $prices[$i] ?? 0,
+//                        'product_id'=>$product->id,
+//                        'discount_price' => $discounts[$i] ?? 0,
+//                        'quantity' => $quantities[$i] ?? 0,
+//                    ];
+//
+//                    if (!empty($ids[$i])) {
+//                        ProductVariant::where('id', $ids[$i])->update($data);
+//                    } else {
+//                        ProductVariant::create($data);
+//                    }
+//                }
+//            }
+//        }
 
         $imgsIds = $product->images->pluck('id')->toArray();
         $newImgsIds = ($request->has('oldImages'))? $request->oldImages:[];
@@ -558,6 +655,26 @@ class ProductsController extends Controller
 
         // If it's part of a product, delete the pivot record
         $giftPackaging->products()->detach();
+
+        // If you want to delete the gift packaging record from the database
+         $giftPackaging->delete();
+
+        return response()->json(['success' => true]);
+    }
+    public function removeVarint(Request $request)
+    {
+
+
+        // Validate gift_id
+        $request->validate([
+            'varint_id' => 'required|exists:product_variants,id',
+        ]);
+
+        // Get the gift packaging and delete the relationship
+        $giftPackaging = ProductVariant::findOrFail($request->varint_id);
+
+        // If it's part of a product, delete the pivot record
+//        $giftPackaging->products()->detach();
 
         // If you want to delete the gift packaging record from the database
          $giftPackaging->delete();

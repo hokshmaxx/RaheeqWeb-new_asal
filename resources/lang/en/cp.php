@@ -597,6 +597,11 @@ return [
     'main_data' => 'Create Coupons',
     'material'=> 'material',
 
+    "varianten"=>" variant Name English",
+
+    "Delivery_note"=>"Delivery Note",
+    "deliverynote"=>"Delivery Note",
+    "variantar"=>"variant Name Arabic",
     'preparing' => 'In Process',
     'annual_sale' =>'Annual Sale',
     'weekly_sale' => 'Weekly Sale',
