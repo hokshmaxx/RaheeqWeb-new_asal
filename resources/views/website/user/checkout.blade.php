@@ -171,7 +171,7 @@
                                             </figure>
                                             <div class="txt-product">
                                                 <div>
-                                                    <p>{{ $cart->product->name }}</p>
+                                                    <p>{{ $cart->product->name }}--({{ $cart->variant->variantType->name_en}})</p>
 
                                                     <span>@lang('website.QTY') : {{ $cart->quantity }}</span>
                                                 </div>

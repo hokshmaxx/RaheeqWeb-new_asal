@@ -27,6 +27,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Auth;
+use Illuminate\Support\Facades\Log;
 use Session;
 use App\Http\Controllers\Controller;
 
@@ -52,20 +53,24 @@ class CartController extends Controller
 }
     public function myCart()
     {
-        if (auth()->check()) {
-            $carts = Cart::where('user_id', Auth::user()->id)
-                ->orWhere('user_key', Session::get('cart.ids'))
-                ->with(['product', 'variant', 'giftPackaging'])
-                ->get();
-        } else {
-            $carts = Cart::where('user_key', Session::get('cart.ids'))
-                ->with(['product', 'variant', 'giftPackaging'])
-                ->get();
-        }
+        $userKey = Session::get('cart.ids');
+
+        $carts = Cart::whereNotNull('variant_id')
+            ->where(function ($q) use ($userKey) {
+                $q->where('user_key', $userKey);
+                if (auth()->check()) {
+                    $q->orWhere('user_id', auth()->id());
+                }
+            })
+            ->with(['product', 'variant', 'giftPackaging'])
+            ->get();
 
         $total = 0;
 
         foreach ($carts as $cart) {
+
+
+
             // 1. Use variant price if exists, otherwise apply discount logic
             $basePrice = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
                 ? $cart->variant->discount_price:$cart->variant->price;
@@ -99,7 +104,7 @@ class CartController extends Controller
 
         try {
 
-            if(Cart::where('user_key',Session::get('cart.ids'))->where('product_id',$id)->exists()){
+            if(Cart::where('user_key',Session::get('cart.ids'))->where('product_id',$id)->where('variant_id',$request->input('variant_id'))->exists()){
                 Cart::where('user_key',Session::get('cart.ids'))->where('product_id',$id)->increment('quantity');
 
                 $count=Cart::where('user_key',Session::get('cart.ids'))->orWhere('user_id',Auth::user()->id)->with('product')->count();
@@ -141,88 +146,113 @@ class CartController extends Controller
 
 
 
-        public function removeProductFromCart(Request $request ,$id)
+//        public function removeProductFromCart(Request $request ,$id)
+//    {
+//        $settings=Setting::findOrFail(1);
+//       //
+//
+//
+//
+//       if(auth()->check()){
+//            Cart::where(function($q) {
+//           $q->where('user_key',Session::get('cart.ids'))->orWhere('user_id',Auth::user()->id);
+//       })->where('product_id',$id)->delete();
+//
+//            $carts=Cart::where('user_id',Auth::user()->id)->orWhere('user_key',Session::get('cart.ids'))->with('product')->get();
+//             $count=Cart::where('user_key',Session::get('cart.ids'))->orWhere('user_id',Auth::user()->id)->with('product')->count();
+//        }else{
+//             Cart::where(function($q) {
+//           $q->where('user_key',Session::get('cart.ids'));
+//       })->where('product_id',$id)->delete();
+//
+//            $carts=Cart::where('user_key',Session::get('cart.ids'))->with('product')->get();
+//             $count=Cart::where('user_key',Session::get('cart.ids'))->with('product')->count();
+//        }
+//
+//
+//         $Total = 0 ;
+//        // $cartAll = view('website.more._headCart')->render();
+//
+//
+//       foreach($carts as $one){
+//           if($one->product->price_offer !=0){
+//              $Total += @$one->product->price_offer * @$one->quantity;
+//           } else {
+//              $Total += @$one->product->price * @$one->quantity;
+//           }
+//       }
+//        // $cartTotal=$Total-($Total*$settings->vat_amount/100);
+//        //  $grand_total=$Total-($Total*$settings->vat_amount/100) ;//+$settings->deliveryCost;
+//        // $total_with_vat =$Total;//+$settings->deliveryCost;
+//        return ['status'=>'done','count'=>$count ,'total'=>$Total];
+//    }
+
+
+
+    public function removeProductFromCartPage(Request $request, $id)
     {
-        $settings=Setting::findOrFail(1);
-       //
+        $settings = Setting::findOrFail(1);
 
+        $userKey = Session::get('cart.ids');
+        $variantId = $request->variant_id;
 
+        // Delete the matching cart item
+        Cart::where('product_id', $id)
+            ->where('variant_id', $variantId)
+            ->where(function ($q) use ($userKey) {
+                $q->where('user_key', $userKey);
+                if (auth()->check()) {
+                    $q->orWhere('user_id', auth()->id());
+                }
+            })->delete();
 
-       if(auth()->check()){
-            Cart::where(function($q) {
-           $q->where('user_key',Session::get('cart.ids'))->orWhere('user_id',Auth::user()->id);
-       })->where('product_id',$id)->delete();
+        // Retrieve updated cart
+        $carts = Cart::where(function ($q) use ($userKey) {
+            $q->where('user_key', $userKey);
+            if (auth()->check()) {
+                $q->orWhere('user_id', auth()->id());
+            }
+        })->with('product')->get();
 
-            $carts=Cart::where('user_id',Auth::user()->id)->orWhere('user_key',Session::get('cart.ids'))->with('product')->get();
-             $count=Cart::where('user_key',Session::get('cart.ids'))->orWhere('user_id',Auth::user()->id)->with('product')->count();
-        }else{
-             Cart::where(function($q) {
-           $q->where('user_key',Session::get('cart.ids'));
-       })->where('product_id',$id)->delete();
+        $count = $carts->count();
+        $total_cart = 0;
 
-            $carts=Cart::where('user_key',Session::get('cart.ids'))->with('product')->get();
-             $count=Cart::where('user_key',Session::get('cart.ids'))->with('product')->count();
+        Log::info('asdf:', ['carts' => $carts]);
+
+        // Calculate total_cart
+        foreach ($carts as $cart) {
+            $product = $cart->variant;
+            if ($product->discount_price > 0 && $product->discount_price<$product->price) {
+                $total_cart += $product->discount_price * $cart->quantity;
+            } else {
+                $total_cart += $product->price * $cart->quantity;
+            }
         }
 
+        $Total = $total_cart; // total before discount
+        $discount = 0;
 
-         $Total = 0 ;
-        // $cartAll = view('website.more._headCart')->render();
+        // Apply promo discount if applicable
+        if ($request->has('code_name')) {
+            $promo = Coupon::where('code', $request->get('code_name'))
+                ->whereDate('start_date', '<=', now())
+                ->whereDate('end_date', '>=', now())
+                ->where('status', 'active')
+                ->first();
 
-
-       foreach($carts as $one){
-           if($one->product->price_offer !=0){
-              $Total += @$one->product->price_offer * @$one->quantity;
-           } else {
-              $Total += @$one->product->price * @$one->quantity;
-           }
-       }
-        // $cartTotal=$Total-($Total*$settings->vat_amount/100);
-        //  $grand_total=$Total-($Total*$settings->vat_amount/100) ;//+$settings->deliveryCost;
-        // $total_with_vat =$Total;//+$settings->deliveryCost;
-        return ['status'=>'done','count'=>$count ,'total'=>$Total];
-    }
-
-
-        public function removeProductFromCartPage(Request $request ,$id)
-    {
-
-        $settings=Setting::findOrFail(1);
-          if(auth()->check()){
-                Cart::where(function($q) {
-               $q->where('user_key',Session::get('cart.ids'))->orWhere('user_id',Auth::user()->id);
-           })->where('product_id',$id)->delete();
-
-                $carts=Cart::where('user_id',Auth::user()->id)->orWhere('user_key',Session::get('cart.ids'))->with('product')->get();
-                 $count=Cart::where('user_key',Session::get('cart.ids'))->orWhere('user_id',Auth::user()->id)->with('product')->count();
-            }else{
-                 Cart::where(function($q) {
-               $q->where('user_key',Session::get('cart.ids'));
-           })->where('product_id',$id)->delete();
-
-                $carts=Cart::where('user_key',Session::get('cart.ids'))->with('product')->get();
-                 $count=Cart::where('user_key',Session::get('cart.ids'))->with('product')->count();
+            if ($promo && $promo->percent > 0) {
+                $discount = ($total_cart * $promo->percent) / 100;
+                $Total = round($total_cart - $discount, 2);
             }
+        }
 
-         $total_cart = 0 ;
-        // $cartAll = view('website.more._headCart')->render();
-        $Total = $total_cart;
-        foreach($carts as $cart){
-           if($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString()){
-              $Total += @$cart->product->discount_price * @$cart->quantity;
-           } else {
-              $Total += @$cart->product->price * @$cart->quantity;
-           }
-       }
-
-         $promo = Coupon::where('code', $request->get('code_name'))->whereDate('end_date', '>=', date('Y-m-d'))->whereDate('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
-           $discount=0;
-                if ($promo) {
-                    if ($promo->percent > 0) {
-                        $discount = ($total_cart * $promo->percent) / 100;
-                        $Total = round($total_cart - $discount, 2);
-                    }
-                }
-        return ['status'=>'done','count'=>$count ,'total'=>$Total ,'total_cart'=>$total_cart  , 'discount'=>$discount];
+        return [
+            'status' => 'done',
+            'count' => $count,
+            'total' => $Total,
+            'total_cart' => $total_cart,
+            'discount' => $discount,
+        ];
     }
 
 
@@ -347,17 +377,37 @@ class CartController extends Controller
     public function changeQuantity(Request $request, $id)
     {
         // Find the cart item by product ID + user/session
+//        if (auth()->check()) {
+//            $myCart = Cart::where('product_id', $id)
+//                ->where(function ($q) {
+//                    $q->where('user_key', Session::get('cart.ids'))
+//                        ->orWhere('user_id', Auth::user()->id);
+//                })->where('variant_id',$request->variant_id)->first();
+//        } else {
+//            $myCart = Cart::where('product_id', $id)
+//                ->where('user_key', Session::get('cart.ids'))->where('variant_id',$request->variant_id)
+//                ->first();
+//        }
+
+        $userKey = Session::get('cart.ids');
+        $variantId = $request->variant_id;
+
+        $query = Cart::where('product_id', $id)
+            ->where('variant_id', $variantId);
+
         if (auth()->check()) {
-            $myCart = Cart::where('product_id', $id)
-                ->where(function ($q) {
-                    $q->where('user_key', Session::get('cart.ids'))
-                        ->orWhere('user_id', Auth::user()->id);
-                })->first();
+            $query->where(function ($q) use ($userKey) {
+                $q->where('user_key', $userKey)
+                    ->orWhere('user_id', auth()->id());
+            });
         } else {
-            $myCart = Cart::where('product_id', $id)
-                ->where('user_key', Session::get('cart.ids'))
-                ->first();
+            $query->where('user_key', $userKey);
         }
+
+        $myCart = $query->first();
+
+        Log::info('mycart:', ['mycart' => $myCart]);
+
 
         if ($myCart) {
             // Adjust quantity
@@ -1224,8 +1274,10 @@ class CartController extends Controller
         if ($order) {
             foreach ($carts as $one) {
 
-                $price = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
-                    ? $cart->variant->discount_price:$cart->variant->price;
+
+                $price = $one->variant && $one->variant->price && $one->variant->discount_price > 0 && $one->variant->discount_price < $one->variant->price
+                    ? $one->variant->discount_price:$one->variant->price;
+
 
 //                $price = $one->variant && $one->variant->price
 //                    ? $one->variant->price
@@ -1238,6 +1290,7 @@ class CartController extends Controller
                 $ProductOrder = new OrderProduct();
                 $ProductOrder->order_id = $order->id;
                 $ProductOrder->product_id = $one->product_id;
+                $ProductOrder->product_variant_id=$one->variant->id;
                 $ProductOrder->quantity = $one->quantity;
                 $ProductOrder->gift_packaging_id = $one->gift_packaging_id;
                 $ProductOrder->offer_price = ($price < $one->variant->price) ? $price : 0;
@@ -1355,6 +1408,9 @@ class CartController extends Controller
         return $server_output['card_tokens'];
 
     }
+
+
+
 
 
 

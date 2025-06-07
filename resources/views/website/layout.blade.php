@@ -414,7 +414,9 @@
 
             var ele = $(this);
             var id = $(this).data("id");
-            // var product_id = $(this).data("product_id");
+          var variantId = ele.data("variant-id");
+
+          // var product_id = $(this).data("product_id");
                  $(this).find('span').html('{{__('website.addToCart')}}');
                 // $(this).removeClass('removeFromCart').addClass("addToCart");
                 $.ajax({
@@ -424,6 +426,7 @@
                          },
                     method: "get",
                     data: {
+                        variant_id: variantId,
 
                     },
                     success: function (response) {
@@ -446,9 +449,14 @@
                e.preventDefault();
                var ele = $(this);
         	   var id = $(this).data("id");
+                     var variantId = ele.data("variant-id");
+                     var variantTypeId = ele.data("variant-type-id");
 
-        	    var quantity = $(this).parent().find('input[name="count-quat1"]').val();
-             $('.productCartItem'+id).find('input[name="count-quat1"]').val(quantity);
+                     console.log("variantId",variantId);
+
+
+                     var quantity = $(this).parent().find('input[name="count-quat1"]').val();
+             $('.productCartItem'+id+variantTypeId+variantId).find('input[name="count-quat1"]').val(quantity);
             $.ajax({
         		headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -458,6 +466,7 @@
                 data: {
                        type:1,
                         code_name:$('#code_name').val(),
+                    variant_id:variantId,
                   },
                 success: function (response) {
                         $('.sub_total').html(response.total_cart+' '+ '@lang('KWD')');
@@ -471,8 +480,11 @@
               e.preventDefault();
               var ele = $(this);
         	   var id = $(this).data("id");
+            var variantId = ele.data("variant-id");
+            var variantTypeId = ele.data("variant-type-id");
 
-        	   var quantity = $(this).parent().find('input[name="count-quat1"]').val();
+
+            var quantity = $(this).parent().find('input[name="count-quat1"]').val();
                 var newQuantity = parseInt(quantity) - 1;
                 if (quantity == 0 ) {
 
@@ -485,13 +497,14 @@
                         method: "get",
                         data: {
                             code_name:$('#code_name').val(),
+                            variant_id:variantId,
 
                         },
                         success: function (response) {
                             $('.sub_total').html(response.total_cart+' '+ '@lang('KWD')');
                             $('.discount_amount').html(response.discount+' '+ '@lang('KWD')');
                             $('.total_price').html(response.total+' '+ '@lang('KWD')');
-                            $('.productCartItem'+id).hide(700).remove();
+                            $('.productCartItem'+id+variantTypeId+variantId).hide(700).remove();
                         }
                     });
                     location.reload();
@@ -506,6 +519,7 @@
                         data: {
                              type:2,
                              code_name:$('#code_name').val(),
+                            variant_id:variantId,
                           },
                         success: function (response) {
                             $('.sub_total').html(response.total_cart+' '+ '@lang('KWD')');

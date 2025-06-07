@@ -79,21 +79,22 @@
                 <div class="row">
                     <div class="col-md-8">
                         @foreach($carts as $cart)
-                            <div class="item-check wow fadeInUp productCartItem{{$cart->product->id}}">
+                            <div class="item-check wow fadeInUp productCartItem{{$cart->product->id}}{{$cart->variant->product_varint_type_id}}{{$cart->variant->id}}">
                                 <figure>
                                     <img src="{{$cart->product->image}}" alt="" />
                                 </figure>
                                 <div class="txt-product">
                                     <div>
-                                        <p>{{$cart->product->name}}</p>
+
+                                        <p>{{$cart->product->name}}--({{$cart->variant->variantType->name_en}}) </p>
                                         <div class="quantity-item">
-                                            @if($cart->product->quantity > 0)
+                                            @if($cart->variant->quantity > 0)
                                                 <div class="quantity">
-                                                    <div class="btn button-count dec jsQuantityDecrease" data-id="{{@$cart->product->id}}" minimum="1">
+                                                    <div class="btn button-count dec jsQuantityDecrease" data-id="{{@$cart->product->id}}"  data-variant-type-id="{{@$cart->variant->product_varint_type_id}}"  data-variant-id="{{@$cart->variant->id}}" minimum="1">
                                                         <i class="fa fa-minus" aria-hidden="true"></i>
                                                     </div>
-                                                    <input type="text" name="count-quat1" class="count-quat" value="{{$cart->quantity}}" min="1" max="{{$cart->product->quantity}}">
-                                                    <div class="btn button-count inc jsQuantityIncrease" max="{{$cart->product->quantity}}" data-id="{{@$cart->product->id}}">
+                                                    <input type="text" name="count-quat1" class="count-quat" value="{{$cart->quantity}}" min="1" max="{{$cart->variant->quantity}}">
+                                                    <div class="btn button-count inc jsQuantityIncrease" max="{{$cart->variant->quantity}}" data-id="{{@$cart->product->id}}"  data-variant-type-id="{{@$cart->variant->product_varint_type_id}}"  data-variant-id="{{@$cart->variant->id}}">
                                                         <i class="fa fa-plus" aria-hidden="true"></i>
                                                     </div>
                                                 </div>
@@ -117,6 +118,7 @@
                                     @else
                                         <strong>{{$cart->variant->price}} @lang('website.KWD')</strong>
                                     @endif
+
 
                                     <!-- Gift Packaging Options -->
                                     @if($cart->product->giftPackagings->count() > 0)
@@ -157,7 +159,7 @@
 {{--                                            <div class="selected-packaging-image" id="selected-packaging-image-{{$cart->product->id}}"></div>--}}
                                         </div>
                                     @endif                                </div>
-                                <a class="remove-item removeProductFromCartPage" data-id="{{$cart->product->id}}">
+                                <a class="remove-item removeProductFromCartPage" data-id="{{$cart->product->id}}" data-variant-type-id="{{@$cart->variant->product_varint_type_id}}"  data-variant-id="{{@$cart->variant->id}}">
                                     <i class="ti-close"></i>
                                 </a>
                             </div>
@@ -197,7 +199,7 @@
                                 </div>
                             </div>
                             <div class="box-check">
-                                @if($cart->product->quantity > 0)
+                                @if($cart->variant->quantity > 0)
                                     @if(auth()->check())
                                         <a href="{{route('checkout')}}" class="btn-site"><span>@lang('website.Checkout')</span></a>
                                     @else
@@ -247,7 +249,11 @@
             e.preventDefault();
             var ele = $(this);
             var id = $(this).data("id");
-            // var product_id = $(this).data("product_id");
+        var variantId = ele.data("variant-id");
+        var variantTypeId = ele.data("variant-type-id");
+
+
+        // var product_id = $(this).data("product_id");
             $(this).find('span').html('{{__('website.addToCart')}}');
             $(this).removeClass('removeFromCart').addClass("addToCart");
             $.ajax({
@@ -258,13 +264,14 @@
                 method: "get",
                 data: {
                     code_name:$('#code_name').val(),
+                    variant_id:variantId,
 
                 },
                 success: function (response) {
                     $('.sub_total').html(response.total_cart+' '+ '@lang('website.KWD')');
                     $('.discount_amount').html(response.discount+' '+ '@lang('website.KWD')');
                     $('.total_price').html(response.total+' '+ '@lang('website.KWD')');
-                    $('.productCartItem'+id).hide(700).remove();
+                    $('.productCartItem'+id+variantTypeId+variantId).hide(700).remove();
                     // ele.parent().parent().hide(700).remove();
 
 

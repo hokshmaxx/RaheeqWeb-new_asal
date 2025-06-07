@@ -16,14 +16,14 @@
                        <div class="row col-sm-12">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>{{__('cp.name')}}</label>
+                                    <label>{{ucwords(__('cp.varianten'))}}</label>
                                     <input type="text" class="form-control form-control-solid"
                                             name="name_en" value="{{$item->name_en}}" required/>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>{{__('cp.name')}}</label>
+                                    <label>{{ucwords(__('cp.variantar'))}}</label>
                                     <input type="text" class="form-control form-control-solid"
                                             name="name_ar" value="{{$item->name_ar}}" required/>
                                 </div>

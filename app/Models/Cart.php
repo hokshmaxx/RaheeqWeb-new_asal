@@ -13,7 +13,7 @@ class Cart extends Model
     protected $table = 'carts';
     protected $guarded = [];
     protected $hidden = ['updated_at', 'deleted_at'];
-    protected $fillable = ['user_key','user_id','product_id','quantity','discount','fcm_token','gift_packaging_id'];
+    protected $fillable = ['user_key','user_id','product_id','quantity','discount','variant_id','fcm_token','gift_packaging_id'];
     public function product()
     {
         return $this->belongsTo(Product::class,'product_id');

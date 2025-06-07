@@ -413,6 +413,10 @@ Route::group([
                     Route::resource('/productReques', 'WEB\Vender\ProductRequestController');
                     Route::resource('/editProductPriceRequests', 'WEB\Vender\EditProductPriceController');
                     Route::post('/accept_product_price_request/{id}', 'WEB\Vender\EditProductPriceController@acceptProductPriceRequest');
+
+                    Route::post('/delete-gift-packaging','WEB\Admin\ProductsController@deleteGiftPackaging')->name('delete.gift.packaging');
+                    Route::post('/remove-varint','WEB\Admin\ProductsController@removeVarint')->name('delete.varint');
+
                     //   Route::get('/storeProducts', 'WEB\Vender\ProductsController@store');
                     // Route::resource('/productoffers', 'WEB\Vender\ProductofferController');
 

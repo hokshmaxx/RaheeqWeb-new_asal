@@ -23,41 +23,41 @@ use DataTables;
 
 class OrdersController extends Controller
 {
-    
+
       public function __construct()
     {
         $this->locales = Language::all();
-        
+
         view()->share([
             'locales' => $this->locales,
-            
+
 
         ]);
-        
+
     $route=Route::currentRouteAction();
-         $route_name = substr($route, strpos($route, "@") + 1);   
+         $route_name = substr($route, strpos($route, "@") + 1);
          $this->middleware(function ($request, $next) use($route_name){
          if(can('orders')){
-            return $next($request);  
+            return $next($request);
          }
           if($route_name== 'index' ){
              if(can(['orders-show' , 'orders-details'])){
-                 return $next($request);  
+                 return $next($request);
              }
           }elseif($route_name== 'show' ){
               if(can('orders-details')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }elseif($route_name== 'edit' || $route_name== 'update' || $route_name== 'show'){
               if(can('orders-edit')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }elseif($route_name== 'destroy' || $route_name== 'delete'){
               if(can('orders-delete')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }else{
-              return $next($request);  
+              return $next($request);
           }
           return redirect()->back()->withErrors(__('cp.you_dont_have_premession'));
         });
@@ -75,15 +75,24 @@ class OrdersController extends Controller
     public function index(Request $request)
     {
         // $items = Order::query();
-  
-        $items = Order::query()
-                ->leftJoin('order_products', 'orders.id', '=', 'order_products.order_id')
-                ->leftJoin('products','order_products.product_id', '=','products.id' )
-                ->select('orders.*')
-                ->where('products.vender_id', auth()->guard('vender')->user()->id);
 
-        
-                
+//        $items = Order::query()
+//                ->leftJoin('order_products', 'orders.id', '=', 'order_products.order_id')
+//                ->leftJoin('products','order_products.product_id', '=','products.id' )
+//                ->select('orders.*')
+//                ->where('products.vender_id', auth()->guard('vender')->user()->id);
+//
+
+        $items = Order::query()
+            ->leftJoin('order_products', 'orders.id', '=', 'order_products.order_id')
+            ->leftJoin('products', 'order_products.product_id', '=', 'products.id')
+            ->where('products.vender_id', auth()->guard('vender')->user()->id)
+            ->select('orders.*')
+            ->groupBy('orders.id');
+//            ->get();
+
+//        dd($items->get());
+
         if ($request->has('status')) {
             if ($request->get('status') != null)
                 $items->where('status',  $request->get('status'));
@@ -97,7 +106,7 @@ class OrdersController extends Controller
             if ($request->get('user_id') != null)
                 $items->where('user_id',  $request->get('user_id'));
         }
-       
+
         if ($request->has('userName')) {
             if ($request->get('userName') != null)
                 $items->where('customer_name',  $request->get('userName'));
@@ -120,7 +129,7 @@ class OrdersController extends Controller
             if ($request->get('mobile') != null)
                 $items->whereHas('user',function ($query) use($request){$query->where('mobile',  $request->get('mobile'));});
         }
-        
+
 
         // dd($items->get());
 
@@ -132,7 +141,7 @@ class OrdersController extends Controller
                 return $btn;
             })->editColumn('created_at',function($row) {
                 return $row->created_at->format('d-m-y H:i:s');
-             
+
             })->escapeColumns([])
             ->addColumn('index', function($row){
                  $btn =view('admin.settings.table_index')->with(['row'=>$row])->render();
@@ -144,7 +153,7 @@ class OrdersController extends Controller
             ->rawColumns(['action','index'])->make(true);
         }
         $areas = Area::get();
-        
+
 
         return view('vender.orders.home', [
             'areas' => $areas,
@@ -161,7 +170,7 @@ class OrdersController extends Controller
            'products' => $products,
             ]);
     }
-    
+
 
 
     public function edit($id)
@@ -221,7 +230,7 @@ class OrdersController extends Controller
         }
         return "fail";
     }
-    
+
     public function change_orderSts_old(Request $request, $id)
     {
         $order = Order::findOrFail($id);
@@ -248,13 +257,13 @@ class OrdersController extends Controller
         $notifiy->save();
         return "success";
     }
-    
+
 
     public function change_orderSts(Request $request, $sts, $id)
     {
         // dd($request->get($id));
         $order = Order::findOrFail($id);
-         
+
         $order->status = $sts;
         $order->save();
         if($sts == 1){
@@ -294,7 +303,7 @@ class OrdersController extends Controller
             'order' => $order ,
             'products' => $products]);
     }
-    
+
 
 
 

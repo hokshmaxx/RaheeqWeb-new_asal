@@ -72,21 +72,21 @@
 
                              <div class="card-body">
                                    <div class="row">
-                                      <div class="col-md-6">
-                                            <div class="form-group ">
-                                                <label>SKU</label>
-                                                <input   type="text"
-                                                class="form-control form-control-solid" name="sku" value="{{ old('sku')}}" required/>
-                                            </div>
-                                       </div>
+{{--                                      <div class="col-md-6">--}}
+{{--                                            <div class="form-group ">--}}
+{{--                                                <label>SKU</label>--}}
+{{--                                                <input   type="text"--}}
+{{--                                                class="form-control form-control-solid" name="sku" value="{{ old('sku')}}" required/>--}}
+{{--                                            </div>--}}
+{{--                                       </div>--}}
 
-                                      <div class="col-md-6">
-                                        <div class="form-group ">
-                                            <label>{{__('cp.quantity')}}</label>
-                                            <input onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" type="text"
-                                             class="form-control form-control-solid" name="quantity" value="{{ old('quantity')}}" required/>
-                                        </div>
-                                       </div>
+{{--                                      <div class="col-md-6">--}}
+{{--                                        <div class="form-group ">--}}
+{{--                                            <label>{{__('cp.quantity')}}</label>--}}
+{{--                                            <input onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" type="text"--}}
+{{--                                             class="form-control form-control-solid" name="quantity" value="{{ old('quantity')}}" required/>--}}
+{{--                                        </div>--}}
+{{--                                       </div>--}}
                                  </div>
                                    <div class="row">
                                       {{-- <div class="col-md-6">
@@ -115,30 +115,30 @@
                                        </div>
                                  </div>
 
-                                 <div class="row">
-                                    <div class="col-md-6">
-                                          <div class="form-group ">
-                                              <label>{{__('cp.price')}}</label>
-                                              <input  type="text"
-                                               class="form-control form-control-solid number-only" name="price" value="{{ old('price')}}" required/>
-                                          </div>
-                                     </div>
-                                    <div class="col-md-3">
-                                          <div class="form-group ">
-                                              <label>{{__('cp.discount_price')}}</label>
-                                              <input   type="text"
-                                               class="form-control form-control-solid number-only" id="discount_price" name="discount_price" value="{{ old('discount_price')}}"/>
-                                          </div>
-                                     </div>
-                                    <div class="col-md-3">
-                                          <div class="form-group ">
-                                              <label>{{__('cp.offer_end_date')}}</label>
-                                              <input  type="date"
-                                               class="form-control form-control-solid" name="offer_end_date" value="{{ old('offer_end_date')}}"/>
-                                          </div>
-                                     </div>
+{{--                                 <div class="row">--}}
+{{--                                    <div class="col-md-6">--}}
+{{--                                          <div class="form-group ">--}}
+{{--                                              <label>{{__('cp.price')}}</label>--}}
+{{--                                              <input  type="text"--}}
+{{--                                               class="form-control form-control-solid number-only" name="price" value="{{ old('price')}}" required/>--}}
+{{--                                          </div>--}}
+{{--                                     </div>--}}
+{{--                                    <div class="col-md-3">--}}
+{{--                                          <div class="form-group ">--}}
+{{--                                              <label>{{__('cp.discount_price')}}</label>--}}
+{{--                                              <input   type="text"--}}
+{{--                                               class="form-control form-control-solid number-only" id="discount_price" name="discount_price" value="{{ old('discount_price')}}"/>--}}
+{{--                                          </div>--}}
+{{--                                     </div>--}}
+{{--                                    <div class="col-md-3">--}}
+{{--                                          <div class="form-group ">--}}
+{{--                                              <label>{{__('cp.offer_end_date')}}</label>--}}
+{{--                                              <input  type="date"--}}
+{{--                                               class="form-control form-control-solid" name="offer_end_date" value="{{ old('offer_end_date')}}"/>--}}
+{{--                                          </div>--}}
+{{--                                     </div>--}}
 
-                               </div>
+{{--                               </div>--}}
 
                                  {{-- <div class="row">
                                     <div class="col-md-6">

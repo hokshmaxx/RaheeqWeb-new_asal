@@ -148,7 +148,7 @@ class ProductVarintTypeController extends Controller
     public function update(Request $request, $id)
     {
 
-        $user= ProductVariantType::findOrFail($id);
+        $varinttype= ProductVariantType::findOrFail($id);
         $validator = Validator::make($request->all(), [
             'name_en' => 'required',
             'name_ar' => 'required',
@@ -158,8 +158,9 @@ class ProductVarintTypeController extends Controller
         }
 
 
-        $user->name = $request->name;
-        $user->save();
+        $varinttype->name_en = $request->name_en;
+        $varinttype->name_ar = $request->name_ar;
+        $varinttype->save();
 
 
         return redirect()->back()->with('status', __('cp.update'));

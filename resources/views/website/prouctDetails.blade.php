@@ -195,6 +195,8 @@
                                         class="variant-box border rounded p-2"
                                         data-variant-id="{{ $variant->id }}"
                                         data-price="{{ $variant->price }}"
+                                        data-quantity="{{ $variant->quantity }}"
+
                                         data-discount-price="{{ $variant->discount_price }}"
                                         onclick="selectVariant(this)"
                                     >
@@ -230,32 +232,32 @@
 
                 <!-- Actions -->
                 <div class="product-actions">
-                    @if( $product->is_cart)
-                        <div class="quantity-item">
-                            @if($cart->product->quantity > 0)
-                                <div class="quantity">
-                                    <div class="btn button-count dec jsQuantityDecrease" data-id="{{@$cart->product->id}}" minimum="1">
-                                        <i class="fa fa-minus" aria-hidden="true"></i>
-                                    </div>
-                                    <input type="text" name="count-quat1" class="count-quat" value="{{$cart->quantity}}" min="1" max="{{$cart->product->quantity}}">
-                                    <div class="btn button-count inc jsQuantityIncrease" max="{{$cart->product->quantity}}" data-id="{{@$cart->product->id}}">
-                                        <i class="fa fa-plus" aria-hidden="true"></i>
-                                    </div>
-                                </div>
+{{--                    @if( $product->is_cart)--}}
+{{--                        <div class="quantity-item">--}}
+{{--                            @if($cart->product->quantity > 0)--}}
+{{--                                <div class="quantity">--}}
+{{--                                    <div class="btn button-count dec jsQuantityDecrease" data-id="{{@$cart->product->id}}" minimum="1">--}}
+{{--                                        <i class="fa fa-minus" aria-hidden="true"></i>--}}
+{{--                                    </div>--}}
+{{--                                    <input type="text" name="count-quat1" class="count-quat" value="{{$cart->quantity}}" min="1" max="{{$cart->product->quantity}}">--}}
+{{--                                    <div class="btn button-count inc jsQuantityIncrease" max="{{$cart->product->quantity}}" data-id="{{@$cart->product->id}}">--}}
+{{--                                        <i class="fa fa-plus" aria-hidden="true"></i>--}}
+{{--                                    </div>--}}
+{{--                                </div>--}}
 {{--                            @else--}}
 {{--                                <div class="soldOut">--}}
 {{--                                    <h1>Sold Out</h1>--}}
 {{--                                </div>--}}
-                            @endif
-                        </div>
-                        <button class="removeFromCart" data-id="{{$product->id}}"> Remove from Cart </button>
+{{--                            @endif--}}
+{{--                        </div>--}}
+{{--                        <button class="removeFromCart" data-id="{{$product->id}}"> Remove from Cart </button>--}}
 
-                    @else
+{{--                    @else--}}
                         <button class="addToCart" data-id="{{ $product->id }}" data-variant-id="{{ $product->variants->first()->id??0 }}" id="addToCartButton">
                             Add to Cart
                         </button>
 
-                    @endif
+{{--                    @endif--}}
 
                     @if($product->is_favorite)
                             <button class="removeFromFavorite {{ $product->is_favorite ? 'active' : '' }}" data-id="{{$product->id}}">Remove from Favorites</button>

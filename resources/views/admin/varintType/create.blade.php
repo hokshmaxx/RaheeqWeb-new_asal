@@ -51,14 +51,14 @@
 
                                       <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="name_en">{{__('cp.variant')}}</label>
+                                            <label for="name_en">{{ucwords(__('cp.varianten'))}}</label>
                                             <input type="text" class="form-control form-control-solid" name="name_en"  placeholder="Please Enter your variant Name "
                                                 value="{{ old('variant') }}" id="name_en" required />
                                         </div>
                                        </div>
                                       <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="name_ar">{{__('cp.variant')}}</label>
+                                            <label for="name_ar">{{ucwords(__('cp.variantar'))}}</label>
                                             <input type="text" class="form-control form-control-solid" name="name_ar"  placeholder="Please Enter your variant Name at arabic "
                                                 value="{{ old('variant') }}" id="name_ar" required />
                                         </div>

@@ -418,7 +418,7 @@
 																		</span>
 																	</div>
 																</td>
-																<td> {{@$one->product->name}} </td>
+                                                                <td> {{@$one->product->name}}--({{$one->variant->name}}) </td>
      															<td> {{@$one->price}}</td>
      															<td> {{@$one->offer_price}}</td>
 																<td> {{@$one->quantity}}</td>

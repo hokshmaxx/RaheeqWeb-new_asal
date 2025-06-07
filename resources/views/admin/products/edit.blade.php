@@ -80,36 +80,36 @@
 
                              <div class="card-body">
 
-                                <div class="row">
-                                    <div class="col-md-6">
-                                          <div class="form-group ">
-                                              <label>SKU</label>
-                                              <input   type="text"
-                                              class="form-control form-control-solid" name="sku" value="{{$item->sku}}" required/>
-                                          </div>
-                                     </div>
+{{--                                <div class="row">--}}
+{{--                                    <div class="col-md-6">--}}
+{{--                                          <div class="form-group ">--}}
+{{--                                              <label>SKU</label>--}}
+{{--                                              <input   type="text"--}}
+{{--                                              class="form-control form-control-solid" name="sku" value="{{$item->sku}}" required/>--}}
+{{--                                          </div>--}}
+{{--                                     </div>--}}
 
-                                    <div class="col-md-6">
-                                      <div class="form-group ">
-                                          <label>{{__('cp.quantity')}}</label>
-                                          <input onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" type="text"
-                                           class="form-control form-control-solid" name="quantity" value="{{$item->quantity}}" required/>
-                                      </div>
-                                     </div>
-                               </div>
-                               <div class="row">
-                                    {{-- <div class="col-md-6">
-                                            <div class="form-group ">
-                                            <label>{{__('cp.age')}}</label>
-                                                <select class="form-control form-control-solid select2"  name="age_id" required>
-                                                <option value="">{{__('cp.select')}}</option>
-                                                    @foreach ($ages as $age)
-                                                    <option value="{{$age->id}}" @if($age->id == $item->age_id) selected @endif>{{$age->name}}</option>
-                                                    @endforeach
+{{--                                    <div class="col-md-6">--}}
+{{--                                      <div class="form-group ">--}}
+{{--                                          <label>{{__('cp.quantity')}}</label>--}}
+{{--                                          <input onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" type="text"--}}
+{{--                                           class="form-control form-control-solid" name="quantity" value="{{$item->quantity}}" required/>--}}
+{{--                                      </div>--}}
+{{--                                     </div>--}}
+{{--                               </div>--}}
+{{--                               <div class="row">--}}
+{{--                                    --}}{{-- <div class="col-md-6">--}}
+{{--                                            <div class="form-group ">--}}
+{{--                                            <label>{{__('cp.age')}}</label>--}}
+{{--                                                <select class="form-control form-control-solid select2"  name="age_id" required>--}}
+{{--                                                <option value="">{{__('cp.select')}}</option>--}}
+{{--                                                    @foreach ($ages as $age)--}}
+{{--                                                    <option value="{{$age->id}}" @if($age->id == $item->age_id) selected @endif>{{$age->name}}</option>--}}
+{{--                                                    @endforeach--}}
 
-                                                </select>
-                                            </div>
-                                    </div> --}}
+{{--                                                </select>--}}
+{{--                                            </div>--}}
+{{--                                    </div> --}}
 
                                 <div class="col-md-6">
                                       <div class="form-group ">
@@ -122,32 +122,32 @@
                                           </select>
                                       </div>
                                  </div>
-                           </div>
+{{--                           </div>--}}
 
-                                 <div class="row">
-                                    <div class="col-md-6">
-                                          <div class="form-group ">
-                                              <label>{{__('cp.price')}}</label>
-                                              <input  type="number"
-                                               class="form-control form-control-solid number-only" name="price" value="{{old('price',$item->price)}}" required/>
-                                          </div>
-                                     </div>
-                                    <div class="col-md-3">
-                                          <div class="form-group ">
-                                              <label>{{__('cp.discount_price')}}</label>
-                                              <input   type="number"
-                                               class="form-control form-control-solid number-only" id="discount_price" name="discount_price" value="{{old('discount_price',$item->discount_price)}}"/>
-                                          </div>
-                                     </div>
-                                    <div class="col-md-3">
-                                          <div class="form-group ">
-                                              <label>{{__('cp.offer_end_date')}}</label>
-                                              <input  type="date"
-                                               class="form-control form-control-solid" name="offer_end_date" value="{{old('offer_end_date',$item->offer_end_date)}}"/>
-                                          </div>
-                                     </div>
+{{--                                 <div class="row">--}}
+{{--                                    <div class="col-md-6">--}}
+{{--                                          <div class="form-group ">--}}
+{{--                                              <label>{{__('cp.price')}}</label>--}}
+{{--                                              <input  type="number"--}}
+{{--                                               class="form-control form-control-solid number-only" name="price" value="{{old('price',$item->price)}}" required/>--}}
+{{--                                          </div>--}}
+{{--                                     </div>--}}
+{{--                                    <div class="col-md-3">--}}
+{{--                                          <div class="form-group ">--}}
+{{--                                              <label>{{__('cp.discount_price')}}</label>--}}
+{{--                                              <input   type="number"--}}
+{{--                                               class="form-control form-control-solid number-only" id="discount_price" name="discount_price" value="{{old('discount_price',$item->discount_price)}}"/>--}}
+{{--                                          </div>--}}
+{{--                                     </div>--}}
+{{--                                    <div class="col-md-3">--}}
+{{--                                          <div class="form-group ">--}}
+{{--                                              <label>{{__('cp.offer_end_date')}}</label>--}}
+{{--                                              <input  type="date"--}}
+{{--                                               class="form-control form-control-solid" name="offer_end_date" value="{{old('offer_end_date',$item->offer_end_date)}}"/>--}}
+{{--                                          </div>--}}
+{{--                                     </div>--}}
 
-                               </div>
+{{--                               </div>--}}
 
 
                                {{-- <div class="row">
@@ -337,16 +337,15 @@
                                         <div class="variant-container" data-type-id="{{ $variantType->id }}">
                                             {{-- Existing Variants --}}
                                             @if (isset($groupedVariants[$variantType->id]))
-                                                @foreach ($groupedVariants[$variantType->id] as $variant)
+                                                @foreach ($groupedVariants[$variantType->id] as $index => $variant)
                                                     <div class="variant-item d-flex align-items-center gap-3 mb-2">
-                                                        <input type="hidden" name="variants[][id]" value="{{ $variant->id }}" required>
-                                                        <input type="hidden" name="variants[][variantTypeId]" value="{{ $variantType->id }}" required>
-                                                        <input type="text" name="variants[][name]" class="form-control" placeholder="الاسم" value="{{ $variant->name }}" >
-                                                        <input type="text" name="variants[][sku]" class="form-control" placeholder="SKU" value="{{ $variant->sku }}" >
-                                                        <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="السعر" value="{{ $variant->price }}" >
-                                                        <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder="سعر الخصم" value="{{ $variant->discount_price }}" >
-                                                        <input type="number" name="variants[][quantity]" class="form-control" placeholder="الكمية" value="{{ $variant->quantity }}" >
-                                                        <button type="button" class="btn btn-danger remove-variant" data-id="{{$variant->id}}">X</button>
+                                                        <input type="hidden" name="variants[{{ $variantType->id }}][id][{{ $index }}]" value="{{ $variant->id }}">
+                                                        <input type="text" name="variants[{{ $variantType->id }}][name][{{ $index }}]" class="form-control" placeholder="الاسم" value="{{ $variant->name }}" required>
+                                                        <input type="text" name="variants[{{ $variantType->id }}][sku][{{ $index }}]" class="form-control" placeholder="SKU" value="{{ $variant->sku }}" required>
+                                                        <input type="number" step="0.01" name="variants[{{ $variantType->id }}][price][{{ $index }}]" class="form-control" placeholder="السعر" value="{{ $variant->price }}" required>
+                                                        <input type="number" step="0.01" name="variants[{{ $variantType->id }}][discount_price][{{ $index }}]" class="form-control" placeholder="سعر الخصم" value="{{ $variant->discount_price }}">
+                                                        <input type="number" name="variants[{{ $variantType->id }}][quantity][{{ $index }}]" class="form-control" placeholder="الكمية" value="{{ $variant->quantity }}" required>
+                                                        <button type="button" class="btn btn-danger remove-variant" data-id="{{ $variant->id }}">X</button>
                                                     </div>
                                                 @endforeach
                                             @endif
@@ -356,7 +355,6 @@
                                     </div>
                                 @endforeach
                             </div>
-
                             <script>
         //                         document.querySelectorAll('.add-variant').forEach(button => {
         //                             button.addEventListener('click', function () {
@@ -509,19 +507,6 @@
         }
     });
 
-    // حذف خيار قديم
-    // document.addEventListener('click', function (e) {
-    //     if (e.target && e.target.classList.contains('remove-old-option')) {
-    //         const parent = e.target.closest('.old-gift');
-    //         const giftId = parent.dataset.id;
-    //         const input = document.createElement('input');
-    //         input.type = 'hidden';
-    //         input.name = 'deletedGiftPackagings[]';
-    //         input.value = giftId;
-    //         parent.remove(); // Remove visually
-    //         document.querySelector('form').appendChild(input); // Add hidden input to mark as deleted
-    //     }
-    // });
 
     $(document).on('click', '.remove-old-option', function () {
         const giftId = $(this).data('id');
@@ -558,45 +543,33 @@
     });
 
 
-    $(document).on('click', '.remove-variant', function (e) {
-        const varint_id = $(this).data('id');
-
-        console.log(varint_id);
-        if (confirm('هل أنت متأكد من حذف هذا الخيار؟')) {
-            var requestUrl = '{{ url("admin/remove-varint") }}';
-
-            console.log('Request URL:', requestUrl);
-
-            $.ajax({
-                url: requestUrl,
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    varint_id: varint_id,
-                },
-                success: function (response) {
-                    console.log('Response:', response);
-                    if (response.success) {
-                        e.target.closest('.variant-item').remove();
-
-                        // $('.old-gift[data-id="' + giftId + '"]').remove();
-                        alert('تم الحذف بنجاح');
-                    } else {
-                        alert('حدث خطأ أثناء الحذف');
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error('Error Status:', status);
-                    console.error('Error Message:', error);
-                    console.error('Response:', xhr.responseText);
-                    alert('حدث خطأ أثناء الاتصال بالخادم');
-                }
-            });
-        }
-    });
 
 
     document.addEventListener('DOMContentLoaded', function() {
+
+        if (!Promise.allSettled) {
+            Promise.allSettled = function (promises) {
+                return Promise.all(promises.map(p =>
+                    p
+                        .then(value => ({ status: 'fulfilled', value }))
+                        .catch(reason => ({ status: 'rejected', reason }))
+                ));
+            };
+        }
+
+        @foreach($locales as $locale)
+        tinymce.init({
+            selector: '#description_{{ $locale->lang }}',
+            plugins: 'lists link image table code',
+            toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | code',
+            height: 300,
+            directionality: '{{ $locale->lang == 'ar' ? 'rtl' : 'ltr' }}',
+            language: '{{ $locale->lang == 'ar' ? 'ar' : 'en' }}',
+            branding: false
+        });
+        @endforeach
+
+
         const giftPackagingCheckbox = document.querySelector('input[name="gift_packaging_enabled"]');
         const giftPackagingFields = document.querySelectorAll('input[name^="gift_packaging_images"], input[name^="gift_packaging_prices"], input[name^="gift_packaging_titles_ar"], input[name^="gift_packaging_titles_en"]');
 
@@ -618,87 +591,77 @@
 
         // Call on page load to initialize
         toggleGiftPackagingFields();
-    });
 
 
-    document.querySelectorAll('.add-variant').forEach(button => {
-        button.addEventListener('click', function () {
-            const typeId = this.dataset.typeId;
-            const container = document.querySelector(`.variant-container[data-type-id="${typeId}"]`);
+        // Add variant functionality
+        document.querySelectorAll('.add-variant').forEach(button => {
+            button.addEventListener('click', function () {
+                const typeId = this.dataset.typeId;
+                const container = document.querySelector(`.variant-container[data-type-id="${typeId}"]`);
 
-            const row = document.createElement('div');
-            row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
-            row.innerHTML = `
-            <input type="hidden" name="variants[${typeId}][id][]" value="">
-            <input type="text" name="variants[${typeId}][name][]" class="form-control" placeholder="الاسم">
-            <input type="text" name="variants[${typeId}][sku][]" class="form-control" placeholder="SKU">
-            <input type="number" step="0.01" name="variants[${typeId}][price][]" class="form-control" placeholder="السعر">
-            <input type="number" step="0.01" name="variants[${typeId}][discount_price][]" class="form-control" placeholder="سعر الخصم">
-            <input type="number" name="variants[${typeId}][quantity][]" class="form-control" placeholder="الكمية">
-            <button type="button" class="btn btn-danger remove-variant"  >X</button>
-        `;
-            container.appendChild(row);
+                // Get the current number of variants to create proper index
+                const existingVariants = container.querySelectorAll('.variant-item').length;
+                const newIndex = existingVariants;
+
+                const row = document.createElement('div');
+                row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
+                row.innerHTML = `
+                <input type="hidden" name="variants[${typeId}][id][${newIndex}]" value="">
+                <input type="text" name="variants[${typeId}][name][${newIndex}]" class="form-control" placeholder="الاسم" required>
+                <input type="text" name="variants[${typeId}][sku][${newIndex}]" class="form-control" placeholder="SKU" required>
+                <input type="number" step="0.01" name="variants[${typeId}][price][${newIndex}]" class="form-control" placeholder="السعر" required>
+                <input type="number" step="0.01" name="variants[${typeId}][discount_price][${newIndex}]" class="form-control" placeholder="سعر الخصم">
+                <input type="number" name="variants[${typeId}][quantity][${newIndex}]" class="form-control" placeholder="الكمية" required>
+                <button type="button" class="btn btn-danger remove-variant-new">X</button>
+            `;
+                container.appendChild(row);
+            });
         });
-    });
 
-    // document.querySelectorAll('.add-variant').forEach(button => {
-    //     button.addEventListener('click', function () {
-    //         const typeId = this.dataset.typeId;
-    //         const container = this.previousElementSibling;
-    //
-    //         const row = document.createElement('div');
-    //         row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
-    //
-    //         row.innerHTML = `
-    //         <input type="hidden" name="variants[][variantTypeId]" value="${typeId}">
-    //         <input type="text" name="variants[][name]" class="form-control" placeholder="الاسم">
-    //         <input type="text" name="variants[][sku]" class="form-control" placeholder="SKU">
-    //         <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="السعر">
-    //         <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder="سعر الخصم">
-    //         <input type="number" name="variants[][quantity]" class="form-control" placeholder="الكمية">
-    //         <button type="button" class="btn btn-danger remove-variant">X</button>
-    //     `;
-    //
-    //         container.appendChild(row);
-    //     });
-    // });
+        // Remove existing variant (with AJAX call)
+        $(document).on('click', '.remove-variant', function (e) {
+            const variantId = $(this).data('id');
 
-    // Optional: Remove button functionality
-    document.addEventListener('click', function (e) {
-        // if (e.target.classList.contains('remove-variant')) {
-            // e.target.closest('.variant-item').remove();
-      //  }
-    });
-</script>
-<script>
-    if (!Promise.allSettled) {
-        Promise.allSettled = function (promises) {
-            return Promise.all(promises.map(p =>
-                p
-                    .then(value => ({ status: 'fulfilled', value }))
-                    .catch(reason => ({ status: 'rejected', reason }))
-            ));
-        };
-    }
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
+            if (confirm('هل أنت متأكد من حذف هذا الخيار؟')) {
+                var requestUrl = '{{ url("admin/remove-varint") }}';
 
-        @foreach($locales as $locale)
-        tinymce.init({
-            selector: '#description_{{ $locale->lang }}',
-            plugins: 'lists link image table code',
-            toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | code',
-            height: 300,
-            directionality: '{{ $locale->lang == 'ar' ? 'rtl' : 'ltr' }}',
-            language: '{{ $locale->lang == 'ar' ? 'ar' : 'en' }}',
-            branding: false
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        varint_id: variantId,
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            e.target.closest('.variant-item').remove();
+                            alert('تم الحذف بنجاح');
+                        } else {
+                            alert('حدث خطأ أثناء الحذف');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء الاتصال بالخادم');
+                    }
+                });
+            }
         });
-        @endforeach
+
+        // Remove new variant (just remove from DOM)
+        $(document).on('click', '.remove-variant-new', function (e) {
+            e.target.closest('.variant-item').remove();
+        });
 
 
     });
+
+
+
+
+
 </script>
+
 
 
 @endsection

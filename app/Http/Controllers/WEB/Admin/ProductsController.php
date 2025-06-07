@@ -113,7 +113,7 @@ class ProductsController extends Controller
 
         if ($request->ajax()) {
             return Datatables::of(
-                $data->with('category', 'age', 'translations', 'vitamin', 'venders')->orderByDesc('id')
+                $data->with('category', 'age', 'translations', 'vitamin', 'venders','variants')->orderByDesc('id')
             )
                 ->editColumn('status', function ($row) {
                     return view('admin.settings.status_lable')->with(['row' => $row])->render();
@@ -132,6 +132,18 @@ class ProductsController extends Controller
                 })
                 ->addColumn('vender', function ($row) {
                     return $row->vender ? $row->vender->name : '-';
+                })
+                ->addColumn('variant_sku', function ($row) {
+                    return optional($row->variants->first())->sku ?? '-';
+                })
+                ->addColumn('variant_price', function ($row) {
+                    return optional($row->variants->first())->price ?? '-';
+                })
+                ->addColumn('variant_discount', function ($row) {
+                    return optional($row->variants->first())->discount_price ?? '-';
+                })
+                ->addColumn('variant_quantity', function ($row) {
+                    return optional($row->variants->first())->quantity ?? '-';
                 })
                 ->addColumn('action', function ($row) {
                     return view('admin.products.btns')->with(['row' => $row])->render();
@@ -167,11 +179,11 @@ class ProductsController extends Controller
     {
         // Step 1: Base validation rules
         $roles = [
-            'sku' => 'required',
+//            'sku' => 'required',
             'category_id' => 'required',
             'image' => 'required|mimes:jpeg,bmp,png,gif',
-            'price' => 'required|numeric',
-            'quantity' => 'required|numeric',
+//            'price' => 'required|numeric',
+//            'quantity' => 'required|numeric',
         ];
 
         // Step 2: Add validation for each locale
@@ -212,6 +224,7 @@ class ProductsController extends Controller
         $product->age_id = 1;
         $product->discount_price = $request->discount_price;
         $product->allow_gift_packaging = $request->gift_packaging_enabled??false;
+
 
         if ($request->offer_end_date != '') {
             $product->offer_end_date = $request->offer_end_date;
@@ -391,19 +404,15 @@ class ProductsController extends Controller
 
     public function update(Request $request, $id)
     {
-
-//dd($request);
+        // Remove the dd($request) line for production
+        // dd($request);
 
         $roles = [
-            'sku' => 'required',
             'category_id' => 'required',
             'image' => 'image|mimes:jpeg,jpg,png',
-            'price' => 'required|numeric',
-            'quantity' => 'required|numeric',
-
         ];
-        $selectedVitamins = ProductVitamin::where('product_id',$id);
 
+        $selectedVitamins = ProductVitamin::where('product_id',$id);
         $locales = Language::all()->pluck('lang');
 
         foreach ($locales as $locale) {
@@ -414,30 +423,33 @@ class ProductsController extends Controller
         // Step 3: Validate that at least one variant exists
         $hasAtLeastOneVariant = false;
 
-        if ($request->has('variants')) {
-
-                $hasAtLeastOneVariant = true;
-
-
-
-
+        if ($request->has('variants') && is_array($request->variants)) {
+            // Check if we have valid variant data
+            foreach ($request->variants as $variantData) {
+                if (is_array($variantData)) {
+                    // Check if this variant has required fields
+                    if (isset($variantData['name']) || isset($variantData['sku']) || isset($variantData['price'])) {
+                        $hasAtLeastOneVariant = true;
+                        break;
+                    }
+                }
+            }
         }
 
         if (!$hasAtLeastOneVariant) {
             return redirect()->back()->withErrors(['variants' => 'At least one variant is required.'])->withInput();
         }
 
-
         $this->validate($request, $roles);
 
-        $product = Product::with( 'images')->findOrFail($id);
+        $product = Product::with('images')->findOrFail($id);
         $product->price = $request->price;
         $product->sku = $request->sku;
         $product->category_id = $request->category_id;
         $product->quantity = $request->quantity;
         $product->age_id = $request->age_id;
         $product->discount_price = $request->discount_price;
-        $product->allow_gift_packaging=$request->gift_packaging_enabled;
+        $product->allow_gift_packaging = $request->gift_packaging_enabled;
 
         // Delete old gift packaging options
         if ($request->has('delete_gift_packagings')) {
@@ -449,7 +461,7 @@ class ProductsController extends Controller
             });
         }
 
-// Save new uploaded gift packaging options
+        // Save new uploaded gift packaging options
         if ($request->hasFile('gift_packaging_images') && $request->has('gift_packaging_prices')) {
             foreach ($request->file('gift_packaging_images') as $index => $image) {
                 if ($image && isset($request->gift_packaging_prices[$index])) {
@@ -459,124 +471,104 @@ class ProductsController extends Controller
                         $constraint->aspectRatio();
                     })->save(public_path($imagePath));
 
-              $giftpack=      GiftPackaging::create([
-//                        'product_id' => $product->id,
+                    $giftpack = GiftPackaging::create([
                         'image' => $imagePath,
-                        'title_en' =>  $request->gift_packaging_titles_en[$index],
-                        'title_ar' =>  $request->gift_packaging_titles_ar[$index],
+                        'title_en' => $request->gift_packaging_titles_en[$index],
+                        'title_ar' => $request->gift_packaging_titles_ar[$index],
                         'price' => $request->gift_packaging_prices[$index],
                     ]);
-                    $product->giftPackagings()->attach($giftpack->id,[
+
+                    $product->giftPackagings()->attach($giftpack->id, [
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-
-
                 }
             }
         }
 
-        if($request->offer_end_date!=''){
+        if($request->offer_end_date != '') {
             $product->offer_end_date = $request->offer_end_date;
         }
         $product->gender = $request->gender;
 
-        foreach ($locales as $locale)
-        {
+        foreach ($locales as $locale) {
             $product->translateOrNew($locale)->name = $request->get('name_' . $locale);
             $product->translateOrNew($locale)->description = $request->get('description_' . $locale);
         }
+
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            //$extention = $image->getClientOriginalExtension();
             $file_name = str_random(15) . "" . rand(1000000, 9999999) . "" . time() . "_" . rand(1000000, 9999999) . '.jpg';
             Image::make($image)->resize(800, null, function ($constraint) {
                 $constraint->aspectRatio();
             })->save("uploads/images/products/$file_name");
             $product->image = $file_name;
         }
+
         $product->save();
 
+        // FIXED VARIANTS PROCESSING
         if ($request->has('variants')) {
-            $variantsGrouped = $request->input('variants', []);
+            $variants = $request->input('variants', []);
 
-            foreach ($variantsGrouped as $typeId => $variantsData) {
-                // Ensure all values are arrays
-                $ids = (array) ($variantsData['id'] ?? []);
-                $names = (array) ($variantsData['name'] ?? []);
-                $skus = (array) ($variantsData['sku'] ?? []);
-                $prices = (array) ($variantsData['price'] ?? []);
-                $discounts = (array) ($variantsData['discount_price'] ?? []);
-                $quantities = (array) ($variantsData['quantity'] ?? []);
+            // Group variants by type_id
+            $groupedVariants = [];
 
-                for ($i = 0; $i < count($names); $i++) {
-                    $data = [
-                        'product_varint_type_id' => $typeId,
-                        'name' => $names[$i],
-                        'sku' => $skus[$i] ?? null,
-                        'price' => $prices[$i] ?? 0,
-                        'product_id' => $product->id,
-                        'discount_price' => $discounts[$i] ?? 0,
-                        'quantity' => $quantities[$i] ?? 0,
-                    ];
+            foreach ($variants as $variantTypeId => $variantData) {
+                if (is_array($variantData)) {
+                    // Handle the new structure where each type has arrays of data
+                    if (isset($variantData['name']) && is_array($variantData['name'])) {
+                        $names = $variantData['name'];
+                        $ids = $variantData['id'] ?? [];
+                        $skus = $variantData['sku'] ?? [];
+                        $prices = $variantData['price'] ?? [];
+                        $discountPrices = $variantData['discount_price'] ?? [];
+                        $quantities = $variantData['quantity'] ?? [];
 
-                    if (!empty($ids[$i])) {
-                        ProductVariant::where('id', $ids[$i])->update($data);
-                    } else {
-                        ProductVariant::create($data);
+                        for ($i = 0; $i < count($names); $i++) {
+                            $data = [
+                                'product_varint_type_id' => $variantTypeId,
+                                'name' => $names[$i] ?? '',
+                                'sku' => $skus[$i] ?? '',
+                                'price' => $prices[$i] ?? 0,
+                                'discount_price' => $discountPrices[$i] ?? 0,
+                                'quantity' => $quantities[$i] ?? 0,
+                                'product_id' => $product->id,
+                            ];
+
+                            if (!empty($ids[$i])) {
+                                // Update existing variant
+                                ProductVariant::where('id', $ids[$i])->update($data);
+                            } else {
+                                // Create new variant
+                                ProductVariant::create($data);
+                            }
+                        }
                     }
                 }
             }
         }
 
-//        if ($request->has('variants')) {
-//            $variantsGrouped = $request->input('variants', []);
-//
-//            foreach ($variantsGrouped as $typeId => $variantsData) {
-//                $ids = $variantsData['id'] ?? [];
-//                $names = $variantsData['name'] ?? [];
-//                $skus = $variantsData['sku'] ?? [];
-//                $prices = $variantsData['price'] ?? [];
-//                $discounts = $variantsData['discount_price'] ?? [];
-//                $quantities = $variantsData['quantity'] ?? [];
-//
-//                for ($i = 0; $i < count($names); $i++) {
-//                    $data = [
-//                        'product_varint_type_id' => $typeId,
-//                        'name' => $names[$i],
-//                        'sku' => $skus[$i] ?? null,
-//                        'price' => $prices[$i] ?? 0,
-//                        'product_id'=>$product->id,
-//                        'discount_price' => $discounts[$i] ?? 0,
-//                        'quantity' => $quantities[$i] ?? 0,
-//                    ];
-//
-//                    if (!empty($ids[$i])) {
-//                        ProductVariant::where('id', $ids[$i])->update($data);
-//                    } else {
-//                        ProductVariant::create($data);
-//                    }
-//                }
-//            }
-//        }
-
+        // Handle product images
         $imgsIds = $product->images->pluck('id')->toArray();
-        $newImgsIds = ($request->has('oldImages'))? $request->oldImages:[];
-        $diff = array_diff($imgsIds,$newImgsIds);
-        ProductImage::whereIn('id',$diff)->delete();
+        $newImgsIds = ($request->has('oldImages')) ? $request->oldImages : [];
+        $diff = array_diff($imgsIds, $newImgsIds);
+        ProductImage::whereIn('id', $diff)->delete();
 
-        if($request->has('filename')  && !empty($request->filename)){
+        if($request->has('filename') && !empty($request->filename)) {
             foreach($request->filename as $one) {
-               if (isset(explode('/', explode(';', explode(',', $one)[0])[0])[1])) {
+                if (isset(explode('/', explode(';', explode(',', $one)[0])[0])[1])) {
                     $fileType = strtolower(explode('/', explode(';', explode(',', $one)[0])[0])[1]);
                     $name = auth()->guard('admin')->user()->id. "_" .str_random(8) . "_" .  "_" . time() . "_" . rand(1000000, 9999999);
                     $attachType = 0;
-                    if (in_array($fileType, ['jpg','jpeg','png','pmb'])){
+                    if (in_array($fileType, ['jpg','jpeg','png','pmb'])) {
                         $newName = $name. ".jpg";
                         $attachType = 1;
-                        Image::make($one)->resize(800, null, function ($constraint) {$constraint->aspectRatio();})->save("uploads/images/products/$newName");
+                        Image::make($one)->resize(800, null, function ($constraint) {
+                            $constraint->aspectRatio();
+                        })->save("uploads/images/products/$newName");
                     }
-                    $product_image=new ProductImage();
+                    $product_image = new ProductImage();
                     $product_image->product_id = $product->id;
                     $product_image->image = $newName;
                     $product_image->save();
@@ -584,65 +576,46 @@ class ProductsController extends Controller
             }
         }
 
-
-        if( !empty($request->vitamins)) {
-
-            $vitamin = Vitamin::where('product_id',$id)->delete();
-            foreach ($request->vitamins as $vitamin)
-            {
-
+        // Handle vitamins
+        if(!empty($request->vitamins)) {
+            $vitamin = Vitamin::where('product_id', $id)->delete();
+            foreach ($request->vitamins as $vitamin) {
                 Vitamin::create([
-                    'product_id' =>$product->id,
-                    'vitamin_id' =>$vitamin,
+                    'product_id' => $product->id,
+                    'vitamin_id' => $vitamin,
                 ]);
             }
         }
 
-
-
-
+        // Handle product vitamins (field images)
         if ($request->has('field_image') && !empty($request->file('field_image'))) {
             foreach ($request->file('field_image') as $index => $image) {
-                // Generate a unique filename
                 $field_image = uniqid() . "_" . time() . "_" . $index . '.jpg';
 
-                // Resize and save the image
                 Image::make($image)->resize(800, null, function ($constraint) {
                     $constraint->aspectRatio();
                 })->save("uploads/images/products/$field_image");
 
-                // Retrieve corresponding title and description
                 $product_title = $request->input('field_title')[$index] ?? '';
                 $product_title_ar = $request->input('field_title_ar')[$index] ?? '';
                 $product_description = $request->input('field_description')[$index] ?? '';
                 $product_description_ar = $request->input('field_description_ar')[$index] ?? '';
 
-                // Insert into the database
-                // ProductVitamin::create([
-                //     'product_id'        => $id,
-                //     'title'             => $product_title,
-                //     'title_ar'          => $product_title_ar,
-                //     'description'       => $product_description,
-                //     'description_ar'    => $product_description_ar,
-                //     'image'             => $field_image,
-                // ]);
-
-                $product_vitamin=new ProductVitamin();
-                $product_vitamin->product_id =$product->id;
+                $product_vitamin = new ProductVitamin();
+                $product_vitamin->product_id = $product->id;
                 $product_vitamin->title = $product_title;
                 $product_vitamin->title_ar = $product_title_ar;
                 $product_vitamin->description = $product_description;
                 $product_vitamin->description_ar = $product_description_ar;
                 $product_vitamin->image = $field_image;
                 $product_vitamin->save();
-
             }
         }
-
 
         return redirect()->back()->with('status', __('cp.update'));
     }
 
+    /////
     public function deleteGiftPackaging(Request $request)
     {
         // Validate gift_id

@@ -269,59 +269,59 @@
 						</div>
 							<div class="separator separator-solid my-7"></div>
 
-						<div class="d-flex align-items-center flex-wrap">
-							<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">
-								<span class="mr-4">
-									<i class="flaticon-file-2 icon-2x text-muted font-weight-bold"></i>
-								</span>
-									<div class="d-flex flex-column text-dark-75">
-									<span class="font-weight-bolder font-size-sm">{{__('cp.delivery_cost')}}</span>
-									<span class="font-weight-bolder font-size-h5">
-										{{$order->delivery_cost}}	<span class="text-dark-50 font-weight-bold">{{__('cp.KD')}} </span></span>
-								</div>
-							</div>
-							<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">
-								<span class="mr-4">
-									<i class="fas fa-dollar-sign" style="font-size: 25px;"></i>
-								</span>
-									<div class="d-flex flex-column text-dark-75">
-										<span class="font-weight-bolder font-size-sm">{{__('cp.sub_total')}}</span>
-									<span class="font-weight-bolder font-size-h5">
-										{{$order->sub_total}} <span class="text-dark-50 font-weight-bold">{{__('cp.KD')}} </span></span>
-								</div>
-							</div>
+{{--						<div class="d-flex align-items-center flex-wrap">--}}
+{{--							<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">--}}
+{{--								<span class="mr-4">--}}
+{{--									<i class="flaticon-file-2 icon-2x text-muted font-weight-bold"></i>--}}
+{{--								</span>--}}
+{{--									<div class="d-flex flex-column text-dark-75">--}}
+{{--									<span class="font-weight-bolder font-size-sm">{{__('cp.delivery_cost')}}</span>--}}
+{{--									<span class="font-weight-bolder font-size-h5">--}}
+{{--										{{$order->delivery_cost}}	<span class="text-dark-50 font-weight-bold">{{__('cp.KD')}} </span></span>--}}
+{{--								</div>--}}
+{{--							</div>--}}
+{{--							<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">--}}
+{{--								<span class="mr-4">--}}
+{{--									<i class="fas fa-dollar-sign" style="font-size: 25px;"></i>--}}
+{{--								</span>--}}
+{{--									<div class="d-flex flex-column text-dark-75">--}}
+{{--										<span class="font-weight-bolder font-size-sm">{{__('cp.sub_total')}}</span>--}}
+{{--									<span class="font-weight-bolder font-size-h5">--}}
+{{--										{{$order->sub_total}} <span class="text-dark-50 font-weight-bold">{{__('cp.KD')}} </span></span>--}}
+{{--								</div>--}}
+{{--							</div>--}}
 
-								<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">
-								<span class="mr-4">
-									<i class="fas fa-dollar-sign" style="font-size: 25px;"></i>
-								</span>
-									<div class="d-flex flex-column text-dark-75">
-										<span class="font-weight-bolder font-size-sm">{{__('cp.total')}}</span>
-									<span class="font-weight-bolder font-size-h5">
-										{{$order->total}} <span class="text-dark-50 font-weight-bold">{{__('cp.KD')}} </span></span>
-								</div>
-							</div>
-							<!--<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">-->
-							<!--	<span class="mr-4">-->
-							<!--		<i class="flaticon2-percentage" style="font-size: 25px;"></i>-->
-							<!--	</span>-->
-							<!--		<div class="d-flex flex-column text-dark-75">-->
-							<!--		<span class="font-weight-bolder font-size-sm">{{__('cp.tax')}}</span>-->
-							<!--		<span class="font-weight-bolder font-size-h5">-->
-							<!--		{{$order->tax_percent}} <span class="text-dark-50 font-weight-bold"> % </span></span>-->
-							<!--	</div>-->
-							<!--</div>-->
-							<!--<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">-->
-							<!--	<span class="mr-4">-->
-							<!--		<i class="fas fa-dollar-sign" style="font-size: 25px;"></i>-->
-							<!--	</span>-->
-							<!--		<div class="d-flex flex-column text-dark-75">-->
-							<!--		<span class="font-weight-bolder font-size-sm">{{__('cp.tax')}} {{__('cp.amount')}}</span>-->
-							<!--		<span class="font-weight-bolder font-size-h5">-->
-							<!--		{{$order->tax_amount}} <span class="text-dark-50 font-weight-bold"> {{__('cp.KD')}} </span></span>-->
-							<!--	</div>-->
-							<!--</div>-->
-						</div>
+{{--								<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">--}}
+{{--								<span class="mr-4">--}}
+{{--									<i class="fas fa-dollar-sign" style="font-size: 25px;"></i>--}}
+{{--								</span>--}}
+{{--									<div class="d-flex flex-column text-dark-75">--}}
+{{--										<span class="font-weight-bolder font-size-sm">{{__('cp.total')}}</span>--}}
+{{--									<span class="font-weight-bolder font-size-h5">--}}
+{{--										{{$order->total}} <span class="text-dark-50 font-weight-bold">{{__('cp.KD')}} </span></span>--}}
+{{--								</div>--}}
+{{--							</div>--}}
+{{--							<!--<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">-->--}}
+{{--							<!--	<span class="mr-4">-->--}}
+{{--							<!--		<i class="flaticon2-percentage" style="font-size: 25px;"></i>-->--}}
+{{--							<!--	</span>-->--}}
+{{--							<!--		<div class="d-flex flex-column text-dark-75">-->--}}
+{{--							<!--		<span class="font-weight-bolder font-size-sm">{{__('cp.tax')}}</span>-->--}}
+{{--							<!--		<span class="font-weight-bolder font-size-h5">-->--}}
+{{--							<!--		{{$order->tax_percent}} <span class="text-dark-50 font-weight-bold"> % </span></span>-->--}}
+{{--							<!--	</div>-->--}}
+{{--							<!--</div>-->--}}
+{{--							<!--<div class="d-flex align-items-center flex-lg-fill mr-5 my-1">-->--}}
+{{--							<!--	<span class="mr-4">-->--}}
+{{--							<!--		<i class="fas fa-dollar-sign" style="font-size: 25px;"></i>-->--}}
+{{--							<!--	</span>-->--}}
+{{--							<!--		<div class="d-flex flex-column text-dark-75">-->--}}
+{{--							<!--		<span class="font-weight-bolder font-size-sm">{{__('cp.tax')}} {{__('cp.amount')}}</span>-->--}}
+{{--							<!--		<span class="font-weight-bolder font-size-h5">-->--}}
+{{--							<!--		{{$order->tax_amount}} <span class="text-dark-50 font-weight-bold"> {{__('cp.KD')}} </span></span>-->--}}
+{{--							<!--	</div>-->--}}
+{{--							<!--</div>-->--}}
+{{--						</div>--}}
 
 							<div class="separator separator-solid my-7"></div>
 								<div class="d-flex align-items-center flex-wrap">
@@ -373,7 +373,7 @@
 
 
 
-				{{-- @if(count($products) > 0)
+				 @if(count($products) > 0)
 					<div class="row">
 					<div class="col-lg-12">
 						<div class="card card-custom card-stretch gutter-b">
@@ -405,7 +405,7 @@
 														</span>
 													</div>
 												</td>
-												<td> {{@$one->product->name}} </td>
+												<td> {{@$one->product->name}}--({{$one->variant->name}}) </td>
 												<td> {{@$one->price}}</td>
 												<td> {{@$one->offer_price}}</td>
 												<td> {{@$one->quantity}}</td>
@@ -432,7 +432,7 @@
 						<!--end::Charts Widget 3-->
 					<!--</div>-->
 				</div>
-				@endif --}}
+				@endif
 
 
 				<!--end::Row-->

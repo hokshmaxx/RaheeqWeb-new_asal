@@ -3,7 +3,7 @@
 @endsection
 @section('css')
 
-  
+
 @section('content')
 <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
   <!--begin::Subheader-->
@@ -18,8 +18,8 @@
 
             <div>
                 <div class="btn-group mb-2 m-md-3 mt-md-0 ml-2 ">
-                
-                    
+
+
                 </div>
                 <a  href="{{url(getLocal().'/vender/products/create')}}" class="btn btn-secondary  mr-2 btn-success">
                     <i class="icon-xl la la-plus"></i>
@@ -77,7 +77,7 @@
                                                 <label class="control-label">{{__('cp.age')}}</label>
                                                 <select id="multiple2" class="form-control"
                                                         name="age">
-                                                      
+
                                                             <option value="">{{__('cp.all')}}</option>
                                                         @foreach ($ages as $age)
                                                             <option value="{{$age->id}}">{{$age->name}}</option>
@@ -134,7 +134,7 @@
                           </tr>
                           </thead>
                     <tbody>
-                  
+
                     </tbody>
                   </table>
                       {{-- $items->appends($_GET)->links("pagination::bootstrap-4") --}}
@@ -147,8 +147,8 @@
   </div>
   <!--end::Entry-->
 </div>
-			
- 
+
+
 
 
 @endsection
@@ -186,19 +186,24 @@
                 { data: 'name', name: 'translations.name' ,orderable: false},
                 { data: 'category.name', name: 'category.id',orderable: false},
                 // { data: 'age.name', name: 'age.id',orderable: false},
-                { data: 'sku', name: 'sku'},
-                { data: 'price', name: 'price'},
-                { data: 'discount_price', name: 'discount_price'},
-                { data: 'status', name: 'status' },
+                // { data: 'sku', name: 'sku'},
+                // { data: 'price', name: 'price'},
+                // { data: 'discount_price', name: 'discount_price'},
+            { data: 'variant_sku', name: 'variant_sku' },
+            { data: 'variant_price', name: 'variant_price' },
+            { data: 'variant_discount', name: 'variant_discount' },
+            { data: 'variant_quantity', name: 'variant_quantity' },
+
+            { data: 'status', name: 'status' },
                 { data: 'created_at', name: 'created_at' },
                 {data: 'action', name: 'action', orderable: false},
              ],
       order: [[0, 'desc']]
-   
+
     });
-    
+
     });
- 
+
 
     function delete_adv(id, iss_id, e) {
             e.preventDefault();
@@ -231,4 +236,3 @@
 
 @endsection
 
- 
