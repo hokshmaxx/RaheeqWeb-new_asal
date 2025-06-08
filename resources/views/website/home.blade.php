@@ -496,6 +496,8 @@
 {{--                                                <span>@lang('website.removefromCart')</span>--}}
 {{--                                            </a>--}}
 {{--                                        @endif--}}
+
+{{--                                        //--}}
                                     @else
                                         <div class="soldOut">
                                             <strong>@lang('website.Sold Out')</strong>
