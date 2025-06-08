@@ -11,6 +11,12 @@ return [
     'good' => 'GOOD ',
     'excellent' => 'EXCELLENT ',
     'rates' => 'Rates ',
+    "giftChoose"=> "Gift wrapping options",
+    "EnablegiftChoose"=> "Enable gift wrapping option for this product",
+    "Addanotheroption"=> "Add another option",
+    "Productoptionsbytype"=>"Product options by type",
+
+
     'vendor' => 'Vendor',
     'reviews' => 'Reviews',
     'rating' => 'Rating',
@@ -293,9 +299,11 @@ return [
     'all_component' => 'All Component',
     'land' => 'Landing Page',
     'delete_cancel' => 'delete_cancel',
-    'delete_msg' => 'Delete Msg',
+    'delete_msg' => 'are you sure you want to delete this item ?',
     'delete_done' => 'Delete Done',
     'link' => 'Link',
+    "Previousoptions"=> "Previous options",
+
     'transaction' => 'Transaction',
     'pages' => 'Pages',
     'page' => 'Page',

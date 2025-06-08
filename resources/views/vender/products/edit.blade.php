@@ -283,12 +283,13 @@
 
                             </div>
                             <div class="card-body">
-                                <h3>خيارات التغليف كهدية</h3>
+                                <h3>  {{__('cp.giftChoose')}}</h3>
 
                                 <div class="form-group">
                                     <label>
                                         <input type="checkbox" name="gift_packaging_enabled" value="1" {{ $item->allow_gift_packaging ? 'checked' : '' }}>
-                                        تفعيل خيار التغليف كهدية لهذا المنتج
+                                        {{__('cp.EnablegiftChoose')}}
+
                                     </label>
                                 </div>
 
@@ -298,26 +299,26 @@
                                         <!-- الخيارات الجديدة -->
                                         <div class="form-group gift-option d-flex align-items-center gap-3 mb-3">
                                             <input type="file" name="gift_packaging_images[]" class="form-control" accept="image/*" required>
-                                            <input type="number" name="gift_packaging_prices[]" class="form-control" placeholder="السعر" step="0.01" min="0" required>
+                                            <input type="number" name="gift_packaging_prices[]" class="form-control" placeholder="{{__('cp.price')}}" step="0.01" min="0" required>
                                             <input type="text" name="gift_packaging_titles_ar[]" class="form-control" placeholder="العنوان بالعربية" required>
                                             <input type="text" name="gift_packaging_titles_en[]" class="form-control" placeholder="Title in English" required>
 
-                                            <button type="button" class="btn btn-danger btn-sm remove-option">حذف</button>
+                                            <button type="button" class="btn btn-danger btn-sm remove-option">{{__('cp.delete')}}</button>
                                         </div>
                                     </div>
 
-                                    <button type="button" class="btn btn-success btn-sm" id="addGiftOption">إضافة خيار آخر</button>
+                                    <button type="button" class="btn btn-success btn-sm" id="addGiftOption">{{__('cp.Addanotheroption')}}</button>
 
                                     @if($item->giftPackagings && $item->giftPackagings->count())
                                         <hr>
-                                        <h5 class="mt-3">الخيارات السابقة</h5>
+                                        <h5 class="mt-3">{{__('cp.Previousoptions')}}</h5>
                                         <div class="row" id="existingGiftPackagings">
                                             @foreach($item->giftPackagings as $index => $gift)
                                                 <div class="col-md-3 text-center old-gift" data-id="{{ $gift->id }}">
                                                     <img src="{{ asset( $gift->image) }}" style="width:100%; height:120px; object-fit:cover;" class="mb-2">
                                                     <input type="hidden" name="oldGiftPackagings[{{ $gift->id }}][id]" value="{{ $gift->id }}">
                                                     <input type="number" name="oldGiftPackagings[{{ $gift->id }}][price]" class="form-control mb-1" value="{{ $gift->price }}" step="0.01" min="0">
-                                                    <button type="button" class="btn btn-danger btn-sm remove-old-option" data-id="{{ $gift->id }}">حذف</button>
+                                                    <button type="button" class="btn btn-danger btn-sm remove-old-option" data-id="{{ $gift->id }}">{{__('cp.delete')}}</button>
                                                 </div>
                                             @endforeach
                                         </div>
@@ -328,7 +329,7 @@
                             </div>
 
                             <div class="card-body">
-                                <h3>خيارات المنتج حسب الأنواع</h3>
+                                <h3>{{__('cp.Productoptionsbytype')}}</h3>
 
                                 @foreach ($variantTypes as $variantType)
                                     <div class="border p-3 mb-4">
@@ -341,11 +342,11 @@
                                                     <div class="variant-item d-flex align-items-center gap-3 mb-2">
                                                         <input type="hidden" name="variants[][id]" value="{{ $variant->id }}" required>
                                                         <input type="hidden" name="variants[][variantTypeId]" value="{{ $variantType->id }}" required>
-                                                        <input type="text" name="variants[][name]" class="form-control" placeholder="الاسم" value="{{ $variant->name }}" >
+                                                        <input type="text" name="variants[][name]" class="form-control" placeholder="{{__('cp.name')}}" value="{{ $variant->name }}" >
                                                         <input type="text" name="variants[][sku]" class="form-control" placeholder="SKU" value="{{ $variant->sku }}" >
-                                                        <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="السعر" value="{{ $variant->price }}" >
-                                                        <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder="سعر الخصم" value="{{ $variant->discount_price }}" >
-                                                        <input type="number" name="variants[][quantity]" class="form-control" placeholder="الكمية" value="{{ $variant->quantity }}" >
+                                                        <input type="number" step="0.01" name="variants[][price]" class="form-control" placeholder="{{__('cp.price')}}" value="{{ $variant->price }}" >
+                                                        <input type="number" step="0.01" name="variants[][discount_price]" class="form-control" placeholder=" {{__('cp.discount')}}" value="{{ $variant->discount_price }}" >
+                                                        <input type="number" name="variants[][quantity]" class="form-control" placeholder="{{__('cp.quantity')}}" value="{{ $variant->quantity }}" >
                                                         <button type="button" class="btn btn-danger remove-variant" data-id="{{$variant->id}}">X</button>
                                                     </div>
                                                 @endforeach
@@ -462,7 +463,7 @@
             newOption.className = 'form-group gift-option d-flex align-items-center gap-3 mb-3';
             newOption.innerHTML = `
             <input type="file" name="gift_packaging_images[]" class="form-control" accept="image/*" required>
-            <input type="number" name="gift_packaging_prices[]" class="form-control" placeholder="السعر" step="0.01" min="0" required>
+            <input type="number" name="gift_packaging_prices[]" class="form-control" placeholder="{{__('cp.price')}}" step="0.01" min="0" required>
  <input type="text" name="gift_packaging_titles_ar[]" class="form-control" placeholder="العنوان بالعربية" required>
             <input type="text" name="gift_packaging_titles_en[]" class="form-control" placeholder="Title in English" required>
 
@@ -482,7 +483,7 @@
         $(document).on('click', '.remove-old-option', function () {
             const giftId = $(this).data('id');
 
-            if (confirm('هل أنت متأكد من حذف هذا الخيار؟')) {
+            if (confirm('{{__('cp.delete_msg')}}')) {
                 var requestUrl = '{{ url("vender/delete-gift-packaging") }}';
 
                 console.log('Request URL:', requestUrl);
@@ -498,16 +499,16 @@
                         console.log('Response:', response);
                         if (response.success) {
                             $('.old-gift[data-id="' + giftId + '"]').remove();
-                            alert('تم الحذف بنجاح');
+                            alert('{{__('cp.delete_done')}}');
                         } else {
-                            alert('حدث خطأ أثناء الحذف');
+                            alert('{{__('cp.errors')}}');
                         }
                     },
                     error: function (xhr, status, error) {
                         console.error('Error Status:', status);
                         console.error('Error Message:', error);
                         console.error('Response:', xhr.responseText);
-                        alert('حدث خطأ أثناء الاتصال بالخادم');
+                        alert('{{__('cp.errors')}}');
                     }
                 });
             }
@@ -578,11 +579,11 @@
                     row.classList.add('variant-item', 'd-flex', 'align-items-center', 'gap-3', 'mb-2');
                     row.innerHTML = `
                 <input type="hidden" name="variants[${typeId}][id][${newIndex}]" value="">
-                <input type="text" name="variants[${typeId}][name][${newIndex}]" class="form-control" placeholder="الاسم" required>
+                <input type="text" name="variants[${typeId}][name][${newIndex}]" class="form-control" placeholder="{{__('cp.name')}}" required>
                 <input type="text" name="variants[${typeId}][sku][${newIndex}]" class="form-control" placeholder="SKU" required>
-                <input type="number" step="0.01" name="variants[${typeId}][price][${newIndex}]" class="form-control" placeholder="السعر" required>
-                <input type="number" step="0.01" name="variants[${typeId}][discount_price][${newIndex}]" class="form-control" placeholder="سعر الخصم">
-                <input type="number" name="variants[${typeId}][quantity][${newIndex}]" class="form-control" placeholder="الكمية" required>
+                <input type="number" step="0.01" name="variants[${typeId}][price][${newIndex}]" class="form-control" placeholder="{{__('cp.price')}}" required>
+                <input type="number" step="0.01" name="variants[${typeId}][discount_price][${newIndex}]" class="form-control" placeholder="{{__('cp.discount')}}">
+                <input type="number" name="variants[${typeId}][quantity][${newIndex}]" class="form-control" placeholder="{{__('cp.quantity')}}" required>
                 <button type="button" class="btn btn-danger remove-variant-new">X</button>
             `;
                     container.appendChild(row);
@@ -593,7 +594,7 @@
             $(document).on('click', '.remove-variant', function (e) {
                 const variantId = $(this).data('id');
 
-                if (confirm('هل أنت متأكد من حذف هذا الخيار؟')) {
+                if (confirm('{{__('cp.delete_msg')}}')) {
                     var requestUrl = '{{ url("vender/remove-varint") }}';
 
                     $.ajax({
@@ -606,14 +607,14 @@
                         success: function (response) {
                             if (response.success) {
                                 e.target.closest('.variant-item').remove();
-                                alert('تم الحذف بنجاح');
+                                alert('{{__('cp.delete_done')}}');
                             } else {
-                                alert('حدث خطأ أثناء الحذف');
+                                alert('{{__('cp.errors')}}');
                             }
                         },
                         error: function (xhr, status, error) {
                             console.error('Error:', error);
-                            alert('حدث خطأ أثناء الاتصال بالخادم');
+                            alert('{{__('cp.errors')}}');
                         }
                     });
                 }

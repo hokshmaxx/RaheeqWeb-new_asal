@@ -10,6 +10,13 @@ return [
     'rates' => 'التقيمات ',
     'book' => 'شكرا لك ، تم الطلب بنجاح ',
     'store_data' => 'بيانات متجر',
+    "giftChoose"=> "خيارات التغليف كهدية",
+    "EnablegiftChoose"=> "تفعيل خيار التغليف كهدية لهذا المنتج",
+    "Addanotheroption"=> "إضافة خيار آخر",
+    "Productoptionsbytype"=>"خيارات المنتج حسب الأنواع",
+
+
+
     'reject' => 'رفض',
     'vendor' => 'البائع',
     'reviews' => 'المراجعات',
@@ -412,9 +419,11 @@ return [
     'contact' => 'تواصل معنا',
     'all_component' => 'كافة العناصر',
     'delete_cancel' => 'الغاء العملية',
-    'delete_msg' => 'رسالة حذف',
+    'delete_msg' => '   هل انت متاكد من الحذف',
     'delete_done' => 'تم الحذف',
     'link' => 'رابط',
+    "Previousoptions"=> "الخيارات السابقة",
+
     'transaction' => 'الخصومات',
     'pages' => 'صفحات',
     'page' => 'صفحة',
