@@ -245,9 +245,9 @@
 {{--                                    </div>--}}
 {{--                                </div>--}}
 {{--                            @else--}}
-{{--                                <div class="soldOut">--}}
-{{--                                    <h1>Sold Out</h1>--}}
-{{--                                </div>--}}
+                                <div class="soldOut" style="display: none" id="soldOutId">
+                                    <h1>Sold Out</h1>
+                                </div>
 {{--                            @endif--}}
 {{--                        </div>--}}
 {{--                        <button class="removeFromCart" data-id="{{$product->id}}"> Remove from Cart </button>--}}
@@ -373,6 +373,9 @@
             // 3. Get price data from the selected variant
             const price = parseFloat(element.dataset.price) || 0;
             const discountPrice = parseFloat(element.dataset.discountPrice) || 0;
+            const Quantity = parseFloat(element.dataset.quantity) || 0;
+            console.log(Quantity);
+
             const hasDiscount = discountPrice > 0 && discountPrice < price;
 
             // 4. Update price display
@@ -387,8 +390,24 @@
                 finalPriceEl.textContent = `${price.toFixed(2)} KWD`;
             }
 
+
+
             // 5. Update Add to Cart button
             const addToCartBtn = document.getElementById('addToCartButton');
+            const soldOutBtn = document.getElementById('soldOutId');
+            if(Quantity==0){
+                addToCartBtn.style.display = 'none';
+                soldOutBtn.style.display = 'block';
+
+
+
+                return;
+            }else {
+                addToCartBtn.style.display = 'block';
+                soldOutBtn.style.display = 'none';
+
+
+            }
             if (addToCartBtn) {
                 addToCartBtn.dataset.variantId = element.dataset.variantId;
                 addToCartBtn.disabled = false;

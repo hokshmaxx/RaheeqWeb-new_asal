@@ -1218,6 +1218,7 @@ class CartController extends Controller
         $final_total = $final_total - $discount;
 
         if (!auth()->check()) {
+            \Log::info('dsadsad',['xcxcx'=>$request->get('password')]);
             $newUser = new User();
             $newUser->password = bcrypt($request->get('password'));
             $newUser->email = $request->email;

@@ -267,12 +267,12 @@
                 if(response.code == 200){
                     // Redirect::away($url)
                     // location.href= response.order.paymentURL;
-                     swal({
-                        title: "{{__('website.ok')}}",
-                        icon: "success",
-                         button: "{{__('website.oky')}}",
+                    {{-- swal({--}}
+                    {{--    title: "{{__('website.ok')}}",--}}
+                    {{--    icon: "success",--}}
+                    {{--     button: "{{__('website.oky')}}",--}}
 
-                     });
+                    {{-- });--}}
 
                      location.href='{{route('myOrders')}}';
                     // // $(".address_form").find("input, textarea ,select").val("");
@@ -287,6 +287,7 @@
                             button: "{{__('website.oky')}}",
                             dangerMode: true,
                         });
+
                          $('.send_form').html('<span>{{__('website.Checkout')}}</span>')
                          $(".send_form").attr("disabled", false);
                 } else{

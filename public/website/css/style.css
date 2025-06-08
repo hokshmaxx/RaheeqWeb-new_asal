@@ -1299,9 +1299,12 @@ footer {
 }
 .soldOut {
     text-align: center;
-    margin-top: 15px;
-    height: 45px;
+    /*margin-top: 15px;*/
+    /*height: 45px;*/
     display: flex;
+    color: var(--main-color);
+
+    padding: 10px 10px;
     align-items: center;
     border-radius: 10px;
     justify-content: center;

@@ -487,15 +487,15 @@
 
                                 <div>
                                     @if($variant && $variant->quantity > 0)
-                                        @if($product->is_cart == 0)
+{{--                                        @if($product->is_cart == 0)--}}
                                             <a class="btn-site addToCart" data-id="{{ $product->id }} "  data-variant-id="{{ $product->variants->first()->id??0 }}">
                                                 <span>@lang('website.addToCart')</span>
                                             </a>
-                                        @else
-                                            <a class="btn-site removeFromCart" data-id="{{ $product->id }}">
-                                                <span>@lang('website.removefromCart')</span>
-                                            </a>
-                                        @endif
+{{--                                        @else--}}
+{{--                                            <a class="btn-site removeFromCart" data-id="{{ $product->id }}">--}}
+{{--                                                <span>@lang('website.removefromCart')</span>--}}
+{{--                                            </a>--}}
+{{--                                        @endif--}}
                                     @else
                                         <div class="soldOut">
                                             <strong>@lang('website.Sold Out')</strong>
