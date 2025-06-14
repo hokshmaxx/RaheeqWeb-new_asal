@@ -12,18 +12,18 @@ class Banner extends Model
     use HasFactory ,SoftDeletes ,Translatable;
 
     protected $guarded = [];
-    public $translatedAttributes = ['title','description','image'];
+    public $translatedAttributes = ['title','description','image','locale'];
     protected $hidden = ['updated_at', 'deleted_at','translations'];
     public function getImageAttribute($value)
     {
         if ($value) {
             if (filter_var($value, FILTER_VALIDATE_URL) === FALSE) {
-                return url('uploads/images/banners/' . $value);
+                return asset('uploads/images/banners/' . $value);
             } else {
                 return $value;
             }
         } else {
-            return url('uploads/images/default.png');
+            return asset('uploads/images/default.png');
         }
     }
     public function scopeFilter($query)

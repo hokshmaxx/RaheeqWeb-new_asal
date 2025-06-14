@@ -330,7 +330,7 @@ return [
     'Count' => 'العدد',
     'Sold Out' => 'نفذ من المخزون',
     'Similar Products' => 'منتجات مشابهة',
-    'Select Area' => 'اختر الحي',
+    'Select Area' => 'اختر المدينه',
     'Forgot PASSWORD' => 'نسيت كلمة المرور',
     'password_confirmation' => 'تأكيد كلمة المرور',
     'Search here in Products' => 'ابحث هنا المنتجات ...',
@@ -343,6 +343,6 @@ return [
      'vender_request' =>'طلب',
      'house_building' =>'بناء منزل',
      'block' => 'حاجز ',
-     'delivery_note' => 'Write Your Delivery Note',
+     'delivery_note' => 'ملاحظات التوصيل',
 
  ];

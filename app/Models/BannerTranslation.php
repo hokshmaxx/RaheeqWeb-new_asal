@@ -10,10 +10,18 @@ class BannerTranslation extends Model
 {
     use HasFactory ,SoftDeletes;
     protected $guarded = [];
-    
-    
-       public function getImageAttribute($value)
+
+
+    public function getImageAttribute($value)
     {
-        return url('uploads/images/banners/' . $value);
+        if ($value) {
+            if (!filter_var($value, FILTER_VALIDATE_URL)) {
+                return asset('uploads/images/banners/' . $value);
+            } else {
+                return $value;
+            }
+        } else {
+            return asset('uploads/images/default.png');
+        }
     }
 }

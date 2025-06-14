@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\WEB\Site;
 
+use App;
 use App\Models\Cart;
 use App\Models\Category;
 use App\Models\LandingPage;
@@ -54,13 +55,26 @@ class HomeController extends Controller
       $categories=Category::where('status','active')->get();
       $venders = Venders::where('status','active')->get();
       $products=Product::where('status','active')->orderBy('id','desc')->take(6)->get();
-      $banners=Banner::where('status','active')->orderBy('id','desc')->get();
+
+        $currentLocale = App::getLocale();
+
+        $banners = Banner::where('status', 'active')
+            ->join('banner_translations', function($join) use ($currentLocale) {
+                $join->on('banners.id', '=', 'banner_translations.banner_id')
+                    ->where('banner_translations.locale', '=', $currentLocale);
+            })
+            ->orderBy('banner_translations.locale', 'asc') // or 'desc'
+            ->select('banners.*') // important to avoid overwriting columns
+            ->get();
+
         return view('website.home',[
             'categories'=> $categories,
             'products'=> $products,
             'venders'=>$venders,
             'banners'=> $banners,
             ]);
+
+
     }
     public function prouctDetails (Request $request,$id,$slug)
     {

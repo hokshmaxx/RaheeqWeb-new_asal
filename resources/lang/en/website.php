@@ -305,7 +305,7 @@ return [
     'Count' => 'Count',
     'Sold Out' => 'Sold Out',
     'Similar Products' => 'Similar Products',
-    'Select Area' => 'Select Area',
+    'Select Area' => 'Select City',
     'Search here in Products' => 'Search here in Products ...',
      'resetPassword' => 'Reset Password link sent to uor email',
     'Time of receipt' => 'Time of receipt',

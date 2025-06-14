@@ -2,11 +2,11 @@
 @section('companyContent')
 	<div class="flex-row-fluid ml-lg-8">
             <div class="card card-custom gutter-b example example-compact">
-                
+
                         <div class="card-header">
                             <h3 class="card-title">{{__('cp.edit')}}</h3>
                         </div>
-                            
+
                     <form method="post" action="{{url(app()->getLocale().'/admin/vender/'.$item->id)}}"
                           enctype="multipart/form-data" class="form-horizontal" role="form" id="form">
                         {{ csrf_field() }}
@@ -15,9 +15,16 @@
                        <div class="row col-sm-12">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>{{__('cp.name')}}</label>
+                                    <label>{{__('cp.name_en')}}</label>
                                     <input type="text" class="form-control form-control-solid"
-                                            name="name" value="{{$item->name}}" required/>
+                                            name="name_en" value="{{$item->name_en}}" required/>
+                                </div>
+                            </div>
+                           <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>{{__('cp.name_ar')}}</label>
+                                    <input type="text" class="form-control form-control-solid"
+                                            name="name_ar" value="{{$item->name_ar}}" required/>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -61,7 +68,7 @@
                        <!--end::Toolbar-->
                         <button type="submit" id="submitForm" style="display:none"></button>
                     </form>
-                
+
             </div>
     </div>
 @endsection

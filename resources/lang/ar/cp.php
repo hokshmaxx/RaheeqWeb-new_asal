@@ -733,8 +733,18 @@ return [
      'is_alowed_cart'=>'ايقاف عملية الاضافة للسلة',
      'system_maintenance'=>'صيانة النظام',
      'system_in_maintenance'=>'التطبيق في وضع الصيانة',
+    'ProductDescription'=>'وصف المنتج',
+    'CustomerReviews'=>'اراء العملاء',
      'seo_setting' => 'اعدادات Seo ',
-     'export' => 'تصدير',
+    'SoldOut'=>'نفذ من المخزون',
+    'local'=>'رمز اللغه',
+    'AddtoFavorites'=>'اضف اللي المفضله',
+    'RemovefromFavorites'=>' حذف من المفضله',
+
+
+
+
+    'export' => 'تصدير',
      'countUsers' => 'عدد المستخدمين',
      'total_sales' => 'مجموع المبيعات',
      'countOrder' => 'عدد الطلبات',
@@ -748,7 +758,7 @@ return [
      'countOrder' => 'عدد الطلبات',
      'orders_total' => 'مجموع الطلبات',
      'orders_count' => 'عدد الطلبات',
-     'welcome you in ASAL' => 'welcome you in ASAL',
+     'welcome you in ASAL' => 'مرحبا بك برحيق',
      'click here' => 'اضغط هنا',
      'If you are having trouble clicking button, copy and paste the URL below into your web browser:' => 'إذا كنت تواجه مشكلة في النقر على "الزر" ، فانسخ الرابط أدناه والصقه في متصفح الويب:',
      'You are receiving this email because we received a password reset request for your account.' => 'أنت تتلقى هذا البريد الإلكتروني لأننا تلقينا طلب إعادة تعيين كلمة المرور لحسابك.',

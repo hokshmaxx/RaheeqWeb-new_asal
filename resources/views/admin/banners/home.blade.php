@@ -36,12 +36,12 @@
                     <i class="icon-xl la la-check"></i>
                     <span>{{__('cp.activation')}}</span>
                 </button>
-        
+
                 <button type="button" class="btn btn-secondary event" href="#cancel_activation" role="button"
                         data-toggle="modal">
                     <i class="icon-xl la la-ban"></i>
                     <span>{{__('cp.cancel_activation')}}</span>
-                </button> 
+                </button>
 {{--                        <button type="button" class="btn btn-secondary" href="#deleteAll" role="button" data-toggle="modal">--}}
 {{--                            <i class="flaticon-delete"></i>--}}
 {{--                            <span>{{__('cp.delete')}}</span>--}}
@@ -114,7 +114,7 @@
 
                         </div>
                         <div class="table-responsive">
-                         
+
                             <table class="table table-bordered table-hover table-checkable"  style="margin-top: 13px !important" id="kt_datatable1">
                                <thead>
                                 <tr>
@@ -126,7 +126,7 @@
                                         </div>
                                         </th>
 
-                                    <th class="wd-5p notExport"> {{ucwords(__('cp.image'))}}</th> 
+                                    <th class="wd-5p notExport"> {{ucwords(__('cp.image'))}}</th>
                                     <th class="wd-25p"> {{ucwords(__('cp.link'))}}</th>
                                     <th class="wd-10p"> {{ucwords(__('cp.status'))}}</th>
                                     <th class="wd-10p"> {{ucwords(__('cp.created'))}}</th>
@@ -136,7 +136,7 @@
                                <tbody>
                                </tbody>
                            </table>
-                           
+
                         </div>
                     </div>
                 </div>
@@ -156,7 +156,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    
+
                     <div class="add-employee-form">
                         <form class="create_form" method="post" action="{{url(app()->getLocale().'/admin/banners')}}" enctype="multipart/form-data">
                             @csrf
@@ -164,8 +164,17 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label>{{__('cp.link')}}</label>
-                                        <input type="text" class="form-control form-control-solid" name="link" 
+                                        <input type="text" class="form-control form-control-solid" name="link"
                                          value="{{ old('link') }}" required />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{__('cp.local')}}</label>
+                                        <input type="text" class="form-control form-control-solid" name="local"
+                                         value="{{ old('local') }}" required />
                                     </div>
                                 </div>
                             </div>
@@ -189,9 +198,9 @@
                                     </div>
                                 </div>
                             </div>
-    
-                         
-                            
+
+
+
                         </form>
                     </div>
                 </div>
@@ -202,7 +211,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="modal fade edit_modal" id="basicModal" tabindex="-1" role="dialog" aria-labelledby="staticBackdrop" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
             <div class="modal-content">
@@ -213,9 +222,9 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    
+
                     <div class="add-employee-form edit_form_data">
-                       
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -225,7 +234,7 @@
             </div>
         </div>
     </div>
-    
+
 @endsection
 @section('js')
 <script>
@@ -247,7 +256,7 @@
         "order": [['id', "desc" ]],
         dom: '<"dt-top-container"<B><"dt-center-in-div"l><f>r>t<"dt-filter-spacer"><ip>',
         buttons: table_btns,
-        
+
         "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
         searching: true,
         "oLanguage": {
@@ -267,12 +276,12 @@
                 {data: 'action', name: 'action', orderable: false},
              ],
       order: [[0, 'desc']]
-   
+
     });
-    
+
     });
     var preventSubmit = false;
- 
+
 $(document).on('click','.create_send_form',function (e) {
             e.preventDefault();
             // data = $('.create_form').serializeArray();
@@ -288,7 +297,7 @@ $(document).on('click','.create_send_form',function (e) {
               if(preventSubmit){
                   preventSubmit = false;
                   return false;
-                  
+
               }
       // $('.contact_us').html('<i class="fa fa-spinner fa-spin" style="font-size: 20px;"></i>'+' '+'{{__('website.send')}}');
          $('.create_send_form').html('<i class="fa fa-spinner fa-spin" style="font-size: 20px;"></i>')
@@ -296,8 +305,8 @@ $(document).on('click','.create_send_form',function (e) {
         var ele = $(this);
         var id = $(this).data("id");
         $.ajax({
-            url: '{{url(app()->getLocale().'/admin/banners')}}', 
-            type: "post", 
+            url: '{{url(app()->getLocale().'/admin/banners')}}',
+            type: "post",
             data: formData,
             processData: false,
             contentType: false,
@@ -317,7 +326,7 @@ $(document).on('click','.create_send_form',function (e) {
                     $('.create_send_form').html('{{__('cp.add')}}')
                     $(".create_send_form").attr("disabled", false);
                     $('#editImage').attr('src', '{{url(admin_assets('images/ChoosePhoto.png'))}}');
-                }else if(response.validator !=null){    
+                }else if(response.validator !=null){
                             swal({
                             text: response.validator,
                             button: "{{__('website.oky')}}",
@@ -328,24 +337,24 @@ $(document).on('click','.create_send_form',function (e) {
                 } else{
                     swal(response.message)
                 }
-            } 
-            
+            }
+
         });
     });
- 
+
 $(document).on('click','.edit_item_btn',function (e) {
        e.preventDefault();
        var id = $(this).data("id");
         $.ajax({
-            url: '{{url(app()->getLocale().'/admin/banners')}}'+'/'+id+'/edit', 
-            type: "get", 
+            url: '{{url(app()->getLocale().'/admin/banners')}}'+'/'+id+'/edit',
+            type: "get",
             success: function (response) {
             // return response;
                 if(response.code ==300){
                 //    jQuery.noConflict();
                 $('.edit_form_data').html(response.html);
                 $('.edit_modal').modal('show');
-                }else if(response.validator !=null){    
+                }else if(response.validator !=null){
                             swal({
                             text: response.validator,
                             button: "{{__('website.oky')}}",
@@ -355,8 +364,8 @@ $(document).on('click','.edit_item_btn',function (e) {
                 } else{
                     swal(response.message)
                 }
-            } 
-            
+            }
+
         });
     });
 
@@ -378,7 +387,7 @@ $(document).on('click','.edit_item_btn',function (e) {
               if(preventSubmit){
                   preventSubmit = false;
                   return false;
-                  
+
               }
         $('.edit_send_form').html('<i class="fa fa-spinner fa-spin" style="font-size: 20px;"></i>')
         $(".edit_send_form").attr("disabled", true);
@@ -392,8 +401,8 @@ $(document).on('click','.edit_item_btn',function (e) {
         });
         $.ajax({
             headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
-            url: '{{url(app()->getLocale().'/admin/banners')}}'+'/'+item_id, 
-            type: "post", 
+            url: '{{url(app()->getLocale().'/admin/banners')}}'+'/'+item_id,
+            type: "post",
             data: editFormData,
             processData: false,
             contentType: false,
@@ -409,7 +418,7 @@ $(document).on('click','.edit_item_btn',function (e) {
                     $('.edit_modal').modal('hide');
                     $('#kt_datatable1').DataTable().ajax.reload();
                     //$('input[name="_token"]') .val('{{ csrf_token() }}');
-                 }else if(response.validator !=null){    
+                 }else if(response.validator !=null){
                             swal({
                             text: response.validator,
                             button: "{{__('website.oky')}}",
@@ -422,8 +431,8 @@ $(document).on('click','.edit_item_btn',function (e) {
                     $(".edit_send_form").attr("disabled", false);
                     swal('error')
                 }
-            } 
-            
+            }
+
         });
     });
 

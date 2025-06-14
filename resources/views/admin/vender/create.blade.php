@@ -12,7 +12,7 @@
 @endsection
 @section('content')
 
-					
+
         <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
             <!--begin::Subheader-->
             <div class="subheader py-2 py-lg-4 subheader-solid" id="kt_subheader">
@@ -48,45 +48,52 @@
 
                             <div class="card-body">
                                 <div class="row">
-                           
+
                                       <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="name">{{__('cp.name')}}</label>
-                                            <input type="text" class="form-control form-control-solid" name="name" 
-                                                value="{{ old('name') }}" id="name" required />
+                                            <label for="name_en">{{__('cp.name_en')}}</label>
+                                            <input type="text" class="form-control form-control-solid" name="name_en"
+                                                value="{{ old('name_en') }}" id="name_en" required />
                                         </div>
                                        </div>
-                                
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="name_ar">{{__('cp.name_ar')}}</label>
+                                            <input type="text" class="form-control form-control-solid" name="name_ar"
+                                                value="{{ old('name_ar') }}" id="name_ar" required />
+                                        </div>
+                                       </div>
+
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="email">{{__('cp.email')}}</label>
-                                            <input type="email" class="form-control form-control-solid" name="email" 
+                                            <input type="email" class="form-control form-control-solid" name="email"
                                                 value="{{ old('email') }}" id="email" required />
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="mobile">{{__('cp.mobile')}}</label>
-                                            <input type="mobile" onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" class="form-control form-control-solid" name="mobile" 
+                                            <input type="mobile" onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" class="form-control form-control-solid" name="mobile"
                                                 value="{{ old('mobile') }}" id="mobile" required />
                                         </div>
                                     </div>
                                 </div>
-          
+
                                 <div class="row">
                                   <div class="col-md-6">
                                       <div class="form-group">
                                           <label for="password">{{__('cp.password')}}</label>
-                                          <input type="password" class="form-control form-control-solid" name="password" 
+                                          <input type="password" class="form-control form-control-solid" name="password"
                                               value="{{ old('password') }}" id="password" required />
                                       </div>
                                   </div>
                                   <div class="col-md-6">
                                       <div class="form-group">
                                           <label for="confirm_password">{{__('cp.confirm_password')}}</label>
-                                          <input type="password" class="form-control form-control-solid" name="confirm_password" 
+                                          <input type="password" class="form-control form-control-solid" name="confirm_password"
                                               value="{{ old('confirm_password') }}" id="confirm_password" required />
                                       </div>
                                   </div>
@@ -115,7 +122,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>  
+                            </div>
 
 
                             <button type="submit" id="submitForm" style="display:none"></button>
@@ -127,8 +134,8 @@
             </div>
             <!--end::Entry-->
         </div>
-				
-					
+
+
 @endsection
 @section('js')
 <script>
@@ -151,7 +158,7 @@ $(document).on('change','.baner_type',function (e) {
        $("#external").hide(200);
        $("#internal").show(200);
     }
-}); 
+});
 
     $(document).on('change','.baner_type',function (e) {
     var ele = $(this);

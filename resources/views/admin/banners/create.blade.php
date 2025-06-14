@@ -12,7 +12,7 @@
 @endsection
 @section('content')
 
-					
+
         <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
             <!--begin::Subheader-->
             <div class="subheader py-2 py-lg-4 subheader-solid" id="kt_subheader">
@@ -58,9 +58,9 @@
                                     @endforeach
                                 </div>
                             </div>
- 
 
-                            
+
+
                             <div class="card-body">
                                    <div class="row">
                                       <div class="col-md-6" id="internal">
@@ -71,7 +71,7 @@
                                                       @foreach ($categories as $category)
                                                       <option value="{{$category->id}}">{{$category->name}}</option>
                                                       @endforeach
-                                                       
+
                                                 </select>
                                             </div>
                                        </div>
@@ -81,11 +81,11 @@
                                                   <input type="link" class="form-control form-control-solid" name="link" value="{{ old('link') }}"   >
                                             </div>
                                        </div>
-                                     
-                                 </div>
-                                </div>  
 
-                            
+                                 </div>
+                                </div>
+
+
                             <div class="card-body">
                                 <div class="card-header">
                                 <h3 class="card-title">{{__('cp.image')}}</h3>
@@ -113,7 +113,7 @@
 
 
                                 </div>
-                            </div>  
+                            </div>
 
 
                             <button type="submit" id="submitForm" style="display:none"></button>
@@ -125,8 +125,8 @@
             </div>
             <!--end::Entry-->
         </div>
-				
-					
+
+
 @endsection
 @section('js')
 <script>
@@ -149,7 +149,7 @@ $(document).on('change','.baner_type',function (e) {
        $("#external").hide(200);
        $("#internal").show(200);
     }
-}); 
+});
 
     $(document).on('change','.baner_type',function (e) {
     var ele = $(this);

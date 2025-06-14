@@ -29,7 +29,7 @@
                             </div>
                         </div>
                         @endforeach
- 
+
                     </div>
                     <div class="pric-order">
                         <div class="data-order">
@@ -61,21 +61,21 @@
                             <p>@lang('website.address_name')  :  {{$item->address_name}} </p>
                             <p>@lang('website.area')  :  {{@$item->area->name}}</p>
                             <p>@lang('website.street')  :  {{$item->street}}</p>
-                            
+
                         </div>
                     </div>
-                    <div class="sec-right">
-                        <ul>
-                            <li><i class="fa fa-calendar"></i>@lang('website.Date of receipt')  :  <span>{{$item->availabile_date}}</span></li>
-                            <li><i class="fa fa-clock"></i>@lang('website.Time of receipt')  :  <span>{{$item->availabile_time}}</span></li>
-                        </ul>
-                    </div>
+{{--                    <div class="sec-right">--}}
+{{--                        <ul>--}}
+{{--                            <li><i class="fa fa-calendar"></i>@lang('website.Date of receipt')  :  <span>{{$item->availabile_date}}</span></li>--}}
+{{--                            <li><i class="fa fa-clock"></i>@lang('website.Time of receipt')  :  <span>{{$item->availabile_time}}</span></li>--}}
+{{--                        </ul>--}}
+{{--                    </div>--}}
                 </div>
             </div>
 		</section>
 @endsection
 
 @section('script')
- 
+
 @endsection
 

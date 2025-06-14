@@ -45,31 +45,31 @@ class VenderController extends Controller
             'settings' => $this->settings,
 
         ]);
-        
+
          $route=Route::currentRouteAction();
-         $route_name = substr($route, strpos($route, "@") + 1);   
+         $route_name = substr($route, strpos($route, "@") + 1);
          $this->middleware(function ($request, $next) use($route_name){
          if(can('Vender')){
-            return $next($request);  
+            return $next($request);
          }
           if($route_name== 'index' ){
              if(can(['Vender-show' , 'Vender-create' , 'Vender-edit' , 'Vender-delete'])){
-                 return $next($request);  
+                 return $next($request);
              }
           }elseif($route_name== 'create' || $route_name== 'store'){
               if(can('Vender-create')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }elseif($route_name== 'edit' || $route_name== 'update'){
               if(can('Vender-edit')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }elseif($route_name== 'destroy' || $route_name== 'delete'){
               if(can('Vender-delete')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }else{
-              return $next($request);  
+              return $next($request);
           }
           if($request->ajax()){
             $message = __('cp.you_dont_have_premession');
@@ -84,11 +84,14 @@ class VenderController extends Controller
     public function index(Request $request) {
         $items = venders::query()->orderBy('id','desc');
 
-        if ($request->has('name')) {
-            if ($request->get('name') != null)
-                $items->where('name',$request->get('name'));
+        if ($request->has('name_en')) {
+            if ($request->get('name_en') != null)
+                $items->where('name_en',$request->get('name_en'));
+        } if ($request->has('name_ar')) {
+            if ($request->get('name_ar') != null)
+                $items->where('name_ar',$request->get('name_ar'));
         }
- 
+
         if ($request->has('email')) {
             if ($request->get('email') != null)
                 $items->where('email',$request->get('email'));
@@ -104,7 +107,7 @@ class VenderController extends Controller
         }
 
         if ($request->ajax()) {
-           
+
             return Datatables::of($items->select('*'))
             ->editColumn('status',function($row){
                 $btn =view('admin.settings.status_lable')->with(['row'=>$row])->render();
@@ -145,7 +148,8 @@ class VenderController extends Controller
 
         $validator = Validator::make($request->all(), [
            // 'image_profile' => 'required|image|mimes:jpeg,jpg,png',
-            'name' => 'required',
+            'name_en' => 'required',
+            'name_ar' => 'required',
             'email' => 'required|email|unique:venders',
             'mobile' => 'required|unique:venders|digits_between:8,12',
             'password' => 'required|min:6',
@@ -158,7 +162,8 @@ class VenderController extends Controller
 
         $newUser = new Venders();
         $newUser->email = $request->email;
-        $newUser->name = $request->name;
+        $newUser->name_en = $request->name_en;
+        $newUser->name_ar = $request->name_ar;
         $newUser->password = bcrypt($request->password);
         $newUser->mobile = $request->mobile;
         $newUser->status= 'not_active';
@@ -181,27 +186,27 @@ class VenderController extends Controller
         $blade_data = [
             'email' => $request->email,
             'mobile'=>$request->mobile,
-            'name'=>$request->name,
+            'name'=>$request->name_en,
             'password'=>$request->password,
         ];
-                       
-      
+
+
 
         /**
          * mail change which is not working ...
          */
 
-         $email_data = [            
-            'from' => env('MAIL_FROM_ADDRESS'),
-            'fromName' => env('MAIL_FROM_NAME'),
-            'to' => [$request->email]];
-        
-            $sendmail =  Mail::send('emails.Vendor_verified', $blade_data, function ($message) use ($email_data, $subject) {
-                $message->to($email_data['to'])
-                    ->subject($subject)
-                    ->replyTo($email_data['from'], $email_data['fromName'])
-                    ->from($email_data['from'],$email_data['fromName']);
-            });
+//         $email_data = [
+//            'from' => env('MAIL_FROM_ADDRESS'),
+//            'fromName' => env('MAIL_FROM_NAME'),
+//            'to' => [$request->email]];
+//
+//            $sendmail =  Mail::send('emails.Vendor_verified', $blade_data, function ($message) use ($email_data, $subject) {
+//                $message->to($email_data['to'])
+//                    ->subject($subject)
+//                    ->replyTo($email_data['from'], $email_data['fromName'])
+//                    ->from($email_data['from'],$email_data['fromName']);
+//            });
 
         return redirect()->back()->with('status', __('cp.create'));
 
@@ -224,7 +229,8 @@ class VenderController extends Controller
     {
         $user= Venders::findOrFail($id);
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
+            'name_en' => 'required',
+            'name_ar' => 'required',
             'email'=>'required|email|unique:users,email,'.$user->id,
             'mobile'=>'required|digits_between:8,12|unique:users,mobile,'.$user->id,
         ]);
@@ -233,7 +239,8 @@ class VenderController extends Controller
         }
 
 
-        $user->name = $request->name;
+        $user->name_en = $request->name_en;
+        $user->name_ar= $request->name_ar;
         $user->mobile = $request->mobile;
         $user->email = $request->email;
         if ($request->hasFile('image')) {
@@ -294,9 +301,9 @@ class VenderController extends Controller
             // });
         }
         catch(Exception $e) {
-            // do any thing  
+            // do any thing
         }
-        
+
         return redirect()->back()->with('status', __('cp.update'));
     }
 
@@ -313,33 +320,33 @@ class VenderController extends Controller
         return "fail";
     }
 
-   
+
 //     public function addresses(Request $request , $id)
 //     {
 //         $item = User::findOrFail($id);
-    
+
 //         $addresses = UserAddress::query();
 //           if ($request->has('area_id')) {
 //             if ($request->get('area_id') != null)
 //                 $addresses->where('area_id', $request->get('area_id'));
 //         }
-        
-      
+
+
 //           if ($request->has('street')) {
 //             if ($request->get('street') != null)
 //                 $addresses->where('street', $request->get('street'));
 //         }
-        
- 
+
+
 //             $addresses = $addresses->where('user_id',$id)->orderBy('id','desc')->paginate($this->settings->paginate);
 
 //         return view('admin.users.addresses.home',[
 //             'item'=>$item ,
 //             'addresses'=>$addresses ,
-               
+
 //         ]);
 //     }
-    
+
 //       public function createAddress($id)
 //     {
 //         $item = User::findOrFail($id);
@@ -372,7 +379,7 @@ class VenderController extends Controller
 
 //          return redirect()->back()->with('status', __('cp.create'));
 //     }
-    
+
 //          public function editAddress($id, $address)
 //     {
 //         $item = User::findOrFail($id);
@@ -384,7 +391,7 @@ class VenderController extends Controller
 //             'areas'=>$areas,
 //         ]);
 //     }
-    
+
 //          public function updateAddress(Request $request ,$id,$address)
 //     {
 //          $validator = Validator::make($request->all(), [
@@ -395,7 +402,7 @@ class VenderController extends Controller
 //         if ($validator->fails()) {
 //             return redirect()->back()->withErrors($validator)->withInput();
 //         }
-        
+
 //        $item = UserAddress::findOrFail($address);
 //        $item->address_name= $request->name;
 //        $item->street= $request->street;
@@ -405,16 +412,16 @@ class VenderController extends Controller
 //        // $item->latitude= $request->latitude;
 //        // $item->longitude= $request->longitude;
 //         $item->save();
-            
+
 //               return redirect()->back()->with('status', __('cp.update'));
 //     }
-    
+
 //       public function deleteAddress($id)
 //     {
 //          UserAddress::findOrFail($id)->delete();
 //          return 'success';
 //     }
-   
+
 
 //       public function createNotification($id)
 //     {
@@ -543,14 +550,14 @@ class VenderController extends Controller
 //         }
 
 //     }
- 
+
 
     public function exportvender(Request $request)  {
         return Excel::download(new UsersExport($request), 'venders.xlsx');
     }
 
 
-    // Vender Unverifyed 
+    // Vender Unverifyed
 
     public function unverifiedVender(Request $request) {
         $items = venders::query()->where('status','not_active')->orderBy('id','desc');
@@ -559,7 +566,7 @@ class VenderController extends Controller
             if ($request->get('name') != null)
                 $items->where('name',$request->get('name'));
         }
- 
+
         if ($request->has('email')) {
             if ($request->get('email') != null)
                 $items->where('email',$request->get('email'));
@@ -574,9 +581,9 @@ class VenderController extends Controller
                 $items->where('status',  $request->get('status'));
         }
 
-        
+
         if ($request->ajax()) {
-           
+
             return Datatables::of($items->select('*'))
             ->editColumn('status',function($row) {
                 $btn =view('admin.settings.status_lable')->with(['row'=>$row])->render();
@@ -597,7 +604,7 @@ class VenderController extends Controller
                          return $btn;
                  })->rawColumns(['action','activation','index'])->make(true);
         }
-        
+
         return view('admin.vender.unverified', [
         ]);
     }
@@ -609,7 +616,7 @@ class VenderController extends Controller
             if ($request->get('name') != null)
                 $items->where('name',$request->get('name'));
         }
- 
+
         if ($request->has('email')) {
             if ($request->get('email') != null)
                 $items->where('email',$request->get('email'));
@@ -655,7 +662,7 @@ class VenderController extends Controller
             if ($request->get('name') != null)
                 $items->where('name',$request->get('name'));
         }
- 
+
         if ($request->has('email')) {
             if ($request->get('email') != null)
                 $items->where('email',$request->get('email'));
@@ -670,9 +677,9 @@ class VenderController extends Controller
                 $items->where('status',  $request->get('status'));
         }
 
-        
+
         if ($request->ajax()) {
-           
+
             return Datatables::of($items->select('*'))
             ->editColumn('status',function($row) {
                 $btn =view('admin.settings.status_lable')->with(['row'=>$row])->render();
@@ -685,7 +692,7 @@ class VenderController extends Controller
                  return $btn;
             })->rawColumns(['index'])->make(true);
         }
-        
+
         return view('admin.vender.vender_request', [
         ]);
     }

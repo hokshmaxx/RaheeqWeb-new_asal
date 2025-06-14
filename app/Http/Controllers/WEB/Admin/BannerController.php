@@ -26,31 +26,31 @@ class BannerController extends Controller
             'settings' => $this->settings,
 
         ]);
-        
+
          $route=Route::currentRouteAction();
-         $route_name = substr($route, strpos($route, "@") + 1);   
+         $route_name = substr($route, strpos($route, "@") + 1);
          $this->middleware(function ($request, $next) use($route_name){
          if(can('banners')){
-            return $next($request);  
+            return $next($request);
          }
           if($route_name== 'index' ){
              if(can(['banners-show' , 'banners-create' , 'banners-edit' , 'banners-delete'])){
-                 return $next($request);  
+                 return $next($request);
              }
           }elseif($route_name== 'create' || $route_name== 'store'){
               if(can('banners-create')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }elseif($route_name== 'edit' || $route_name== 'update'){
               if(can('banners-edit')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }elseif($route_name== 'destroy' || $route_name== 'delete'){
               if(can('banners-delete')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }else{
-              return $next($request);  
+              return $next($request);
           }
           if($request->ajax()){
             $message = __('cp.you_dont_have_premession');
@@ -90,11 +90,12 @@ class BannerController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\Response
      */
     public function create()
     {
         $categories=Category::orderBy('id','desc')->where('type',1)->get();
+
         return view('admin.banners.create',['categories'=>$categories]);
     }
 
@@ -107,9 +108,11 @@ class BannerController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'image' => 'required|image|mimes:jpeg,jpg,png,svg', 
+            'image' => 'required|image|mimes:jpeg,jpg,png,svg',
         ]);
-        $locales = Language::all()->pluck('lang');
+//        \Log::info($request->all());
+//        $locales = Language::all()->pluck('lang');
+
         if ($validator->fails()) {
             return response()->json(['status' => false, 'code' => 200,
                 'validator' =>implode("\n",$validator-> messages()-> all()) ]);
@@ -117,7 +120,7 @@ class BannerController extends Controller
 
         $banner= new Banner();
         $banner->link=$request->link;
- 
+
         if ($request->hasFile('image')) {
             $logo = $request->file('image');
             $extention = $logo->getClientOriginalExtension();
@@ -126,6 +129,7 @@ class BannerController extends Controller
                 $constraint->aspectRatio();
             })->save("uploads/images/banners/".$file_name);
             $banner->image = $file_name;
+            $banner->locale=$request->local;
         }
         $banner->save();
         $message = __('api.ok');
@@ -139,7 +143,7 @@ class BannerController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-   
+
         public function edit($id)
         {
              $item = Banner::where('id',$id)->first();
@@ -163,7 +167,7 @@ class BannerController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-             
+
         ]);
         $locales = Language::all()->pluck('lang');
         if ($validator->fails()) {
@@ -173,7 +177,7 @@ class BannerController extends Controller
 
         $banner = Banner::query()->findOrFail($id);
         $banner->link=$request->link;
- 
+
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $extention = $image->getClientOriginalExtension();

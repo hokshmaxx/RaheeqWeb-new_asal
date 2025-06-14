@@ -157,7 +157,8 @@
 
                               <th class="wd-1p">ID</th>
                               <th class="wd-5p"> {{ucwords(__('cp.image'))}}</th>
-                              <th class="wd-25p"> {{ucwords(__('cp.name'))}}</th>
+                              <th class="wd-25p"> {{ucwords(__('cp.name_en'))}}</th>
+                              <th class="wd-25p"> {{ucwords(__('cp.name_ar'))}}</th>
                               <th class="wd-25p"> {{ucwords(__('cp.email'))}}</th>
                               <th class="wd-25p"> {{ucwords(__('cp.mobile'))}}</th>
                               <th class="wd-10p"> {{ucwords(__('cp.status'))}}</th>
@@ -299,7 +300,8 @@
                     { data: 'index', name: 'index' , orderable: false},
                     { data: 'id', name: 'id'},
                     { data: 'image', name: 'image'},
-                    { data: 'name', name: 'name'},
+                    { data: 'name_en', name: 'name_en'},
+                    { data: 'name_ar', name: 'name_ar'},
                     { data: 'email', name: 'email'},
                     { data: 'mobile', name: 'mobile'},
                     { data: 'status', name: 'status'},

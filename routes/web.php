@@ -294,11 +294,12 @@ Route::group([
              Route::get('/product/{id}/review', 'WEB\Admin\ProductsController@productReview');
 
         }
-        if (can('ads')) {
+//        if (can('ads')) {
             Route::resource('/ads', 'WEB\Admin\AdsController');
             Route::resource('/banners', 'WEB\Admin\BannerController');
 
-        }
+
+       // }
         if (can('cities')) {
             Route::resource('/countries', 'WEB\Admin\CountryController');
             Route::resource('/cities', 'WEB\Admin\CitiesController');

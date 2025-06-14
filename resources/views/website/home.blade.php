@@ -377,6 +377,7 @@
     <section class="section_home">
         <div class="owl-carousel" id="home_slider">
             @foreach($banners as $banner)
+
                 <div class="item">
                     <a href="{{$banner->link}}">
                         <img src="{{$banner->image}}" alt="Banner" loading="lazy" />
@@ -419,9 +420,9 @@
                         <div class="item_venders" >
                             <a href="{{route('vender_category',[$vender->id])}}">
                                 <figure>
-                                    <img src="{{$vender->image}}" alt="{{$vender->name}}" loading="lazy" />
+                                    <img src="{{$vender->image}}" alt=" {{app()->getLocale()=='en'? $vender->name_en:$vender->name_ar}}" loading="lazy" />
                                 </figure>
-                                <p>{{$vender->name}}</p>
+                                <p>  {{app()->getLocale()=='en'? $vender->name_en:$vender->name_ar}}</p>
                             </a>
                         </div>
                     </div>

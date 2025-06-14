@@ -191,6 +191,7 @@
                             <h5>{{ $variantTypeName }}</h5>
                             <div class="variant-scroll-container d-flex overflow-auto gap-2">
                                 @foreach ($variants as $variant)
+
                                     <div
                                         class="variant-box border rounded p-2"
                                         data-variant-id="{{ $variant->id }}"
@@ -246,7 +247,7 @@
 {{--                                </div>--}}
 {{--                            @else--}}
                                 <div class="soldOut" style="display: none" id="soldOutId">
-                                    <h1>Sold Out</h1>
+                                    <h1>@lang('website.Sold Out')</h1>
                                 </div>
 {{--                            @endif--}}
 {{--                        </div>--}}
@@ -254,15 +255,15 @@
 
 {{--                    @else--}}
                         <button class="addToCart" data-id="{{ $product->id }}" data-variant-id="{{ $product->variants->first()->id??0 }}" id="addToCartButton">
-                            Add to Cart
+                            {{__('website.addToCart')}}
                         </button>
 
 {{--                    @endif--}}
 
                     @if($product->is_favorite)
-                            <button class="removeFromFavorite {{ $product->is_favorite ? 'active' : '' }}" data-id="{{$product->id}}">Remove from Favorites</button>
+                            <button class="removeFromFavorite {{ $product->is_favorite ? 'active' : '' }}" data-id="{{$product->id}}">@lang('cp.RemovefromFavorites')</button>
                         @else
-                            <button class="addToFavorite  " data-id="{{$product->id}}"> Add to Favorites</button>
+                            <button class="addToFavorite  " data-id="{{$product->id}}">{{__('cp.AddtoFavorites')}}</button>
 
 
                         @endif
@@ -272,7 +273,7 @@
 
                 <!-- Description -->
                 <div class="product-description">
-                    <h5>Product Description</h5>
+                    <h5>{{__('cp.ProductDescription')}}</h5>
                     {!! $product->description !!}
                 </div>
             </div>
@@ -280,13 +281,13 @@
     </div>
 
     <!-- Reviews -->
-    <div class="product-reviews">
-        <h1>Customer Reviews</h1>
+    <div class="product-reviews row">
+        <h1>{{__('cp.CustomerReviews')}}</h1>
 
         <!-- Review Form (if user is logged in) -->
 
         @auth
-            <form action="{{ route('reviews.store') }}" method="POST" class="review-form">
+            <form action="{{ route('reviews.store') }}" method="POST" class="review-form col-md-6">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
 
@@ -383,11 +384,11 @@
             const finalPriceEl = document.getElementById('finalPrice');
 
             if (hasDiscount) {
-                regularPriceEl.innerHTML = `<del>${price.toFixed(2)} KWD</del>`;
-                finalPriceEl.textContent = `${discountPrice.toFixed(2)} KWD`;
+                regularPriceEl.innerHTML = `<del>${price.toFixed(3)} KWD</del>`;
+                finalPriceEl.textContent = `${discountPrice.toFixed(3)} KWD`;
             } else {
                 regularPriceEl.innerHTML = '';
-                finalPriceEl.textContent = `${price.toFixed(2)} KWD`;
+                finalPriceEl.textContent = `${price.toFixed(3)} KWD`;
             }
 
 
