@@ -1535,6 +1535,11 @@ jobs:
             exit 1
           fi
 
+          # Fix git repository permissions (common issue after sudo operations)
+          echo "🔧 Fixing git repository permissions..."
+          sudo chown -R $USER:$USER $APP_DIR/.git
+          sudo chown -R $USER:$USER $APP_DIR
+
           # Navigate to application directory
           cd $APP_DIR
 
@@ -1548,7 +1553,23 @@ jobs:
 
           # Fetch latest changes
           echo "📥 Fetching latest changes from repository..."
-          git fetch origin master
+          if ! git fetch origin master; then
+            echo "❌ Git fetch failed! Trying to fix remote issues..."
+
+            # Reset remote URL (sometimes helps with permission issues)
+            git remote set-url origin https://github.com/hokshmaxx/RaheeqWeb-new_asal.git
+
+            # Try fetch again
+            if ! git fetch origin master; then
+              echo "❌ Git fetch still failing. Attempting to reinitialize remote..."
+              git remote remove origin
+              git remote add origin https://github.com/hokshmaxx/RaheeqWeb-new_asal.git
+              git fetch origin master || {
+                echo "❌ Unable to fetch from remote repository"
+                exit 1
+              }
+            fi
+          fi
 
           # Check if there are new commits
           LATEST_COMMIT=$(git rev-parse origin/master)
@@ -1574,10 +1595,17 @@ jobs:
           if git pull origin master; then
             echo "✅ Successfully updated to latest commit"
           else
-            echo "❌ Git pull failed! Rolling back..."
-            git reset --hard $CURRENT_COMMIT
-            git stash pop || true
-            exit 1
+            echo "❌ Git pull failed! Trying alternative approach..."
+
+            # Alternative: reset to remote master
+            if git reset --hard origin/master; then
+              echo "✅ Successfully reset to remote master"
+            else
+              echo "❌ All git operations failed! Rolling back..."
+              git reset --hard $CURRENT_COMMIT
+              git stash pop 2>/dev/null || true
+              exit 1
+            fi
           fi
 
           # Show what was updated
