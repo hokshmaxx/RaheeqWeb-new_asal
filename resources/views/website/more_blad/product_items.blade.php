@@ -155,7 +155,9 @@
 
                 <div class="txt-product">
                     <a href="{{ route('prouctDetails', [$product->id, Str::slug($product->name)]) }}">
-                        <p>{{ $product->name }}</p>
+                        <p class="my-2 text-center font-semibold text-base leading-tight break-words whitespace-normal">
+
+                            {{ $product->name }}</p>
                     </a>
 
                     <div>

@@ -84,12 +84,14 @@ class CartController extends Controller
 //                );
 
             // 2. Add gift packaging price if applicable
-            $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
+            $packagingPrice =  $cart->giftPackaging ? $cart->giftPackaging->price : 0;
+
 
             // 3. Multiply by quantity
-            $total += ($basePrice + $packagingPrice) * $cart->quantity;
+            $total +=round( ($basePrice + $packagingPrice) * $cart->quantity,3);
         }
 
+        $total = number_format($total, 3,);
         return view('website.user.myCart', [
             'carts' => $carts,
             'total' => $total,
@@ -242,16 +244,16 @@ class CartController extends Controller
 
             if ($promo && $promo->percent > 0) {
                 $discount = ($total_cart * $promo->percent) / 100;
-                $Total = round($total_cart - $discount, 2);
+                $Total = round($total_cart - $discount, 3);
             }
         }
 
         return [
             'status' => 'done',
             'count' => $count,
-            'total' => $Total,
+            'total' => number_format($Total,3),
             'total_cart' => $total_cart,
-            'discount' => $discount,
+            'discount' => number_format($discount,3),
         ];
     }
 
@@ -353,16 +355,16 @@ class CartController extends Controller
 
             if ($promo && $promo->percent > 0) {
                 $discount = ($total_cart * $promo->percent) / 100;
-                $Total = round($total_cart - $discount, 2);
+                $Total = round($total_cart - $discount, 3);
             }
 
 
             // Return the updated totals as a JSON response
             return response()->json([
                 'status' => 'done',
-                'total_cart' => number_format($total_cart, 2),
-                'discount' => number_format($discount, 2),
-                'total' => number_format($total_cart, 2),  // Final total after discount
+                'total_cart' => number_format($total_cart, 3),
+                'discount' => number_format($discount, 3),
+                'total' => number_format($total_cart, 3),  // Final total after discount
             ], 200);
 
         } catch (\Exception $e) {
@@ -462,15 +464,15 @@ class CartController extends Controller
 
             if ($promo && $promo->percent > 0) {
                 $discount = ($total_cart * $promo->percent) / 100;
-                $Total = round($total_cart - $discount, 2);
+                $Total = round($total_cart - $discount, 3);
             }
 
             return response()->json([
                 'status' => true,
                 'code' => 200,
-                'total' => number_format($Total, 2),
-                'total_cart' => number_format($total_cart, 2),
-                'discount' => number_format($discount, 2),
+                'total' => number_format($Total, 3),
+                'total_cart' => number_format($total_cart, 3),
+                'discount' => number_format($discount, 3),
             ]);
         }
 
@@ -557,14 +559,14 @@ class CartController extends Controller
 
                 if ($promo->percent > 0) {
                     $discount = ($total_cart * $promo->percent) / 100;
-                    $Total = round($total_cart - $discount, 2);
+                    $Total = round($total_cart - $discount, 3);
                 }
-                $Total = round($Total + $delivery_charge, 2);
+                $Total = round($Total + $delivery_charge, 3);
                 $message = __('api.ok');
                 return response()->json(['status' => true, 'code' => 200, 'message' => $message ,'total'=>$Total ,'total_cart'=>$total_cart  , 'discount'=>$discount ,'delivery_charge'=>$delivery_charge]);
 
             } else {
-                $Total = round($Total + $delivery_charge, 2);
+                $Total = round($Total + $delivery_charge, 3);
                 $message = __('api.wrongPromo');
                 return response()->json(['status' => false, 'code' => 500, 'message' => $message,'total'=>$Total ,'total_cart'=>$total_cart  , 'discount'=>$discount ,'delivery_charge'=>$delivery_charge]);
             }
@@ -665,9 +667,9 @@ class CartController extends Controller
             if ($validVendor) {
                 if ($promo->percent > 0) {
                     $discount = ($total_cart * $promo->percent) / 100;
-                    $Total = round($total_cart - $discount, 2);
+                    $Total = round($total_cart - $discount, 3);
                 }
-                $Total = round($Total + $delivery_charge, 2);
+                $Total = round($Total + $delivery_charge, 3);
 
                 // Update cart discounts
                 if (auth()->check()) {
@@ -683,40 +685,39 @@ class CartController extends Controller
                     'status' => true,
                     'code' => 200,
                     'message' => __('api.ok'),
-                    'total' => $Total,
+                    'total' => number_format( $Total,3),
                     'total_cart' => $total_cart,
-                    'discount' => $discount,
-                    'delivery_charge' => $delivery_charge,
+                    'discount' => number_format($discount,3),
+                    'delivery_charge' => number_format($delivery_charge,3),
                 ]);
             } else {
-                $Total = round($Total + $delivery_charge, 2);
+                $Total = round($Total + $delivery_charge, 3);
                 return response()->json([
                     'status' => false,
                     'code' => 500,
                     'message' => __('api.wrongPromo'),
-                    'total' => $Total,
+                    'total' => number_format($Total,3),
                     'total_cart' => $total_cart,
-                    'discount' => $discount,
-                    'delivery_charge' => $delivery_charge,
+                    'discount' => number_format($discount,3),
+                    'delivery_charge' => number_format($delivery_charge,3),
                 ]);
             }
         } else {
-            $Total = round($Total + $delivery_charge, 2);
+            $Total = round($Total + $delivery_charge, 3);
             return response()->json([
                 'status' => false,
                 'code' => 500,
                 'message' => __('api.wrongPromo'),
-                'total' => $Total,
+                'total' => number_format($Total,3),
                 'total_cart' => $total_cart,
-                'discount' => $discount,
-                'delivery_charge' => $delivery_charge,
+                'discount' => number_format($discount,3),
+                'delivery_charge' => number_format($delivery_charge,3),
             ]);
         }
     }
 
  public function calculateDileveryCostByAriaId(Request $request)
  {
-
         $settings = Setting::first();
         $validator = Validator::make($request->all(), [
             'area_id' => 'required',
@@ -763,12 +764,17 @@ class CartController extends Controller
         //     }
         // if($discount > 0 ){
         // }
-             $Total = round($Total - $discount, 2);
+             $Total = round($Total - $discount, 3);
 
-            $Total = round($Total + $delivery_charge, 2);
+            $Total = round($Total + $delivery_charge, 3);
+
+            $Total=number_format($Total,3);
+     $discount=number_format($discount,3);
+     $delivery_charge=number_format($delivery_charge,3);
+
 
             $message = __('api.ok');
-            return response()->json(['status' => true, 'code' => 200, 'message' => $message ,'total'=>$Total ,'total_cart'=>$total_cart  , 'discount'=>$discount ,'delivery_charge'=>$delivery_charge]);
+            return response()->json(['status' => true, 'code' => 200, 'message' => $message ,'total'=>$Total ,'total_cart'=>number_format($total_cart,3)  , 'discount'=>$discount ,'delivery_charge'=>$delivery_charge]);
 
 
     }
@@ -825,12 +831,15 @@ class CartController extends Controller
 
                 if ($promo->percent > 0) {
                     $discount = ($total_cart * $promo->percent) / 100;
-                    $Total = round($total_cart - $discount, 2);
+                    $Total = round($total_cart - $discount, 3);
                 }
             }
 
-            $Total = round($Total + $delivery_charge, 2);
+            $Total = round($Total + $delivery_charge, 3);
             $Total = $Total - $discount;
+            $Total = number_format($Total, 3);
+        $discount = number_format($discount, 3);
+        $delivery_charge = number_format($delivery_charge, 3);
 
             $message = __('api.ok');
             return response()->json(['status' => true, 'code' => 200, 'message' => $message ,'total'=>$Total ,'total_cart'=>$total_cart  , 'discount'=>$discount ,'delivery_charge'=>$delivery_charge]);
@@ -881,7 +890,7 @@ class CartController extends Controller
 
         return view('website.user.checkout', [
             'carts' => $carts,
-            'total_cart' => $total_cart,
+            'total_cart' => number_format($total_cart,3),
             'addresses' => $addresses,
             'areas' => $areas,
             'delivery_note' => $delivery_note,
@@ -990,7 +999,7 @@ class CartController extends Controller
         if ($promo) {
             if ($promo->percent > 0) {
                 $discount = ($total_cart * $promo->percent) / 100;
-                $total_cart = round($total_cart - $discount, 2);
+                $total_cart = round($total_cart - $discount, 3);
             }
         }
         $vat_amount = $vat_amount * $vat/100;
@@ -1208,7 +1217,7 @@ class CartController extends Controller
         if ($promo) {
             if ($promo->percent > 0) {
                 $discount = ($total_cart * $promo->percent) / 100;
-                $total_cart = round($total_cart - $discount, 2);
+                $total_cart = round($total_cart - $discount, 3);
             }
         }
 

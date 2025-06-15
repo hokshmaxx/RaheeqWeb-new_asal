@@ -104,8 +104,11 @@ class HomeController extends Controller
 //        dd(app()->getLocale());
         if ($product->vender_id> 0) {
             $visitor = Venders::where('id',$product->vender_id)->first();
-            $newVisitorCount=$visitor->visitor + 1;
-            Venders::where('id',$product->vender_id)->update(['visitor' => $newVisitorCount]);
+            if(!empty($visitor)){
+                $newVisitorCount=$visitor->visitor + 1;
+                Venders::where('id',$product->vender_id)->update(['visitor' => $newVisitorCount]);
+
+            }
         }
 
        $products=Product::where('status','active')

@@ -72,7 +72,7 @@
     }
 
     /* General Styling */
-    .product-detail-container { padding: 40px 0; }
+    /*.product-detail-container { padding: 40px 0; }*/
 
     /* Breadcrumbs */
 
@@ -91,8 +91,10 @@
     .product-thumbnail img { width: 100%; height: 100%; object-fit: contain; }
 
     /* Product Info */
-    .product-info { padding-left: 30px; }
-    .product-title { font-size: 28px; font-weight: 600; margin-bottom: 15px; }
+    /*.product-info { padding-left: 30px; }*/
+    .product-title { font-size: 28px; font-weight: 600; margin-bottom: 15px;    white-space: normal;
+        word-wrap: break-word;
+        overflow: visible; }
     .product-price { font-size: 24px; font-weight: 700; color: var(--main-color); margin-bottom: 15px; }
     .regular-price del { color: #999; }
     .product-rating { margin-bottom: 15px; }
@@ -139,7 +141,7 @@
 @endsection
 
 @section('content')
-<div class="container product-detail-container">
+<div class="container product-detail-container ">
     <!-- Breadcrumbs -->
     <div class="breadcrumb-container">
         <nav>

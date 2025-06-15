@@ -203,15 +203,15 @@
                                     </div>
                                     <div>
 		                                <p>@lang('website.Shipping')</p>
-                                        <strong class="delivery_charge">00.00 @lang('website.KWD')</strong>
+                                        <strong class="delivery_charge">00.000 @lang('website.KWD')</strong>
                                     </div>
                                     <div>
 		                                <p>@lang('website.Discount')</p>
-                                        <strong class="discount_amount">{{$cart->discount}} @lang('website.KWD')</strong>
+                                        <strong class="discount_amount">{{number_format($cart->discount,3)}} @lang('website.KWD')</strong>
                                     </div>
                                     <div class="total-price">
 		                                <p>@lang('website.Total Price')</p>
-                                        <strong class="total_price">{{$total_cart-$cart->discount}} @lang('website.KWD')</strong>
+                                        <strong class="total_price">{{number_format($total_cart-$cart->discount,3)}} @lang('website.KWD')</strong>
                                     </div>
 		                        </div>
 		                    </div>

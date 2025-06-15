@@ -178,10 +178,11 @@
                                     </div>
                                     <div>
                                         <p>@lang('website.Discount')</p>
-                                        <strong class="discount_amount">00.00 @lang('website.KWD')</strong>
+                                        <strong class="discount_amount">00.000 @lang('website.KWD')</strong>
                                     </div>
                                     <div class="total-price">
                                         <p>@lang('website.Total Price')</p>
+
                                         <strong class="total_price">{{$total}} @lang('website.KWD')</strong>
                                     </div>
                                 </div>

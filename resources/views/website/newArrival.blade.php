@@ -198,21 +198,24 @@
         }
 
         /* Product Info */
-        .txt-product {
-            padding: 15px;
-            text-align: center;
-        }
+        /*.txt-product {*/
+        /*    padding: 15px;*/
+        /*    text-align: center;*/
+        /*}*/
 
         .txt-product p {
             font-size: 14px;
             font-weight: 600;
             color: #333;
             margin: 0 0 8px;
-            height: 38px;
-            overflow: hidden;
-            display: -webkit-box;
+            /*height: 100px;*/
+            /*overflow: hidden;*/
+            /*display: -webkit-box;*/
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow: visible;
         }
 
         .txt-product strong {

@@ -87,13 +87,13 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
 
-        .item_categoris a, .item_venders a {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            text-decoration: none;
-            color: inherit;
-        }
+        /*.item_categoris a, .item_venders a {*/
+        /*    display: flex;*/
+        /*    flex-direction: column;*/
+        /*    height: 100%;*/
+        /*    text-decoration: none;*/
+        /*    color: inherit;*/
+        /*}*/
 
         .item_categoris figure, .item_venders figure {
             position: relative;
@@ -124,11 +124,12 @@
             font-size: 15px;
             font-weight: 600;
             color: var(--text-color);
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
             padding: 0 8px;
             flex-grow: 1;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow: visible;
+        }
         }
 
         /* ==== Product Card ==== */
@@ -197,22 +198,24 @@
             z-index: 2;
         }
 
-        /* Product Info */
-        .txt-product {
-            padding: 15px;
-            text-align: center;
-        }
+        /*.txt-product {*/
+        /*    padding: 15px;*/
+        /*    text-align: center;*/
+        /*}*/
 
         .txt-product p {
             font-size: 14px;
             font-weight: 600;
             color: #333;
             margin: 0 0 8px;
-            height: 38px;
-            overflow: hidden;
-            display: -webkit-box;
+            /*height: 100px;*/
+            /*overflow: hidden;*/
+            /*display: -webkit-box;*/
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow: visible;
         }
 
         .txt-product strong {
@@ -472,7 +475,8 @@
 
                             <div class="txt-product">
                                 <a href="{{ route('prouctDetails', [$product->id, Str::slug($product->name)]) }}">
-                                    <p>{{ $product->name }}</p>
+                                    <p class="my-2 text-center font-semibold text-base leading-tight break-words whitespace-normal">
+                                        {{ $product->name }}</p>
                                 </a>
 
                                 <div>
