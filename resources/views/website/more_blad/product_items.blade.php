@@ -162,12 +162,12 @@
 
                     <div>
                         @if($variant && $variant->discount_price > 0 &&$variant->discount_price< $variant->price )
-                            <del>{{ $variant->price }} @lang('website.KWD')</del>
-                            <strong>{{ $variant->discount_price }} @lang('website.KWD')</strong>
+                            <del>{{ number_format($variant->price,3) }} @lang('website.KWD')</del>
+                            <strong>{{ number_format($variant->discount_price,3) }} @lang('website.KWD')</strong>
                         @elseif($variant)
-                            <strong>{{ $variant->price }} @lang('website.KWD')</strong>
+                            <strong>{{ number_format($variant->price,3) }} @lang('website.KWD')</strong>
                         @else
-                            <strong>{{ $product->price }} @lang('website.KWD')</strong>
+                            <strong>{{ number_format($product->price,3) }} @lang('website.KWD')</strong>
                         @endif
                     </div>
 
