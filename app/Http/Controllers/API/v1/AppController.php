@@ -89,14 +89,14 @@ class AppController extends Controller
         if ($request->category_id == null) {
             $data = Category::query()
                     ->where('status', 'active')
-                    ->with(['products'])->get();
-            
+                    ->with(['products','variants'])->get();
+
             $message = __('api.ok');
             return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'items' => $data]);
         } elseif (isset($request->category_id) && $request->category_id != null) {
             $data = Product::query()->where('status', 'active')->where('category_id', $request->category_id)
                 ->paginate($this->paginate)->items();
-            
+
             $check = ($this->paginate > count($data)) ? false : true;
             $message = __('api.ok');
             return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'items' => $data, 'is_more' => $check]);
@@ -107,7 +107,7 @@ class AppController extends Controller
     public function getProductDetails($id)
     {
         $product = Product::query()->with('venders')->findOrFail($id);
-        
+
 
 
 
@@ -125,7 +125,7 @@ class AppController extends Controller
                     ->where('vitamin_product.product_id', $id)
                     ->select('vitamin_product.*', 'product_vitamin.*')
                     ->get();
-        
+
 
         $message = __('api.ok');
         return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'item' => $product]);
@@ -143,14 +143,14 @@ class AppController extends Controller
     {
 
         if ($request->type == 1 ) {
-            
+
             Venders::updateOrCreate(
                 [
-                    'id' => auth('api')->id() 
+                    'id' => auth('api')->id()
                 ] ,
                 [
-                
-                    'fcm_token' => $request->get('fcmToken'), 
+
+                    'fcm_token' => $request->get('fcmToken'),
                     'device_type' => $request->get('type_mobile'),
                     'lang' => $request->get('lang'),
                 ]
@@ -160,32 +160,32 @@ class AppController extends Controller
         } else if($request->type == 2){
 
             if (!empty(auth('api')->id())) {
-              
+
                 Token::updateOrCreate(
                     [
-                        'user_id' => auth('api')->id() 
+                        'user_id' => auth('api')->id()
                     ] ,
                     [
-                    
-                        'fcm_token' => $request->get('fcmToken'), 
+
+                        'fcm_token' => $request->get('fcmToken'),
                         'device_type' => $request->get('type_mobile'),
                         'lang' => $request->get('lang'),
                         'user_id' => auth('api')->id(),
-                    
+
                     ]);
             } else {
 
                 Token::updateOrCreate(
                     [
-                        'fcm_token' => $request->get('fcmToken'),  
+                        'fcm_token' => $request->get('fcmToken'),
                     ] ,
                     [
-                    
-                        'fcm_token' => $request->get('fcmToken'), 
+
+                        'fcm_token' => $request->get('fcmToken'),
                         'device_type' => $request->get('type_mobile'),
                         'lang' => $request->get('lang'),
                         'user_id' => 0
-                    
+
                     ]);
             }
         }
@@ -260,7 +260,7 @@ class AppController extends Controller
         $data = Venders::query()->where('status', 'active')
                 ->paginate($this->paginate)->items();
 
-            
+
             $check = ($this->paginate > count($data)) ? false : true;
             $message = __('api.ok');
         return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'item' => $data, 'check'=>$check ]);
@@ -272,9 +272,9 @@ class AppController extends Controller
 
     public function getVenderProducts(Request $request) {
 
-       
+
         $data = Product::query()->where('status', 'active');
-        
+
         if ($request->has('vender_id') && $request->vender_id != null) {
             $data ->where('vender_id', $request->get('vender_id'));
         }
@@ -282,11 +282,11 @@ class AppController extends Controller
             $data ->where('category_id', $request->get('category_id'));
         }
 
-        $data= $data->paginate($this->paginate)->items();   
+        $data= $data->paginate($this->paginate)->items();
 
         // $visitor  = UPDATE counter SET visits = visits+1 WHERE id = 1";
 
-       
+
 
 
         $check = ($this->paginate > count($data)) ? false : true;
@@ -300,16 +300,16 @@ class AppController extends Controller
                     ->where('status','active')
                     ->where('vender_id',$request->get('vender_id'))
                     ->paginate($this->paginate)->items();
-       
+
         $check = ($this->paginate > count($products)) ? false : true;
-   
+
         if ($request->has('vender_id') && $request->vender_id != null) {
             $visitor = Venders::where('id',$request->get('vender_id'))->first();
             $new_quantity=$visitor->visitor + 1;
             Venders::where('id',$request->get('vender_id'))->update(['visitor' => $new_quantity]);
         }
-       
-        
+
+
         $message = __('api.ok');
         return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'products' => $products, 'is_more' => $check]);
     }
@@ -317,24 +317,24 @@ class AppController extends Controller
     public function vender_information(Request $request) {
 
 
-        
+
         if ($request->has('vender_id') && $request->vender_id != null) {
             $data =  Venders::where('id',$request->get('vender_id'))->first();
-         
+
             $message = __('api.ok');
-            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);      
+            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
         } else {
             $message = __('api.error');
             return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
         }
 
-    } 
+    }
 
 
 
-    
+
     public function delete_account(Request $request) {
-         
+
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'usertype' => 'required',
@@ -344,25 +344,25 @@ class AppController extends Controller
         if ($validator->fails()) {
             $message = __('api.error');
             return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
-        } 
+        }
 
 
-        if($request->usertype == 0) 
+        if($request->usertype == 0)
         {
             $user = User::where('id',$request->id)->where('email',$request->email)->delete();
-            
+
             $message = "User deleted successfully";
             return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
-        } 
+        }
         if($request->usertype = 1){
             Venders::where('id',$request->id)->where('email',$request->email)->delete();
-            $Product = Product::where('vender_id',$request->id)->delete(); 
+            $Product = Product::where('vender_id',$request->id)->delete();
             $message = "Vendor deleted successfully ";
             return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
         }
         $message = __('api.error');
         return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
-        
+
     }
 
 
