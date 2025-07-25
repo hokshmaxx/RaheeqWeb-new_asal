@@ -86,10 +86,11 @@ class AppController extends Controller
 
     public function getProducts(Request $request)
     {
+
         if ($request->category_id == null) {
             $data = Category::query()
                     ->where('status', 'active')
-                    ->with(['products','variants'])->get();
+                    ->with(['products'])->get();
 
             $message = __('api.ok');
             return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'items' => $data]);
@@ -106,7 +107,7 @@ class AppController extends Controller
 
     public function getProductDetails($id)
     {
-        $product = Product::query()->with('venders')->findOrFail($id);
+        $product = Product::query()->with('venders','variants','variants.variantType')->findOrFail($id);
 
 
 

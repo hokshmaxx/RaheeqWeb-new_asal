@@ -7,6 +7,9 @@ use App\Models\Area;
 use App\Models\Banner;
 use App\Models\CartAddition;
 use App\Models\City;
+use App\Models\Deleverynote;
+use App\Models\Notifiy;
+use App\Models\ProductVariant;
 use App\Models\Setting;
 
 use App\Models\Order;
@@ -50,50 +53,163 @@ class CartController extends Controller
     }
 
 
+//    public function addProductToCart(Request $request)
+//    {
+//        // if (auth()->check()) {
+//        $settings = Setting::first();
+//        if ($settings->is_alowed_cart == 1) {
+//            $message = __('api.addToCartStoped');
+//            return response()->json(['status' => true, 'message' => $message]);
+//        } else {
+//
+//            $vat = $settings->tax_amount;
+//            $myCart = new Cart();
+//            if (Auth::guard('api')->check()) {
+//                $myCart->user_id = \auth('api')->user()->id;
+//            }
+//            $myCart->product_id = $request->product_id;
+//            $myCart->quantity = $request->quantity;
+//            $myCart->fcm_token = $request->fcm_token;
+//            $myCart->fcm_token = $request->variant_id;
+//            $myCart->save();
+//
+//            $myNewCart = Cart::Where('fcm_token', $request->fcm_token)->with('product')->get();
+//            $count_products = Cart::Where('fcm_token', $request->fcm_token)->count('quantity');
+//
+//            $total_cart = 0;
+//
+//            foreach ($myNewCart as $one) {
+//                $price_val = ($one->product->discount_price) ? $one->product->discount_price : $one->product->price;
+//                $total_cart += $price_val * $one->quantity;
+//
+//            }
+//
+//            $total_cart = $total_cart + $vat;
+//            // }
+//
+//
+//            // $count_products = Cart::Where('fcm_token', $request->fcmToken)->count();
+//
+//            $message = __('api.addedToCart');
+//            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'count_products' => $count_products,
+//                'total_cart' => $total_cart]);
+////            return ['status' => true, 'count_products'=>$count_products];
+//        }
+//
+//
+//    }
+
     public function addProductToCart(Request $request)
     {
-        // if (auth()->check()) {
-        $settings = Setting::first();
-        if ($settings->is_alowed_cart == 1) {
-            $message = __('api.addToCartStoped');
-            return response()->json(['status' => true, 'message' => $message]);
-        } else {
+        \Log::info('Adding product to cart:', [
+            'product_id' => $request->product_id,
+            'variant_id' => $request->input('variant_id'),
+            'quantity' => $request->quantity,
+            'fcm_token' => $request->fcm_token
+        ]);
+
+        try {
+            $settings = Setting::first();
+            if ($settings->is_alowed_cart == 1) {
+                $message = __('api.addToCartStoped');
+                return response()->json(['status' => true, 'message' => $message]);
+            }
 
             $vat = $settings->tax_amount;
-            $myCart = new Cart();
-            if (Auth::guard('api')->check()) {
-                $myCart->user_id = \auth('api')->user()->id;
+
+            // Check if product with same variant already exists in cart
+            $existingCart = Cart::where('fcm_token', $request->fcm_token)
+                ->where('product_id', $request->product_id)
+                ->where('variant_id', $request->input('variant_id'))
+                ->first();
+
+            if ($existingCart) {
+                // If exists, increment quantity
+                $existingCart->increment('quantity', $request->quantity ?? 1);
+
+                $count_products = Cart::where('fcm_token', $request->fcm_token)->sum('quantity');
+                $message = __('api.quantityUpdated');
+
+                return response()->json([
+                    'status' => true,
+                    'code' => 200,
+                    'message' => $message,
+                    'count_products' => $count_products,
+                    'action' => 'updated'
+                ]);
             }
+
+            // Create new cart entry
+            $myCart = new Cart();
+
+            if (Auth::guard('api')->check()) {
+                $myCart->user_id = auth('api')->user()->id;
+            }
+
             $myCart->product_id = $request->product_id;
-            $myCart->quantity = $request->quantity;
+            $myCart->quantity = $request->quantity ?? 1;
             $myCart->fcm_token = $request->fcm_token;
+
+            // Correctly set variant_id (not fcm_token!)
+            if ($request->has('variant_id') && $request->variant_id) {
+                $myCart->variant_id = $request->variant_id;
+            }
+
             $myCart->save();
 
-            $myNewCart = Cart::Where('fcm_token', $request->fcm_token)->with('product')->get();
-            $count_products = Cart::Where('fcm_token', $request->fcm_token)->count('quantity');
+            // Calculate totals
+            $myNewCart = Cart::where('fcm_token', $request->fcm_token)
+                ->with(['product', 'variant']) // Include variant relationship if you have it
+                ->get();
 
+            $count_products = Cart::where('fcm_token', $request->fcm_token)->sum('quantity');
             $total_cart = 0;
 
-            foreach ($myNewCart as $one) {
-                $price_val = ($one->product->discount_price) ? $one->product->discount_price : $one->product->price;
-                $total_cart += $price_val * $one->quantity;
+            foreach ($myNewCart as $cartItem) {
+                $price_val = 0;
 
+                // If variant exists, use variant price, otherwise use product price
+                if ($cartItem->variant_id && $cartItem->variant) {
+                    $price_val = ($cartItem->variant->discount_price > 0)
+                        ? $cartItem->variant->discount_price
+                        : $cartItem->variant->price;
+                } else {
+                    $price_val = ($cartItem->product->discount_price > 0)
+                        ? $cartItem->product->discount_price
+                        : $cartItem->product->price;
+                }
+
+                $total_cart += $price_val * $cartItem->quantity;
             }
 
             $total_cart = $total_cart + $vat;
-            // }
-
-
-            // $count_products = Cart::Where('fcm_token', $request->fcmToken)->count();
 
             $message = __('api.addedToCart');
-            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'count_products' => $count_products,
-                'total_cart' => $total_cart]);
-//            return ['status' => true, 'count_products'=>$count_products];
+
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => $message,
+                'count_products' => $count_products,
+                'total_cart' => $total_cart,
+                'action' => 'added'
+            ]);
+
+        } catch (\Throwable $th) {
+            \Log::error('Error adding to cart:', ['error' => $th->getMessage()]);
+
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => 'An error occurred while adding to cart',
+                'error' => $th->getMessage()
+            ]);
         }
-
-
     }
+
+// Also, make sure your Cart model has the variant relationship
+// In your Cart model, add this relationship:
+
 
     public function deleteProductCart(Request $request, $id)
     {
@@ -117,11 +233,11 @@ class CartController extends Controller
             if(Auth::guard('api')->check()){
                 $user_id = Auth::guard('api')->user()->id;
                 $myNewCart = Cart::where('user_id', $user_id)->with('product')->get();
-               
-    
+
+
             }else{
                 if( $request->header('fcmToken') != '') {
-                    $myNewCart = Cart::where('fcm_token',$request->header('fcmToken'))->with('product')->get();;   
+                    $myNewCart = Cart::where('fcm_token',$request->header('fcmToken'))->with('product')->get();;
                 }
             }
             // $myNewCart = Cart::Where('fcm_token', $request->header('fcmToken'))->with('product')->get();
@@ -188,7 +304,7 @@ class CartController extends Controller
             $vat = $settings->tax_amount;
 
             foreach ($myCart as $one) {
-                
+
                 // $price_val = ($one->product->discount_price) ? $one->product->discount_price : $one->product->price;
                 // $total_cart += $price_val * $one->quantity;
 
@@ -214,7 +330,7 @@ class CartController extends Controller
 
             $promo = Coupon::where('code', $request->get('code'))->where('end_date', '>=', date('Y-m-d'))
                 ->where('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
-            
+
             if ($promo) {
                 $discount = ($total_cart * $promo->percent) / 100;
                 $total_discount = round($total_cart - $discount, 2);
@@ -252,24 +368,122 @@ class CartController extends Controller
     }
 
 
+//    public function getMyCart(Request $request)
+//    {
+//        $settings = Setting::first();
+//        // $user_id = Auth::guard('api')->user()->id;
+//
+//        if(Auth::guard('api')->check()){
+//            $user_id = Auth::guard('api')->user()->id;
+//            $myCart = Cart::where('user_id', $user_id)->with('product')->get();
+//
+//
+//        }else{
+//            if( $request->fcm_token != '') {
+//                $myCart = Cart::where('fcm_token',$request->fcm_token)->with('product')->get();;
+//            }
+//        }
+//
+//
+//        // $myCart = Cart::Where('fcm_token', $request->fcm_token)->with('product')->get();
+//        if ($myCart && count($myCart) != 0) {
+//
+//            $count_products = count($myCart);
+//            $total_cart = 0;
+//            $discount = 0;
+//            $delivery_charge = 0;
+//            $final_total = 0;
+//            $vat = $settings->tax_amount;
+//
+//            foreach ($myCart as $item) {
+//                $price = $item->product->discount_price > 0 && $item->product->offer_end_date >= now()->toDateString()
+//                    ? $item->product->discount_price
+//                    : $item->product->price;
+//
+//                $total_cart += $price * $item->quantity;
+//            }
+//
+//
+//            $vat_amount = ($total_cart * $vat) / 100;
+//
+//            if ($request->has('address_id') && $request->address_id != '') {
+//                $address = UserAddress::where('id', $request->address_id)->first();
+//                $area_cost = Area::query()->findOrFail($address->area_id);
+//                $delivery_charge = $area_cost->delivery_charges;
+//            } elseif ($request->has('area_id') && $request->area_id != '') {
+//                $area_cost = Area::query()->findOrFail($request->area_id);
+//                $delivery_charge = $area_cost->delivery_charges;
+//            } else {
+//                $delivery_charge = 0;
+//            }
+//
+//            $promo = Coupon::where('code', $request->get('code'))->where('end_date', '>=', date('Y-m-d'))
+//                ->where('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
+//
+//            if ($promo) {
+//                $discount = ($total_cart * $promo->percent) / 100;
+//                $total_discount = round($total_cart - $discount, 2);
+//            }
+//            $final_total = $total_cart + $delivery_charge - $discount;
+//            $data['final_total'] =$final_total;
+//            $data['total'] =$total_cart;
+//            $data['count_products'] =$count_products;
+//            $data['discount'] =$discount;
+//            $data['Tax'] =$vat_amount;
+//            $data['delivery_charge'] =$delivery_charge;
+//            $data['total'] =$total_cart;
+//            $data['MyCart'] =$myCart;
+//            $message = __('api.ok');
+//            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data,
+//               ]);
+//        }else{
+//             $count_products = 0;
+//            $total_cart = 0;
+//            $discount = 0;
+//            $delivery_charge = 0;
+//            $final_total = 0;
+//            $vat_amount = 0;
+//            $vat = $settings->tax_amount;
+//            $data['final_total'] =$final_total;
+//            $data['total'] =$total_cart;
+//            $data['count_products'] =$count_products;
+//            $data['discount'] =$discount;
+//            $data['Tax'] =$vat_amount;
+//            $data['delivery_charge'] =$delivery_charge;
+//            $data['total'] =$total_cart;
+//            $data['MyCart'] =$myCart;
+//             $message = __('api.cartEmpty');
+//        return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
+//        }
+//
+//    }
+
+
     public function getMyCart(Request $request)
     {
         $settings = Setting::first();
-        // $user_id = Auth::guard('api')->user()->id;
 
         if(Auth::guard('api')->check()){
             $user_id = Auth::guard('api')->user()->id;
-            $myCart = Cart::where('user_id', $user_id)->with('product')->get();
-           
 
-        }else{
+            // Get both API cart items and website cart items for authenticated user
+            $apiCart = Cart::where('user_id', $user_id)->with(['product', 'variant', 'giftPackaging'])->get();
+            $websiteCart = Cart::whereNotNull('variant_id')
+                ->where('user_id', $user_id)
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+
+            // Combine both carts
+            $myCart = $apiCart->merge($websiteCart)->unique(function ($item) {
+                return $item->product_id . '_' . ($item->variant_id ?? 'no_variant');
+            });
+
+        } else {
             if( $request->fcm_token != '') {
-                $myCart = Cart::where('fcm_token',$request->fcm_token)->with('product')->get();;   
+                $myCart = Cart::where('fcm_token',$request->fcm_token)->with(['product', 'variant', 'giftPackaging'])->get();
             }
         }
-       
-         
-        // $myCart = Cart::Where('fcm_token', $request->fcm_token)->with('product')->get();
+
         if ($myCart && count($myCart) != 0) {
 
             $count_products = count($myCart);
@@ -280,13 +494,22 @@ class CartController extends Controller
             $vat = $settings->tax_amount;
 
             foreach ($myCart as $item) {
-                $price = $item->product->discount_price > 0 && $item->product->offer_end_date >= now()->toDateString()
-                    ? $item->product->discount_price
-                    : $item->product->price;
-                
-                $total_cart += $price * $item->quantity;
+                // Check if item has variant (from website) or not (from API)
+                if($item->variant && $item->variant_id) {
+                    // Use variant pricing like website
+                    $price = $item->variant->discount_price > 0 ? $item->variant->discount_price : $item->variant->price;
+                } else {
+                    // Use product pricing like original API
+                    $price = $item->product->discount_price > 0 && $item->product->offer_end_date >= now()->toDateString()
+                        ? $item->product->discount_price
+                        : $item->product->price;
+                }
+
+                // Add gift packaging price if exists (from website)
+                $packagingPrice = $item->giftPackaging ? $item->giftPackaging->price : 0;
+
+                $total_cart += ($price + $packagingPrice) * $item->quantity;
             }
-            
 
             $vat_amount = ($total_cart * $vat) / 100;
 
@@ -303,46 +526,46 @@ class CartController extends Controller
 
             $promo = Coupon::where('code', $request->get('code'))->where('end_date', '>=', date('Y-m-d'))
                 ->where('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
-            
+
             if ($promo) {
                 $discount = ($total_cart * $promo->percent) / 100;
                 $total_discount = round($total_cart - $discount, 2);
             }
-            $final_total = $total_cart + $delivery_charge - $discount;
-            $data['final_total'] =$final_total;
-            $data['total'] =$total_cart;
-            $data['count_products'] =$count_products;
-            $data['discount'] =$discount;
-            $data['Tax'] =$vat_amount;
-            $data['delivery_charge'] =$delivery_charge;
-            $data['total'] =$total_cart;
-            $data['MyCart'] =$myCart;
+
+            $final_total = $total_cart + $vat_amount + $delivery_charge - $discount;
+
+            $data['final_total'] = $final_total;
+            $data['total'] = $total_cart;
+            $data['count_products'] = $count_products;
+            $data['discount'] = $discount;
+            $data['Tax'] = $vat_amount;
+            $data['delivery_charge'] = $delivery_charge;
+            $data['MyCart'] = $myCart;
+
             $message = __('api.ok');
-            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data,
-               ]);
-        }else{
-             $count_products = 0;
+            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
+
+        } else {
+            $count_products = 0;
             $total_cart = 0;
             $discount = 0;
             $delivery_charge = 0;
             $final_total = 0;
             $vat_amount = 0;
             $vat = $settings->tax_amount;
-            $data['final_total'] =$final_total;
-            $data['total'] =$total_cart;
-            $data['count_products'] =$count_products;
-            $data['discount'] =$discount;
-            $data['Tax'] =$vat_amount;
-            $data['delivery_charge'] =$delivery_charge;
-            $data['total'] =$total_cart;
-            $data['MyCart'] =$myCart;
-             $message = __('api.cartEmpty');
-        return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
+
+            $data['final_total'] = $final_total;
+            $data['total'] = $total_cart;
+            $data['count_products'] = $count_products;
+            $data['discount'] = $discount;
+            $data['Tax'] = $vat_amount;
+            $data['delivery_charge'] = $delivery_charge;
+            $data['MyCart'] = [];
+
+            $message = __('api.cartEmpty');
+            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
         }
-
     }
-
-
     public function changeQuantity_old(Request $request, $id)
     {
         $settings = Setting::first();
@@ -380,133 +603,302 @@ class CartController extends Controller
         }
     }
 
+//
+//    public function changeQuantity(Request $request, $id)
+//    {
+//
+//        $settings = Setting::first();
+//        // $myCart = Cart::Where('fcm_token', $request->header('fcmToken'))->where('product_id', $id)->first();
+//
+//        // $user_id = Auth::guard('api')->user()->id;
+//
+//        if(Auth::guard('api')->check()){
+//            $user_id = Auth::guard('api')->user()->id;
+//            $myCart = Cart::where('user_id', $user_id)->where('product_id', $id)->first();
+//
+//        }else{
+//            if( $request->fcm_token != '') {
+//                $myCart = Cart::where('fcm_token',$request->fcm_token)->where('product_id', $id)->first();
+//            }
+//        }
+//
+//        if ($myCart) {
+//            if ($request->type == 1) {
+//                $newValue = $myCart->quantity + 1;
+//            } else {
+//                if ($myCart->quantity != 0) {
+//                    $newValue = $myCart->quantity - 1;
+//                } else {
+//                    $newValue = $myCart->delete();
+//                }
+//
+//            }
+//            $myCart->update(['quantity' => $newValue]);
+//            // $myNewCart = Cart::Where('fcm_token', $request->header('fcmToken'))->with('product')->get();
+//            if(Auth::guard('api')->check()){
+//                $user_id = Auth::guard('api')->user()->id;
+//                $myNewCart = Cart::where('user_id', $user_id)->with('product')->get();
+//
+//            }else{
+//                if( $request->fcm_token != '') {
+//                    $myNewCart = Cart::where('fcm_token',$request->fcm_token)->with('product')->get();
+//                }
+//            }
+//            $total_cart = 0;
+//            // foreach ($myNewCart as $one) {
+//            //     //change in the price  when the discount prince
+//            //     if($one->product->discount_price > 0 && $one->product->offer_end_date >= now()->toDateString()){
+//            //         $total_cart += @$one->product->discount_price * @$one->quantity;
+//            //     } else {
+//            //         $total_cart += @$one->product->price * @$one->quantity;
+//            //     }
+//            // }
+//
+//            $count_products = count($myNewCart);
+//            $total_cart = 0;
+//            $total = 0;
+//            $vat = $settings->tax_amount;
+//            $vat_amount = 0;
+//            $total_cart = 0;
+//            $discount = 0;
+//            $delivery_charge = 0;
+//            $final_total = 0;
+//
+//            foreach ($myNewCart as $one) {
+//                // $price_val = ($one->product->discount_price) ? $one->product->discount_price : $one->product->price;
+//                // $total_cart += $price_val * $one->quantity;
+//
+//                if($one->product->discount_price > 0 && $one->product->offer_end_date >= now()->toDateString()){
+//                    $total_cart += @$one->product->discount_price * @$one->quantity;
+//                } else {
+//                    $total_cart += @$one->product->price * @$one->quantity;
+//                }
+//            }
+//
+//
+//
+//            if ($request->has('address_id') && $request->address_id != '') {
+//                // $address = UserAddress::where('id', $request->address_id)->first();
+//                $address = UserAddress::query()->findOrFail($request->address_id);
+//                    if(!isset($address)){
+//                         $message = __('api.not_found');
+//                         return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
+//                    }
+//                $area_cost = Area::query()->findOrFail($address->area_id);
+//                $delivery_charge = $area_cost->delivery_charges;
+//            } elseif ($request->has('area_id') && $request->area_id != '') {
+//                $area_cost = Area::query()->findOrFail($request->area_id);
+//                $delivery_charge = $area_cost->delivery_charges;
+//            } else {
+//                $delivery_charge = 0;
+//            }
+//            $promo = Coupon::where('code', $request->get('code'))->whereDate('end_date', '>=', date('Y-m-d'))->whereDate('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
+//
+//            if ($promo) {
+//                if ($promo->percent > 0) {
+//                    $discount = ($total_cart * $promo->percent) / 100;
+//                    $total_cart = round($total_cart - $discount, 2);
+//                }
+//            }
+//            $vat_amount = $vat_amount * $vat/100;
+//
+//            $final_total = $total_cart + $delivery_charge;
+//
+//            $data['final_total'] =$final_total;
+//            $data['total'] =$total_cart;
+//
+//            // $data['count_products'] =$count_products;
+//            $data['discount'] =$discount;
+//            $data['Tax'] =$vat_amount;
+//            $data['delivery_charge'] =$delivery_charge;
+//
+//            $data['Quantity']  = $newValue;
+//
+//
+//
+//            //$total_cart = $total_cart + $vat;
+//
+//            $message = __('api.ok');
+//            // return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'Quantity' => $newValue, 'total_cart' => $total_cart]);
+//            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data ]);
+//
+//        } else {
+//            $message = __('api.not_found');
+//            return response()->json(['status' => true, 'code' => 200, 'message' => $message]);
+//        }
+//    }
+//
+
 
     public function changeQuantity(Request $request, $id)
     {
-        
         $settings = Setting::first();
-        // $myCart = Cart::Where('fcm_token', $request->header('fcmToken'))->where('product_id', $id)->first();
 
-        // $user_id = Auth::guard('api')->user()->id;
+        // Get variant ID from request
+        $variantId = $request->variant_id;
 
-        if(Auth::guard('api')->check()){
+        // Build query to find cart item
+        $query = Cart::where('product_id', $id)
+            ->where('variant_id', $variantId);
+
+
+
+        // Handle authenticated vs guest users
+        if (Auth::guard('api')->check()) {
             $user_id = Auth::guard('api')->user()->id;
-            $myCart = Cart::where('user_id', $user_id)->where('product_id', $id)->first();           
-
-        }else{
-            if( $request->fcm_token != '') {
-                $myCart = Cart::where('fcm_token',$request->fcm_token)->where('product_id', $id)->first();   
+            $query->where(function ($q) use ($user_id, $request) {
+                $q->where('user_id', $user_id);
+                if ($request->fcm_token) {
+                    $q->orWhere('fcm_token', $request->fcm_token);
+                }
+            });
+        } else {
+            if ($request->fcm_token) {
+                $query->where('fcm_token', $request->fcm_token);
             }
         }
 
+        $myCart = $query->first();
+
+
         if ($myCart) {
+            // Adjust quantity based on type
             if ($request->type == 1) {
                 $newValue = $myCart->quantity + 1;
             } else {
-                if ($myCart->quantity != 0) {
-                    $newValue = $myCart->quantity - 1;
-                } else {
-                    $newValue = $myCart->delete();
-                }
+                $newValue = max($myCart->quantity - 1, 0);
 
+                // If quantity becomes 0, delete the cart item
+                if ($newValue == 0) {
+                    $myCart->delete();
+
+                    $message = __('api.item_removed');
+                    return response()->json([
+                        'status' => true,
+                        'code' => 200,
+                        'message' => $message,
+                        'data' => [
+                            'quantity' => 0,
+                            'item_removed' => true
+                        ]
+                    ]);
+                }
             }
+
             $myCart->update(['quantity' => $newValue]);
-            // $myNewCart = Cart::Where('fcm_token', $request->header('fcmToken'))->with('product')->get();
-            if(Auth::guard('api')->check()){
+
+            // Fetch all cart items with relationships
+            $cartQuery = Cart::with(['product', 'variant', 'giftPackaging']);
+
+            if (Auth::guard('api')->check()) {
                 $user_id = Auth::guard('api')->user()->id;
-                $myNewCart = Cart::where('user_id', $user_id)->with('product')->get();           
-    
-            }else{
-                if( $request->fcm_token != '') {
-                    $myNewCart = Cart::where('fcm_token',$request->fcm_token)->with('product')->get();   
+                $cartQuery->where(function ($q) use ($user_id, $request) {
+                    $q->where('user_id', $user_id);
+                    if ($request->fcm_token) {
+                        $q->orWhere('fcm_token', $request->fcm_token);
+                    }
+                });
+            } else {
+                if ($request->fcm_token) {
+                    $cartQuery->where('fcm_token', $request->fcm_token);
                 }
             }
-            $total_cart = 0; 
-            // foreach ($myNewCart as $one) { 
-            //     //change in the price  when the discount prince 
-            //     if($one->product->discount_price > 0 && $one->product->offer_end_date >= now()->toDateString()){
-            //         $total_cart += @$one->product->discount_price * @$one->quantity;
-            //     } else {
-            //         $total_cart += @$one->product->price * @$one->quantity;
-            //     } 
-            // }
 
-            $count_products = count($myNewCart);
+            $carts = $cartQuery->get();
+            $count_products = count($carts);
             $total_cart = 0;
-            $total = 0;
-            $vat = $settings->tax_amount;
-            $vat_amount = 0;
-            $total_cart = 0;
+
+            // Calculate cart total with variant and gift packaging prices
+            foreach ($carts as $cart) {
+                // Use variant price if it exists, else fallback to product price
+                $basePrice = 0;
+
+                if ($cart->variant && $cart->variant->price) {
+                    $basePrice = ($cart->variant->discount_price > 0)
+                        ? $cart->variant->discount_price
+                        : $cart->variant->price;
+                } else {
+                    // Fallback to product price
+                    $basePrice = ($cart->product->discount_price > 0 &&
+                        $cart->product->offer_end_date >= now()->toDateString())
+                        ? $cart->product->discount_price
+                        : $cart->product->price;
+                }
+
+                // Add gift packaging price if exists
+                $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
+
+                $total_cart += ($basePrice + $packagingPrice) * $cart->quantity;
+            }
+
+            $Total = $total_cart;
             $discount = 0;
             $delivery_charge = 0;
-            $final_total = 0;
+            $vat_amount = 0;
 
-            foreach ($myNewCart as $one) {
-                // $price_val = ($one->product->discount_price) ? $one->product->discount_price : $one->product->price;
-                // $total_cart += $price_val * $one->quantity;
-                
-                if($one->product->discount_price > 0 && $one->product->offer_end_date >= now()->toDateString()){
-                    $total_cart += @$one->product->discount_price * @$one->quantity;
-                } else {
-                    $total_cart += @$one->product->price * @$one->quantity;
-                } 
-            }
-
-
-
+            // Calculate delivery charge
             if ($request->has('address_id') && $request->address_id != '') {
-                // $address = UserAddress::where('id', $request->address_id)->first();
                 $address = UserAddress::query()->findOrFail($request->address_id);
-                    if(!isset($address)){
-                         $message = __('api.not_found');
-                         return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
-                    }
+                if (!$address) {
+                    $message = __('api.not_found');
+                    return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
+                }
                 $area_cost = Area::query()->findOrFail($address->area_id);
                 $delivery_charge = $area_cost->delivery_charges;
             } elseif ($request->has('area_id') && $request->area_id != '') {
                 $area_cost = Area::query()->findOrFail($request->area_id);
                 $delivery_charge = $area_cost->delivery_charges;
-            } else {
-                $delivery_charge = 0;
             }
-            $promo = Coupon::where('code', $request->get('code'))->whereDate('end_date', '>=', date('Y-m-d'))->whereDate('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
 
-            if ($promo) {
-                if ($promo->percent > 0) {
+            // Apply promo/coupon discount
+            $promoCode = $request->get('code') ?: $request->get('code_name');
+            if ($promoCode) {
+                $promo = Coupon::where('code', $promoCode)
+                    ->whereDate('end_date', '>=', now()->toDateString())
+                    ->whereDate('start_date', '<=', now()->toDateString())
+                    ->where('status', 'active')
+                    ->first();
+
+                if ($promo && $promo->percent > 0) {
                     $discount = ($total_cart * $promo->percent) / 100;
-                    $total_cart = round($total_cart - $discount, 2);
+                    $Total = round($total_cart - $discount, 3);
                 }
             }
-            $vat_amount = $vat_amount * $vat/100;
 
-            $final_total = $total_cart + $delivery_charge;
+            // Calculate VAT
+            $vat = $settings->tax_amount ?? 0;
+            $vat_amount = ($Total * $vat) / 100;
 
-            $data['final_total'] =$final_total;
-            $data['total'] =$total_cart;
+            $final_total = $Total + $delivery_charge + $vat_amount;
 
-            // $data['count_products'] =$count_products;
-            $data['discount'] =$discount;
-            $data['Tax'] =$vat_amount;
-            $data['delivery_charge'] =$delivery_charge;
-           
-            $data['Quantity']  = $newValue;
-
-
-                
-            //$total_cart = $total_cart + $vat;
+            $data = [
+                'final_total' => number_format($final_total, 3),
+                'total' => number_format($Total, 3),
+                'total_cart' => number_format($total_cart, 3),
+                'count_products' => $count_products,
+                'discount' => number_format($discount, 3),
+                'tax' => number_format($vat_amount, 3),
+                'delivery_charge' => number_format($delivery_charge, 3),
+                'quantity' => $newValue
+            ];
 
             $message = __('api.ok');
-            // return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'Quantity' => $newValue, 'total_cart' => $total_cart]);
-            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data ]);
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => $message,
+                'data' => $data
+            ]);
 
         } else {
             $message = __('api.not_found');
-            return response()->json(['status' => true, 'code' => 200, 'message' => $message]);
+            return response()->json([
+                'status' => false,
+                'code' => 404,
+                'message' => $message
+            ]);
         }
     }
-
-
-
 
     public function checkCode(Request $request)
     {
@@ -542,15 +934,15 @@ class CartController extends Controller
 
     }
 
-    
+
     public function checkOut_old(Request $request)
-    { 
-        $settings = Setting::first();   
+    {
+        $settings = Setting::first();
         if ($settings->is_alowed_buying == 1) {
             $message = __('api.Purchase_is_suspended');
             return response()->json(['status' => true, 'message' => $message]);
         } else {
-            
+
             if (Auth::guard('api')->check()) {
                 $user_id = auth('api')->user()->id;
                 $validator = Validator::make($request->all(), [
@@ -578,18 +970,18 @@ class CartController extends Controller
                         'message' => implode("\n", $validator->messages()->all())]);
                 }
             }
-            
+
 
             if(Auth::guard('api')->check()){
                 $user_id = Auth::guard('api')->user()->id;
-                $myNewCart = Cart::where('user_id', $user_id)->with('product')->get();           
-    
+                $myNewCart = Cart::where('user_id', $user_id)->with('product')->get();
+
             }else{
                 if( $request->fcm_token != '') {
-                    $myNewCart = Cart::where('fcm_token',$request->fcm_token)->with('product')->get();   
+                    $myNewCart = Cart::where('fcm_token',$request->fcm_token)->with('product')->get();
                 }
             }
-            
+
             if ($myNewCart) {
                 if ($myNewCart->isEmpty()) {
                     $message = __('api.cartEmpty');
@@ -609,15 +1001,15 @@ class CartController extends Controller
                 foreach ($myNewCart as $one) {
                     // $price_val = ($one->product->discount_price) ? $one->product->discount_price : $one->product->price;
                     // $total_cart += $price_val * $one->quantity;
-                    
+
                     if($one->product->discount_price > 0 && $one->product->offer_end_date >= now()->toDateString()){
                         $total_cart += @$one->product->discount_price * @$one->quantity;
                     } else {
                         $total_cart += @$one->product->price * @$one->quantity;
                 }
-                
-                
-                
+
+
+
                 }
 
 
@@ -658,7 +1050,7 @@ class CartController extends Controller
                     $newUser->mobile = $request->mobile;
                     $newUser->type_mobile = $request->type_mobile;
                     $newUser->save();
-                    
+
                     $address = UserAddress::query()->create([
                         'address_name' => $request->address_name,
                         'area_id' => $request->area_id,
@@ -667,11 +1059,11 @@ class CartController extends Controller
                         // 'latitude' => $request->latitude,
                         'user_id' => $newUser->id,
                       ]);
-                    
+
                     $user_id =$newUser->id;
-                    
+
                 }
-                 
+
                 $order = new Order();
                 $order->total = $final_total ;
                 $order->sub_total = $total_cart;
@@ -704,12 +1096,12 @@ class CartController extends Controller
                 // $order->availabile_time = $request->availabile_time;
                 $order->save();
                 // dd($order);
-               
+
                 // $payment = $this->payment_user($order);
 
                 if ($order) {
                     $checkout_url = url('/checkouturl/'.$order->id);
-                  
+
 
                     foreach ($myNewCart as $one) {
                         if ($one->product->discount_price != 0) {
@@ -733,7 +1125,7 @@ class CartController extends Controller
                     $message = __('api.not_found');
                     return response()->json(['status' => true, 'code' => 200, 'message' => $message]);
                 }
-                    
+
                 $user='';
                 if(isset($newUser)) {
                     if($newUser){
@@ -742,7 +1134,7 @@ class CartController extends Controller
                                     'lang' => app()->getLocale()]
                                 , ['user_id' => $newUser->id]);
                         }
-        
+
                         $user = User::findOrFail($newUser->id);
                         $user['access_token'] = $newUser->createToken('mobile')->accessToken;
                     }
@@ -759,207 +1151,526 @@ class CartController extends Controller
 
     }
 
+//    public function checkOut(Request $request)
+//    {
+//        $settings = Setting::first();
+//        if ($settings->is_alowed_buying == 1) {
+//            $message = __('api.Purchase_is_suspended');
+//            return response()->json(['status' => true, 'message' => $message]);
+//        } else {
+//
+//            if (Auth::guard('api')->check()) {
+//                $user_id = auth('api')->user()->id;
+//                $validator = Validator::make($request->all(), [
+//                    'address_id' => 'required',
+//                ]);
+//                if ($validator->fails()) {
+//                    return response()->json(['status' => false, 'code' => 201,
+//                        'message' => implode("\n", $validator->messages()->all())]);
+//                }
+//            } else {
+//                $validator = Validator::make($request->all(), [
+//                    'area_id' => 'required',
+//                    'name' => 'required',
+//                    'email' => 'required|email|unique:users',
+//                    'street' => 'required',
+//                    'mobile' => 'required',
+//
+//                    // 'password' => 'required',
+//                    'address_name' => 'required',
+//                    // 'latitude' => 'required',
+//                    // 'longitude' => 'required',
+//                ]);
+//                if ($validator->fails()) {
+//                    return response()->json(['status' => false, 'code' => 200,
+//                        'message' => implode("\n", $validator->messages()->all())]);
+//                }
+//            }
+//            if (Auth::guard('api')->check()) {
+//                $myNewCart = Cart::where('user_id', $user_id)->with('product')->get();
+//            } else {
+//                $myNewCart = Cart::where('fcm_token', $request->fcm_token)->with('product')->get();
+//            }
+//
+//            if ($myNewCart) {
+//                if ($myNewCart->isEmpty()) {
+//                    $message = __('api.cartEmpty');
+//                    return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
+//                }
+//
+//                $count_products = count($myNewCart);
+//                $total_cart = 0;
+//                $total = 0;
+//                $vat = $settings->tax_amount;
+//                $vat_amount = 0;
+//                $total_cart = 0;
+//                $discount = 0;
+//                $delivery_charge = 0;
+//                $final_total = 0;
+//
+//                foreach ($myNewCart as $one) {
+//                    // $price_val = ($one->product->discount_price) ? $one->product->discount_price : $one->product->price;
+//                    // $total_cart += $price_val * $one->quantity;
+//
+//                    if($one->product->discount_price > 0 && $one->product->offer_end_date >= now()->toDateString()){
+//                        $total_cart += @$one->product->discount_price * @$one->quantity;
+//                    } else {
+//                        $total_cart += @$one->product->price * @$one->quantity;
+//                }
+//
+//
+//
+//                }
+//
+//
+//
+//                if ($request->has('address_id') && $request->address_id != '') {
+//                    // $address = UserAddress::where('id', $request->address_id)->first();
+//                    $address = UserAddress::query()->findOrFail($request->address_id);
+//                        if(!isset($address)){
+//                             $message = __('api.not_found');
+//                             return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
+//                        }
+//                    $area_cost = Area::query()->findOrFail($address->area_id);
+//                    $delivery_charge = $area_cost->delivery_charges;
+//                } elseif ($request->has('area_id') && $request->area_id != '') {
+//                    $area_cost = Area::query()->findOrFail($request->area_id);
+//                    $delivery_charge = $area_cost->delivery_charges;
+//                } else {
+//                    $delivery_charge = 0;
+//                }
+//                $promo = Coupon::where('code', $request->get('code'))->whereDate('end_date', '>=', date('Y-m-d'))->whereDate('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
+//
+//                if ($promo) {
+//                    if ($promo->percent > 0) {
+//                        $discount = ($total_cart * $promo->percent) / 100;
+//                        $total_cart = round($total_cart - $discount, 2);
+//                    }
+//                }
+//                $vat_amount = $vat_amount * $vat/100;
+//
+//                $final_total = $total_cart + $delivery_charge;
+//
+//
+//               if (!auth('api')->check()) {
+//                    $newUser = new User();
+//                    $newUser->password = bcrypt($request->get('password'));
+//                    $newUser->email = $request->email;
+//                    $newUser->name = $request->name;
+//                    $newUser->mobile = $request->mobile;
+//                    $newUser->type_mobile = $request->type_mobile;
+//                    $newUser->save();
+//
+//                    $address = UserAddress::query()->create([
+//                        'address_name' => $request->address_name,
+//                        'area_id' => $request->area_id,
+//                        'street' => $request->street,
+//                        // 'longitude' => $request->longitude,
+//                        // 'latitude' => $request->latitude,
+//                        'user_id' => $newUser->id,
+//                      ]);
+//
+//                    $user_id =$newUser->id;
+//
+//                }
+//
+//                $order = new Order();
+//                $order->total = $final_total ;
+//                $order->sub_total = $total_cart;
+//                $order->count_items = $count_products;
+//                $order->vat_percent = $vat;
+//                $order->vat_amount = $vat_amount;
+//                $order->delivery_cost = $delivery_charge;
+//                $order->discount = $discount;
+//                $order->discount_code = $promo->code ?? '';
+//                $order->user_id = $user_id;
+//                // if (Auth::guard('api')->check()) {
+//                    $order->address_id = $address->id;
+//                // }else {
+//                    $order->fcm_token = $request->fcm_token;
+//                    $order->name = (isset($newUser))? $newUser->name:auth('api')->user()->name;
+//                    $order->email =(isset($newUser))? $newUser->email:auth('api')->user()->email;
+//                    $order->mobile =(isset($newUser))? $newUser->mobile:auth('api')->user()->mobile;
+//
+//                    $order->area_id = $address->area_id;
+//                    $order->street = $address->street;
+//                    $order->address_name = $address->address_name;
+//                    $order->block = $address->block;
+//                    $order->house_number = $address->house_building;
+//                // }
+//                // $order->availabile_date = $request->availabile_date;
+//                // $order->availabile_time = $request->availabile_time;
+//                $order->save();
+//                // dd($order);
+//
+//                // $payment = $this->payment_user($order);
+//
+//                if ($order) {
+//                    foreach ($myNewCart as $one) {
+//                        if ($one->product->discount_price != 0) {
+//                            $price = $one->product->discount_price;
+//                        } else {
+//                            $price = 0;
+//                        }
+//
+//                        $ProductOrder = new OrderProduct();
+//                        $ProductOrder->order_id = $order->id;
+//                        $ProductOrder->product_id = $one->product_id;
+//                        $ProductOrder->quantity = $one->quantity;
+//                        $ProductOrder->offer_price = $price;
+//                        $ProductOrder->price = $one->product->price;
+//                        $ProductOrder->save();
+//
+//                        // Cart::where('user_id', auth('api')->id())->delete();
+//                    }
+//
+//                } else {
+//                    $message = __('api.not_found');
+//                    return response()->json(['status' => true, 'code' => 200, 'message' => $message]);
+//                }
+//
+//                $user='';
+//                if(isset($newUser)) {
+//                    if($newUser){
+//                        if ($request->has('fcmToken')) {
+//                            Token::updateOrCreate(['device_type' => $request->get('type_mobile'), 'fcm_token' => $request->get('fcmToken'),
+//                                    'lang' => app()->getLocale()]
+//                                , ['user_id' => $newUser->id]);
+//                        }
+//
+//                        $user = User::findOrFail($newUser->id);
+//                        $user['access_token'] = $newUser->createToken('mobile')->accessToken;
+//                    }
+//                }
+//                $message = __('api.ok');
+//                return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $order ,'user'=>$user]);
+//            } else {
+//                $message = __('api.not_found');
+//                return response()->json(['status' => true, 'code' => 200, 'message' => $message]);
+//            }
+//
+//
+//        }
+//
+//    }
+
+
     public function checkOut(Request $request)
-    { 
-        $settings = Setting::first();   
+    {
+        $settings = Setting::first();
+
+        // Check if purchasing is suspended
         if ($settings->is_alowed_buying == 1) {
             $message = __('api.Purchase_is_suspended');
-            return response()->json(['status' => true, 'message' => $message]);
-        } else {
-            
-            if (Auth::guard('api')->check()) {
-                $user_id = auth('api')->user()->id;
-                $validator = Validator::make($request->all(), [
-                    'address_id' => 'required',
-                ]);
-                if ($validator->fails()) {
-                    return response()->json(['status' => false, 'code' => 201,
-                        'message' => implode("\n", $validator->messages()->all())]);
-                }
-            } else {
-                $validator = Validator::make($request->all(), [
-                    'area_id' => 'required',
-                    'name' => 'required',
-                    'email' => 'required|email|unique:users',
-                    'street' => 'required',
-                    'mobile' => 'required',
-
-                    // 'password' => 'required',
-                    'address_name' => 'required',
-                    // 'latitude' => 'required',
-                    // 'longitude' => 'required',
-                ]);
-                if ($validator->fails()) {
-                    return response()->json(['status' => false, 'code' => 200,
-                        'message' => implode("\n", $validator->messages()->all())]);
-                }
-            }
-            if (Auth::guard('api')->check()) {
-                $myNewCart = Cart::where('user_id', $user_id)->with('product')->get();
-            } else {
-                $myNewCart = Cart::where('fcm_token', $request->fcm_token)->with('product')->get();
-            }
-            
-            if ($myNewCart) {
-                if ($myNewCart->isEmpty()) {
-                    $message = __('api.cartEmpty');
-                    return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
-                }
-
-                $count_products = count($myNewCart);
-                $total_cart = 0;
-                $total = 0;
-                $vat = $settings->tax_amount;
-                $vat_amount = 0;
-                $total_cart = 0;
-                $discount = 0;
-                $delivery_charge = 0;
-                $final_total = 0;
-
-                foreach ($myNewCart as $one) {
-                    // $price_val = ($one->product->discount_price) ? $one->product->discount_price : $one->product->price;
-                    // $total_cart += $price_val * $one->quantity;
-                    
-                    if($one->product->discount_price > 0 && $one->product->offer_end_date >= now()->toDateString()){
-                        $total_cart += @$one->product->discount_price * @$one->quantity;
-                    } else {
-                        $total_cart += @$one->product->price * @$one->quantity;
-                }
-                
-                
-                
-                }
-
-
-
-                if ($request->has('address_id') && $request->address_id != '') {
-                    // $address = UserAddress::where('id', $request->address_id)->first();
-                    $address = UserAddress::query()->findOrFail($request->address_id);
-                        if(!isset($address)){
-                             $message = __('api.not_found');
-                             return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
-                        }
-                    $area_cost = Area::query()->findOrFail($address->area_id);
-                    $delivery_charge = $area_cost->delivery_charges;
-                } elseif ($request->has('area_id') && $request->area_id != '') {
-                    $area_cost = Area::query()->findOrFail($request->area_id);
-                    $delivery_charge = $area_cost->delivery_charges;
-                } else {
-                    $delivery_charge = 0;
-                }
-                $promo = Coupon::where('code', $request->get('code'))->whereDate('end_date', '>=', date('Y-m-d'))->whereDate('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
-
-                if ($promo) {
-                    if ($promo->percent > 0) {
-                        $discount = ($total_cart * $promo->percent) / 100;
-                        $total_cart = round($total_cart - $discount, 2);
-                    }
-                }
-                $vat_amount = $vat_amount * $vat/100;
-
-                $final_total = $total_cart + $delivery_charge;
-
-
-               if (!auth('api')->check()) {
-                    $newUser = new User();
-                    $newUser->password = bcrypt($request->get('password'));
-                    $newUser->email = $request->email;
-                    $newUser->name = $request->name;
-                    $newUser->mobile = $request->mobile;
-                    $newUser->type_mobile = $request->type_mobile;
-                    $newUser->save();
-                    
-                    $address = UserAddress::query()->create([
-                        'address_name' => $request->address_name,
-                        'area_id' => $request->area_id,
-                        'street' => $request->street,
-                        // 'longitude' => $request->longitude,
-                        // 'latitude' => $request->latitude,
-                        'user_id' => $newUser->id,
-                      ]);
-                    
-                    $user_id =$newUser->id;
-                    
-                }
-                 
-                $order = new Order();
-                $order->total = $final_total ;
-                $order->sub_total = $total_cart;
-                $order->count_items = $count_products;
-                $order->vat_percent = $vat;
-                $order->vat_amount = $vat_amount;
-                $order->delivery_cost = $delivery_charge;
-                $order->discount = $discount;
-                $order->discount_code = $promo->code ?? '';
-                $order->user_id = $user_id;
-                // if (Auth::guard('api')->check()) {
-                    $order->address_id = $address->id;
-                // }else {
-                    $order->fcm_token = $request->fcm_token;
-                    $order->name = (isset($newUser))? $newUser->name:auth('api')->user()->name;
-                    $order->email =(isset($newUser))? $newUser->email:auth('api')->user()->email;
-                    $order->mobile =(isset($newUser))? $newUser->mobile:auth('api')->user()->mobile;
-
-                    $order->area_id = $address->area_id;
-                    $order->street = $address->street;
-                    $order->address_name = $address->address_name;
-                    $order->block = $address->block;
-                    $order->house_number = $address->house_building;
-                // }
-                // $order->availabile_date = $request->availabile_date;
-                // $order->availabile_time = $request->availabile_time;
-                $order->save();
-                // dd($order);
-               
-                // $payment = $this->payment_user($order);
-
-                if ($order) {
-                    foreach ($myNewCart as $one) {
-                        if ($one->product->discount_price != 0) {
-                            $price = $one->product->discount_price;
-                        } else {
-                            $price = 0;
-                        }
-
-                        $ProductOrder = new OrderProduct();
-                        $ProductOrder->order_id = $order->id;
-                        $ProductOrder->product_id = $one->product_id;
-                        $ProductOrder->quantity = $one->quantity;
-                        $ProductOrder->offer_price = $price;
-                        $ProductOrder->price = $one->product->price;
-                        $ProductOrder->save();
-
-                        // Cart::where('user_id', auth('api')->id())->delete();
-                    }
-
-                } else {
-                    $message = __('api.not_found');
-                    return response()->json(['status' => true, 'code' => 200, 'message' => $message]);
-                }
-                    
-                $user='';
-                if(isset($newUser)) {
-                    if($newUser){
-                        if ($request->has('fcmToken')) {
-                            Token::updateOrCreate(['device_type' => $request->get('type_mobile'), 'fcm_token' => $request->get('fcmToken'),
-                                    'lang' => app()->getLocale()]
-                                , ['user_id' => $newUser->id]);
-                        }
-        
-                        $user = User::findOrFail($newUser->id);
-                        $user['access_token'] = $newUser->createToken('mobile')->accessToken;
-                    }
-                }
-                $message = __('api.ok');
-                return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $order ,'user'=>$user]);
-            } else {
-                $message = __('api.not_found');
-                return response()->json(['status' => true, 'code' => 200, 'message' => $message]);
-            }
-
-
+            return response()->json(['status' => false, 'message' => $message, 'code' => 600]);
         }
 
+        // Validation based on authentication status
+        if (Auth::guard('api')->check()) {
+            $user_id = auth('api')->user()->id;
+            $validator = Validator::make($request->all(), [
+                'address_id' => 'required|exists:user_addresses,id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'code' => 400,
+                    'message' => implode("\n", $validator->messages()->all())
+                ]);
+            }
+        } else {
+            $validator = Validator::make($request->all(), [
+                'area_id' => 'required|exists:areas,id',
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'mobile' => 'required|string|max:20',
+                'street' => 'required|string|max:255',
+                'address_name' => 'required|string|max:255',
+                'block' => 'nullable|string|max:100',
+                'house_number' => 'nullable|string|max:100',
+                'avenue' => 'nullable|string|max:255',
+                'address_type' => 'nullable|string|max:50',
+                'fcm_token' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'code' => 400,
+                    'message' => implode("\n", $validator->messages()->all())
+                ]);
+            }
+        }
+
+        // Get cart items with relationships
+        if (Auth::guard('api')->check()) {
+            $carts = Cart::where('user_id', $user_id)
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('fcm_token', $request->fcm_token)
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        }
+
+        // Check if cart is empty
+        if ($carts->isEmpty()) {
+            $message = __('api.cartEmpty');
+            return response()->json(['status' => false, 'code' => 600, 'message' => $message]);
+        }
+
+        // Initialize calculation variables
+        $count_products = $carts->count();
+        $total_cart = 0;
+        $vat = $settings->tax_amount;
+        $vat_amount = 0;
+        $discount = 0;
+        $delivery_charge = 0;
+
+        // Calculate cart total with variants and gift packaging
+        foreach ($carts as $cart) {
+            $basePrice = 0;
+
+            // Calculate base price considering variants and discounts
+            if ($cart->variant) {
+                $basePrice = ($cart->variant->discount_price > 0 && $cart->variant->discount_price < $cart->variant->price)
+                    ? $cart->variant->discount_price
+                    : $cart->variant->price;
+            } else {
+                $basePrice = ($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString())
+                    ? $cart->product->discount_price
+                    : $cart->product->price;
+            }
+
+            // Add gift packaging cost if selected
+            $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
+
+            $total_cart += ($basePrice + $packagingPrice) * $cart->quantity;
+        }
+
+        // Calculate delivery charges
+        if ($request->has('address_id') && is_numeric($request->address_id)) {
+            $address = UserAddress::query()->findOrFail($request->address_id);
+            if (!$address) {
+                $message = __('api.not_found');
+                return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
+            }
+
+            $area_cost = Area::query()->findOrFail($address->area_id);
+            $delivery_charge = $area_cost->delivery_charges ?? 0;
+        } elseif ($request->has('area_id') && $request->area_id != '') {
+            $area_cost = Area::query()->findOrFail($request->area_id);
+            $delivery_charge = $area_cost->delivery_charges ?? 0;
+        }
+
+        // Apply promo code if provided
+        if ($request->has('code') && !empty($request->code)) {
+            $promo = Coupon::where('code', $request->code)
+                ->whereDate('end_date', '>=', now()->toDateString())
+                ->whereDate('start_date', '<=', now()->toDateString())
+                ->where('status', 'active')
+                ->first();
+
+            if ($promo && $promo->percent > 0) {
+                $discount = ($total_cart * $promo->percent) / 100;
+                $total_cart = round($total_cart - $discount, 3);
+            }
+        }
+
+        // Calculate VAT
+        $vat_amount = $total_cart * $vat / 100;
+
+        // Calculate final total
+        $final_total = $total_cart + $vat_amount + $delivery_charge;
+
+        // Create guest user if not authenticated
+        $newUser = null;
+        if (!Auth::guard('api')->check()) {
+            try {
+                $newUser = new User();
+                $newUser->password = bcrypt($request->get('password', 'defaultpassword123'));
+                $newUser->email = $request->email;
+                $newUser->name = $request->name;
+                $newUser->mobile = $request->mobile;
+                $newUser->type_mobile = $request->type_mobile ?? 'android';
+                $newUser->save();
+
+                // Create address for guest user
+                $address = UserAddress::create([
+                    'address_name' => $request->address_name,
+                    'area_id' => $request->area_id,
+                    'street' => $request->street,
+                    'block' => $request->block ?? '',
+                    'house_building' => $request->house_number ?? '',
+                    'avenue' => $request->avenue ?? '',
+                    'address_type' => $request->address_type ?? 'home',
+                    'latitude' => $request->latitude ?? null,
+                    'longitude' => $request->longitude ?? null,
+                    'user_id' => $newUser->id,
+                ]);
+
+                $user_id = $newUser->id;
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => false,
+                    'code' => 500,
+                    'message' => 'Failed to create user account'
+                ]);
+            }
+        } else {
+            $address = UserAddress::findOrFail($request->address_id);
+        }
+
+        // Create order
+        try {
+            $order = new Order();
+            $order->total = $final_total;
+            $order->sub_total = $total_cart;
+            $order->count_items = $count_products;
+            $order->vat_percent = $vat;
+            $order->vat_amount = $vat_amount;
+            $order->delivery_cost = $delivery_charge;
+            $order->discount = $discount;
+            $order->discount_code = isset($promo) ? $promo->code : '';
+            $order->user_id = $user_id ?? auth('api')->user()->id;
+            $order->payment_method = 2; // Default payment method
+
+            // Address information
+            $order->address_id = $address->id;
+            $order->fcm_token = $request->fcm_token ?? null;
+            $order->name = $newUser ? $newUser->name : auth('api')->user()->name;
+            $order->email = $newUser ? $newUser->email : auth('api')->user()->email;
+            $order->mobile = $newUser ? $newUser->mobile : auth('api')->user()->mobile;
+            $order->area_id = $address->area_id;
+            $order->street = $address->street ?? '';
+            $order->address_name = $address->address_name ?? '';
+            $order->block = $address->block ?? '';
+            $order->house_number = $address->house_building ?? '';
+
+            // Handle delivery notes
+            if ($request->has('delivery_note') && !empty($request->delivery_note)) {
+                $note = Deleverynote::create([
+                    'delivery_note' => $request->delivery_note
+                ]);
+                $order->delivery_note_id = $note->id;
+            } elseif ($request->has('selected_delivery_note_id') && is_numeric($request->selected_delivery_note_id)) {
+                $order->delivery_note_id = $request->selected_delivery_note_id;
+            }
+
+            $order->save();
+
+            // Create order products
+            if ($order) {
+                foreach ($carts as $cart) {
+                    // Calculate individual product price
+                    $price = 0;
+                    if ($cart->variant) {
+                        $price = ($cart->variant->discount_price > 0 && $cart->variant->discount_price < $cart->variant->price)
+                            ? $cart->variant->discount_price
+                            : $cart->variant->price;
+                    } else {
+                        $price = ($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString())
+                            ? $cart->product->discount_price
+                            : $cart->product->price;
+                    }
+
+                    $productOrder = new OrderProduct();
+                    $productOrder->order_id = $order->id;
+                    $productOrder->product_id = $cart->product_id;
+                    $productOrder->product_variant_id = $cart->variant ? $cart->variant->id : null;
+                    $productOrder->quantity = $cart->quantity;
+                    $productOrder->gift_packaging_id = $cart->gift_packaging_id ?? null;
+
+                    // Set offer price only if there's actually a discount
+                    $originalPrice = $cart->variant ? $cart->variant->price : $cart->product->price;
+                    $productOrder->offer_price = ($price < $originalPrice) ? $price : 0;
+                    $productOrder->price = $originalPrice;
+                    $productOrder->save();
+
+                    // Send notification to vendor
+                    $this->notifyVendor($cart->product_id, $order);
+                }
+
+                // Clear cart after successful order
+                if (Auth::guard('api')->check()) {
+                    Cart::where('user_id', $user_id)->delete();
+                } else {
+                    Cart::where('fcm_token', $request->fcm_token)->delete();
+                }
+
+                // Handle FCM token for new users
+                $user = null;
+                if ($newUser) {
+                    if ($request->has('fcm_token')) {
+                        Token::updateOrCreate([
+                            'device_type' => $request->get('type_mobile', 'android'),
+                            'fcm_token' => $request->get('fcm_token'),
+                            'lang' => app()->getLocale()
+                        ], [
+                            'user_id' => $newUser->id
+                        ]);
+                    }
+
+                    $user = User::findOrFail($newUser->id);
+                    $user['access_token'] = $newUser->createToken('mobile')->accessToken;
+                }
+
+                $message = __('api.ok');
+                return response()->json([
+                    'status' => true,
+                    'code' => 200,
+                    'message' => $message,
+                    'data' => $order,
+                    'user' => $user
+                ]);
+            } else {
+                $message = __('api.order_creation_failed');
+                return response()->json(['status' => false, 'code' => 500, 'message' => $message]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Checkout Error: ' . $e->getMessage(), [
+                'user_id' => $user_id ?? null,
+                'request_data' => $request->all(),
+                'stack_trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => 'An error occurred while processing your order'
+            ]);
+        }
+    }
+
+    /**
+     * Send notification to vendor about new order
+     */
+    private function notifyVendor($productId, $order)
+    {
+        try {
+            $message = __('api.NewOrder');
+            $vendor = Product::where('id', $productId)->pluck('vender_id')->first();
+
+            if (!empty($vendor)) {
+                $tokens = Venders::where('id', $vendor)->pluck('fcm_token')->toArray();
+                $tokens = array_filter($tokens); // Remove empty tokens
+
+                if (!empty($tokens)) {
+                    sendNotificationToUsers($tokens, 'order', $order->id, $message);
+                }
+
+                // Save notification to database
+                $notify = new Notifiy();
+                $notify->user_id = $vendor;
+                $notify->order_id = $order->id;
+                $notify->message = $message;
+                $notify->save();
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Vendor notification failed: ' . $e->getMessage());
+            // Don't fail the order if notification fails
+        }
     }
 
     public function reOrder(Request $request, $id)
@@ -1014,19 +1725,19 @@ class CartController extends Controller
     }
 
     /**
-     * Home page of user 
+     * Home page of user
      */
 
     public function userHome(Request $request) {
         $categories=Category::where('status','active')->get();
         $venders = Venders::where('status','active')->get();
-        $products= Product::where('status','active')->orderBy('id','desc')->take(6)->get();
+        $products= Product::where('status','active')->with('variants','variants.variantType','category','images','vitamin')->orderBy('id','desc')->take(6)->get();
         $banners= Banner::where('status','active')->orderBy('id','desc')->get();
         $data = [
             'categories'=>$categories,
             'venders'  => $venders,
             'products' => $products,
-            'banners'  => $banners        
+            'banners'  => $banners
         ];
 
         $message = __('api.ok');
@@ -1034,20 +1745,20 @@ class CartController extends Controller
     }
 
     public function payment_user($request) {
-       
+
         $User_card = $this->card_token($request->mobile);
-       
+
         $fields = [
             'merchant_id'=>env('MERCHAND_ID'),
             'username' =>env('UPAY_USERNAME'),
             'password'=> env('UPAY_PASSWORD'),
-            'api_key'=> env('UPAY_API_KEY'), 
+            'api_key'=> env('UPAY_API_KEY'),
             'order_id'=>$request->id, // MIN 30 characters with strong unique function (like hashing function with time)
             'total_price'=>$request->total,
             'CurrencyCode'=>env('CURRENCY'),//only works in production mode
             'CstFName'=> $request->name,
             'CstEmail'=>$request->email,
-            'CstMobile'=>$request->mobile, 
+            'CstMobile'=>$request->mobile,
             'success_url'=> env('R_URL').'successPayment',
             'error_url'=> env('R_URL').'failPayment',
             'test_mode'=>1, // test mode enabled
@@ -1060,8 +1771,8 @@ class CartController extends Controller
             // 'ProductQty'=>json_encode([2,1]),
             // 'ProductPrice'=>json_encode([150,1500]),
             'reference'=>str_random(10), // Reference that you want to show in invoice in ref column
-            // 'ExtraMerchantsData'=>json_encode($extraMerchantsData) 
-        ];    
+            // 'ExtraMerchantsData'=>json_encode($extraMerchantsData)
+        ];
 
         $fields_string = http_build_query($fields);
         $ch = curl_init();
@@ -1075,7 +1786,7 @@ class CartController extends Controller
         DB::table('payment')->insert(
             ['order_id' =>$fields['order_id'], 'total_price' => $fields['total_price'], 'CstFName'=> $fields['CstFName'],'CstEmail'=>$fields['CstEmail'],'CstMobile'=>$fields['CstMobile'],'customer_unq_token'=>$fields['customer_unq_token'],'reference'=>$fields['reference']]
         );
-        return $server_output;       
+        return $server_output;
     }
     public function card_token($request) {
         $fields = [
@@ -1086,7 +1797,7 @@ class CartController extends Controller
         $token = Admin::query()->findOrFail(1);
         // $auth_token=[
         //     'Token' => $token->api_auth_token
-        // ]; 
+        // ];
 
         $curl = curl_init();
         curl_setopt_array($curl,[
@@ -1101,12 +1812,12 @@ class CartController extends Controller
           CURLOPT_POSTFIELDS => $fields,
           CURLOPT_HTTPHEADER => array('Token: '.$token->api_auth_token),
         ]);
-        
+
         $response = curl_exec($curl);
         curl_close($curl);
         $server_output = json_decode($response,true);
-        return $server_output['card_tokens'];   
-    
+        return $server_output['card_tokens'];
+
     }
 
 

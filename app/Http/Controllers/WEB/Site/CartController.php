@@ -376,6 +376,8 @@ class CartController extends Controller
 
 
 
+
+    //change quntity site
     public function changeQuantity(Request $request, $id)
     {
         // Find the cart item by product ID + user/session
