@@ -8,6 +8,7 @@ use App\Models\Banner;
 use App\Models\CartAddition;
 use App\Models\City;
 use App\Models\Deleverynote;
+use App\Models\GiftPackaging;
 use App\Models\Notifiy;
 use App\Models\ProductVariant;
 use App\Models\Setting;
@@ -31,6 +32,7 @@ use App\Models\UserAddress;
 use App\Models\Addition;
 use App\Notifications\ResetPassword;
 use Carbon\Carbon;
+use GPBMetadata\Google\Api\Log;
 use Illuminate\Support\Facades\Password;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -458,34 +460,160 @@ class CartController extends Controller
 //
 //    }
 
+    /**
+     * Update gift packaging for a cart item
+     */
+    public function updateGiftPackaging(Request $request)
+    {
+        try {
+            // Validate the request (allow packaging_id to be null or zero)
+            $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'packaging_id' => 'nullable|integer',
+                'code_name' => 'nullable|string', // promo code
+                'fcm_token' => 'nullable|string', // for guest users
+            ]);
+
+            // Get product and packaging details from the request
+            $productId = $request->input('product_id');
+            $packagingId = $request->input('packaging_id');
+            $promoCode = $request->input('code_name');
+
+            // Fetch the product
+            $product = Product::find($productId);
+
+            // If packagingId is truthy (not 0/null), fetch the GiftPackaging, otherwise null
+            $packaging = $packagingId ? GiftPackaging::find($packagingId) : null;
+
+            // Check if product exists (packaging is optional)
+            if (!$product) {
+                return response()->json(['error' => 'Invalid product.'], 400);
+            }
+
+            // Find cart item based on authentication status
+            if (Auth::guard('api')->check()) {
+                // For authenticated users
+                $cart = Cart::whereNotNull('variant_id')
+                    ->where('user_id', Auth::guard('api')->id())
+                    ->where('product_id', $productId)
+                    ->first();
+            } else {
+                // For guest users, use FCM token
+                $fcmToken = $request->input('fcm_token');
+                if (!$fcmToken) {
+                    return response()->json(['error' => 'FCM token required for guest users.'], 400);
+                }
+
+                $cart = Cart::whereNotNull('variant_id')
+                    ->where('fcm_token', $fcmToken)
+                    ->where('product_id', $productId)
+                    ->first();
+            }
+
+            // If cart item does not exist, return an error
+            if (!$cart) {
+                return response()->json(['error' => 'Product not found in the cart.'], 400);
+            }
+
+            // Update the cart item with the selected gift packaging (or remove it if null)
+            $cart->gift_packaging_id = $packaging ? $packaging->id : null;
+            $cart->save();
+
+            // Get all cart items for total calculation
+            if (Auth::guard('api')->check()) {
+                $carts = Cart::whereNotNull('variant_id')
+                    ->where('user_id', Auth::guard('api')->id())
+                    ->with(['product', 'variant', 'giftPackaging'])
+                    ->get();
+            } else {
+                $carts = Cart::whereNotNull('variant_id')
+                    ->where('fcm_token', $request->input('fcm_token'))
+                    ->with(['product', 'variant', 'giftPackaging'])
+                    ->get();
+            }
+
+            $count_products = count($carts);
+            $total_cart = 0;
+
+            // Calculate total with gift packaging
+            foreach ($carts as $cartItem) {
+                // Use variant pricing logic (consistent with your website cart)
+                $basePrice = $cartItem->variant && $cartItem->variant->price && $cartItem->variant->discount_price > 0
+                    ? $cartItem->variant->discount_price
+                    : $cartItem->variant->price;
+
+                // Add gift packaging price if applicable
+                $packagingPrice = $cartItem->giftPackaging ? $cartItem->giftPackaging->price : 0;
+
+                // Calculate total (multiply by quantity and round)
+                $total_cart += round(($basePrice + $packagingPrice) * $cartItem->quantity, 3);
+            }
+
+            // Apply promo discount if any
+            $discount = 0;
+            if ($promoCode) {
+                $promo = Coupon::where('code', $promoCode)
+                    ->whereDate('end_date', '>=', now()->toDateString())
+                    ->whereDate('start_date', '<=', now()->toDateString())
+                    ->where('status', 'active')
+                    ->first();
+
+                if ($promo && $promo->percent > 0) {
+                    $discount = ($total_cart * $promo->percent) / 100;
+                }
+            }
+
+            // Calculate final total
+            $final_total = $total_cart - $discount;
+
+            // Return the updated totals as a JSON response
+            return response()->json([
+                'status' => 'done',
+                'total_cart' => number_format($total_cart, 3),
+                'discount' => number_format($discount, 3),
+                'total' => number_format($final_total, 3),  // Final total after discount
+                'count_products' => $count_products,
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in gift packaging:', [
+                'error' => $e->getMessage(),
+                'request' => $request->all()
+            ]);
+
+            return response()->json(['error' => 'Error in gift packaging.'], 400);
+        }
+    }
 
     public function getMyCart(Request $request)
     {
         $settings = Setting::first();
+        $myCart = collect();
 
-        if(Auth::guard('api')->check()){
+        // Handle authenticated users
+        if (Auth::guard('api')->check()) {
             $user_id = Auth::guard('api')->user()->id;
 
-            // Get both API cart items and website cart items for authenticated user
-            $apiCart = Cart::where('user_id', $user_id)->with(['product', 'variant', 'giftPackaging'])->get();
-            $websiteCart = Cart::whereNotNull('variant_id')
+            // Get cart items for authenticated user (similar to website logic)
+            $myCart = Cart::whereNotNull('variant_id')
                 ->where('user_id', $user_id)
                 ->with(['product', 'variant', 'giftPackaging'])
                 ->get();
 
-            // Combine both carts
-            $myCart = $apiCart->merge($websiteCart)->unique(function ($item) {
-                return $item->product_id . '_' . ($item->variant_id ?? 'no_variant');
-            });
-
         } else {
-            if( $request->fcm_token != '') {
-                $myCart = Cart::where('fcm_token',$request->fcm_token)->with(['product', 'variant', 'giftPackaging'])->get();
+            // Handle guest users with FCM token (equivalent to user_key)
+            if ($request->fcm_token != '') {
+                $myCart = Cart::whereNotNull('variant_id')
+                    ->where('fcm_token', $request->fcm_token)
+                    ->with(['product', 'variant', 'giftPackaging','product.giftPackagings'])
+                    ->get();
             }
         }
 
-        if ($myCart && count($myCart) != 0) {
 
+
+
+        if ($myCart && count($myCart) != 0) {
             $count_products = count($myCart);
             $total_cart = 0;
             $discount = 0;
@@ -493,30 +621,30 @@ class CartController extends Controller
             $final_total = 0;
             $vat = $settings->tax_amount;
 
-            foreach ($myCart as $item) {
-                // Check if item has variant (from website) or not (from API)
-                if($item->variant && $item->variant_id) {
-                    // Use variant pricing like website
-                    $price = $item->variant->discount_price > 0 ? $item->variant->discount_price : $item->variant->price;
-                } else {
-                    // Use product pricing like original API
-                    $price = $item->product->discount_price > 0 && $item->product->offer_end_date >= now()->toDateString()
-                        ? $item->product->discount_price
-                        : $item->product->price;
-                }
+            foreach ($myCart as $cart) {
+                // Use the same pricing logic as website
+                // 1. Use variant price with discount logic
+                $basePrice = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
+                    ? $cart->variant->discount_price
+                    : $cart->variant->price;
 
-                // Add gift packaging price if exists (from website)
-                $packagingPrice = $item->giftPackaging ? $item->giftPackaging->price : 0;
+                // 2. Add gift packaging price if applicable
+                $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
 
-                $total_cart += ($price + $packagingPrice) * $item->quantity;
+                // 3. Calculate total (multiply by quantity and round)
+                $total_cart += round(($basePrice + $packagingPrice) * $cart->quantity, 3);
             }
 
+            // Calculate VAT
             $vat_amount = ($total_cart * $vat) / 100;
 
+            // Calculate delivery charges
             if ($request->has('address_id') && $request->address_id != '') {
                 $address = UserAddress::where('id', $request->address_id)->first();
-                $area_cost = Area::query()->findOrFail($address->area_id);
-                $delivery_charge = $area_cost->delivery_charges;
+                if ($address) {
+                    $area_cost = Area::query()->findOrFail($address->area_id);
+                    $delivery_charge = $area_cost->delivery_charges;
+                }
             } elseif ($request->has('area_id') && $request->area_id != '') {
                 $area_cost = Area::query()->findOrFail($request->area_id);
                 $delivery_charge = $area_cost->delivery_charges;
@@ -524,48 +652,172 @@ class CartController extends Controller
                 $delivery_charge = 0;
             }
 
-            $promo = Coupon::where('code', $request->get('code'))->where('end_date', '>=', date('Y-m-d'))
-                ->where('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
+            // Apply coupon discount
+            $promo = Coupon::where('code', $request->get('code'))
+                ->where('end_date', '>=', date('Y-m-d'))
+                ->where('start_date', '<=', date('Y-m-d'))
+                ->where('status', 'active')
+                ->first();
 
             if ($promo) {
                 $discount = ($total_cart * $promo->percent) / 100;
-                $total_discount = round($total_cart - $discount, 2);
             }
 
+            // Calculate final total
             $final_total = $total_cart + $vat_amount + $delivery_charge - $discount;
 
-            $data['final_total'] = $final_total;
-            $data['total'] = $total_cart;
+            // Format total like website (3 decimal places)
+            $data['final_total'] = number_format($final_total, 3);
+            $data['total'] = number_format($total_cart, 3);
             $data['count_products'] = $count_products;
-            $data['discount'] = $discount;
-            $data['Tax'] = $vat_amount;
-            $data['delivery_charge'] = $delivery_charge;
+            $data['discount'] = number_format($discount, 3);
+            $data['Tax'] = number_format($vat_amount, 3);
+            $data['delivery_charge'] = number_format($delivery_charge, 3);
             $data['MyCart'] = $myCart;
 
             $message = __('api.ok');
-            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => $message,
+                'data' => $data
+            ]);
 
         } else {
+            // Empty cart response
             $count_products = 0;
             $total_cart = 0;
             $discount = 0;
             $delivery_charge = 0;
             $final_total = 0;
             $vat_amount = 0;
-            $vat = $settings->tax_amount;
 
-            $data['final_total'] = $final_total;
-            $data['total'] = $total_cart;
+            $data['final_total'] = number_format($final_total, 3);
+            $data['total'] = number_format($total_cart, 3);
             $data['count_products'] = $count_products;
-            $data['discount'] = $discount;
-            $data['Tax'] = $vat_amount;
-            $data['delivery_charge'] = $delivery_charge;
+            $data['discount'] = number_format($discount, 3);
+            $data['Tax'] = number_format($vat_amount, 3);
+            $data['delivery_charge'] = number_format($delivery_charge, 3);
             $data['MyCart'] = [];
 
             $message = __('api.cartEmpty');
-            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => $message,
+                'data' => $data
+            ]);
         }
     }
+
+
+//    public function getMyCart(Request $request)
+//    {
+//        $settings = Setting::first();
+//
+//        if(Auth::guard('api')->check()){
+//            $user_id = Auth::guard('api')->user()->id;
+//
+//            // Get both API cart items and website cart items for authenticated user
+//            $apiCart = Cart::where('user_id', $user_id)->with(['product', 'variant', 'giftPackaging'])->get();
+//            $websiteCart = Cart::whereNotNull('variant_id')
+//                ->where('user_id', $user_id)
+//                ->with(['product', 'variant', 'giftPackaging'])
+//                ->get();
+//
+//            // Combine both carts
+//            $myCart = $apiCart->merge($websiteCart)->unique(function ($item) {
+//                return $item->product_id . '_' . ($item->variant_id ?? 'no_variant');
+//            });
+//
+//        } else {
+//            if( $request->fcm_token != '') {
+//                $myCart = Cart::where('fcm_token',$request->fcm_token)->with(['product', 'variant', 'giftPackaging'])->get();
+//            }
+//        }
+//
+//        if ($myCart && count($myCart) != 0) {
+//
+//            $count_products = count($myCart);
+//            $total_cart = 0;
+//            $discount = 0;
+//            $delivery_charge = 0;
+//            $final_total = 0;
+//            $vat = $settings->tax_amount;
+//
+//            foreach ($myCart as $item) {
+//                // Check if item has variant (from website) or not (from API)
+//                if($item->variant && $item->variant_id) {
+//                    // Use variant pricing like website
+//                    $price = $item->variant->discount_price > 0 ? $item->variant->discount_price : $item->variant->price;
+//                } else {
+//                    // Use product pricing like original API
+//                    $price = $item->product->discount_price > 0 && $item->product->offer_end_date >= now()->toDateString()
+//                        ? $item->product->discount_price
+//                        : $item->product->price;
+//                }
+//
+//                // Add gift packaging price if exists (from website)
+//                $packagingPrice = $item->giftPackaging ? $item->giftPackaging->price : 0;
+//
+//                $total_cart += ($price + $packagingPrice) * $item->quantity;
+//            }
+//
+//            $vat_amount = ($total_cart * $vat) / 100;
+//
+//            if ($request->has('address_id') && $request->address_id != '') {
+//                $address = UserAddress::where('id', $request->address_id)->first();
+//                $area_cost = Area::query()->findOrFail($address->area_id);
+//                $delivery_charge = $area_cost->delivery_charges;
+//            } elseif ($request->has('area_id') && $request->area_id != '') {
+//                $area_cost = Area::query()->findOrFail($request->area_id);
+//                $delivery_charge = $area_cost->delivery_charges;
+//            } else {
+//                $delivery_charge = 0;
+//            }
+//
+//            $promo = Coupon::where('code', $request->get('code'))->where('end_date', '>=', date('Y-m-d'))
+//                ->where('start_date', '<=', date('Y-m-d'))->where('status', 'active')->first();
+//
+//            if ($promo) {
+//                $discount = ($total_cart * $promo->percent) / 100;
+//                $total_discount = round($total_cart - $discount, 2);
+//            }
+//
+//            $final_total = $total_cart + $vat_amount + $delivery_charge - $discount;
+//
+//            $data['final_total'] = $final_total;
+//            $data['total'] = $total_cart;
+//            $data['count_products'] = $count_products;
+//            $data['discount'] = $discount;
+//            $data['Tax'] = $vat_amount;
+//            $data['delivery_charge'] = $delivery_charge;
+//            $data['MyCart'] = $myCart;
+//
+//            $message = __('api.ok');
+//            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
+//
+//        } else {
+//            $count_products = 0;
+//            $total_cart = 0;
+//            $discount = 0;
+//            $delivery_charge = 0;
+//            $final_total = 0;
+//            $vat_amount = 0;
+//            $vat = $settings->tax_amount;
+//
+//            $data['final_total'] = $final_total;
+//            $data['total'] = $total_cart;
+//            $data['count_products'] = $count_products;
+//            $data['discount'] = $discount;
+//            $data['Tax'] = $vat_amount;
+//            $data['delivery_charge'] = $delivery_charge;
+//            $data['MyCart'] = [];
+//
+//            $message = __('api.cartEmpty');
+//            return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
+//        }
+//    }
     public function changeQuantity_old(Request $request, $id)
     {
         $settings = Setting::first();

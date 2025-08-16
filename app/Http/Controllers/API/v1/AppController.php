@@ -95,7 +95,7 @@ class AppController extends Controller
             $message = __('api.ok');
             return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'items' => $data]);
         } elseif (isset($request->category_id) && $request->category_id != null) {
-            $data = Product::query()->where('status', 'active')->where('category_id', $request->category_id)
+            $data = Product::query()->where('status', 'active')->where('category_id', $request->category_id)->with(['variants','variants.variantType'])
                 ->paginate($this->paginate)->items();
 
             $check = ($this->paginate > count($data)) ? false : true;

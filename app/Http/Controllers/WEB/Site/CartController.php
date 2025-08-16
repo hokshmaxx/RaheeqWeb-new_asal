@@ -53,6 +53,7 @@ class CartController extends Controller
 }
     public function myCart()
     {
+
         $userKey = Session::get('cart.ids');
 
         $carts = Cart::whereNotNull('variant_id')
