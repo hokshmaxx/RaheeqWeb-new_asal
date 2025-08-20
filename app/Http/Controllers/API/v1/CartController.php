@@ -597,7 +597,7 @@ class CartController extends Controller
             // Get cart items for authenticated user (similar to website logic)
             $myCart = Cart::whereNotNull('variant_id')
                 ->where('user_id', $user_id)
-                ->with(['product', 'variant', 'giftPackaging'])
+                ->with(['product', 'variant','variants.variantType', 'giftPackaging'])
                 ->get();
 
         } else {
@@ -605,7 +605,7 @@ class CartController extends Controller
             if ($request->fcm_token != '') {
                 $myCart = Cart::whereNotNull('variant_id')
                     ->where('fcm_token', $request->fcm_token)
-                    ->with(['product', 'variant', 'giftPackaging','product.giftPackagings'])
+                    ->with(['product', 'variant','variants.variantType', 'giftPackaging','product.giftPackagings'])
                     ->get();
             }
         }
