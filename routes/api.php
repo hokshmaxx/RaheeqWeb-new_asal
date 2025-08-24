@@ -28,6 +28,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 });
 
 
+
 Route::get('getSetting', 'API\v1\AppController@getSetting');
 Route::post('/admin/register', 'AdminAuth\RegisterController@create')->name('admin.auth.regisct');
 
@@ -63,6 +64,12 @@ Route::get('getdeliverynoteList', 'API\v1\FavoriteController@getdeliverynoteList
 
 Route::post('changeQuantity/{id}', 'API\v1\CartController@changeQuantity');
 Route::post('checkOut', 'API\v1\CartController@checkOut');
+Route::get('tap/callback', 'API\v1\CartController@mobileTapCallback')->name('mobile.tap.callback');
+Route::post('tap/webhook', 'API\v1\CartController@mobileTapWebhook')->name('mobile.tap.webhook');
+
+// Payment status check
+Route::post('payment/status','API\v1\CartController@getMobilePaymentStatus')->name('mobile.payment.status');
+
 Route::get('getMyOrders', 'API\v1\UserController@getMyOrders');
 Route::get('getOrderDetail/{id}', 'API\v1\UserController@getOrderDetail');
 

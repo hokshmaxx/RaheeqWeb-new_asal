@@ -85,6 +85,12 @@ Route::group([
     Route::get('/removeProductFromCartPage/{id}', 'WEB\Site\CartController@removeProductFromCartPage')->name('removeProductFromCartPage');
     Route::post('/updateGiftPackaging','WEB\Site\CartController@updateGiftPackaging')->name('updateGiftPackaging');;
 
+    Route::get('/tap/callback', 'WEB\Site\CartController@tapCallback')->name('tap.callback');
+    Route::post('/tap/webhook', 'WEB\Site\CartController@tapWebhook')->name('tap.webhook');
+
+    // Optional: Route to check payment status
+    Route::get('/payment/status/{order_id}','WEB\Site\CartController@checkPaymentStatus')->name('payment.status');
+
     Route::get('/checkPromo', 'WEB\Site\CartController@checkPromo')->name('checkPromo');
     Route::get('/changeQuantity/{id}', 'WEB\Site\CartController@changeQuantity')->name('changeQuantity');
     Route::get('/cart/', 'WEB\Site\CartController@myCart')->name('myCart');

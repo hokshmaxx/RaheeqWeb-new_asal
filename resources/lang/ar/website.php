@@ -24,6 +24,21 @@ return [
     'storeName' => 'اسم المتجر',
 
 
+    'payment_method' => 'طريقة الدفع',
+    'cash_on_delivery' => 'الدفع عند التسليم',
+    'pay_when_order_delivered' => 'ادفع عند تسليم طلبك',
+    'online_payment' => 'الدفع الإلكتروني',
+    'pay_with_card_or_tap' => 'ادفع بالبطاقة الائتمانية عبر تاب',
+    'please_select_payment_method' => 'الرجاء اختيار طريقة الدفع',
+    'order_placed_successfully' => 'تم إنشاء الطلب بنجاح',
+    'order_placed_cash_message' => 'تم إنشاء طلبك بنجاح. ستدفع عند تسليم الطلب.',
+    'payment_processing' => 'جاري معالجة الدفع...',
+    'payment_successful' => 'تم الدفع بنجاح',
+    'payment_failed' => 'فشل في الدفع',
+    'redirecting_to_payment' => 'جاري التوجيه إلى بوابة الدفع...',
+    'something_went_wrong' => 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
+
+
     'comment' => 'تعليق',
     'mobile' => 'موبايل',
     'email' => 'البريد الالكتروني',

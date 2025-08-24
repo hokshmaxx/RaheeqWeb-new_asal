@@ -30,4 +30,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'tap' => [
+        'secret_key' => env('TAP_SECRET_KEY'),
+        'publishable_key' => env('TAP_PUBLISHABLE_KEY'),
+        'webhook_secret' => env('TAP_WEBHOOK_SECRET'),
+        'mode' => env('TAP_MODE', 'test'), // test or live
+    ],
+
 ];

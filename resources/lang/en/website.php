@@ -106,6 +106,21 @@ return [
     'currencyLang' => 'QAR',
     'update' => 'Update',
 
+
+    'payment_method' => 'Payment Method',
+    'cash_on_delivery' => 'Cash on Delivery',
+    'pay_when_order_delivered' => 'Pay when your order is delivered',
+    'online_payment' => 'Online Payment',
+    'pay_with_card_or_tap' => 'Pay with Credit/Debit Card via Tap',
+    'please_select_payment_method' => 'Please select a payment method',
+    'order_placed_successfully' => 'Order Placed Successfully',
+    'order_placed_cash_message' => 'Your order has been placed successfully. You will pay when the order is delivered.',
+    'payment_processing' => 'Processing Payment...',
+    'payment_successful' => 'Payment Successful',
+    'payment_failed' => 'Payment Failed',
+    'redirecting_to_payment' => 'Redirecting to payment gateway...',
+    'something_went_wrong' => 'Something went wrong. Please try again.',
+
     'chooseImages'=>'Choose Images',
     'description_ar'=>'Description Arabic',
     'description_en'=>'Description English',
