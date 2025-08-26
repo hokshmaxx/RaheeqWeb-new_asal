@@ -233,8 +233,8 @@
                     @lang('website.Do You Want To Proceed To Checkout As ?')
                 </div>
                 <div class="modal-footer">
-                    <a href="{{route('checkout')}}" class="btn-site"><span>@lang('website.Guest')</span></a>
-                    <a href="{{route('login')}}" class="btn-site"><span>@lang('website.User')</span></a>
+{{--                    <a href="{{route('checkout')}}" class="btn-site"><span>@lang('website.Guest')</span></a>--}}
+                    <a href="{{route('login')}}" class="btn-site"><span>@lang('website.login')</span></a>
                 </div>
             </div>
         </div>

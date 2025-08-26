@@ -740,6 +740,17 @@ return [
     'local'=>'رمز اللغه',
     'AddtoFavorites'=>'اضف اللي المفضله',
     'RemovefromFavorites'=>' حذف من المفضله',
+    'completed' => 'مكتمل',
+    'pending' => 'قيد الانتظار',
+    'pending_payment' => 'في انتظار الدفع',
+    'payment_status' => 'حالة الدفع',
+    'payment_method' => 'طريقة الدفع',
+    'failed' => 'فاشل',
+    'cancelled' => 'ملغي',
+    'unknown' => 'غير معروف',
+
+    'cache' => 'نقداً',
+    'online' => 'إلكتروني',
 
 
 

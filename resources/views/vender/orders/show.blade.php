@@ -198,9 +198,9 @@
 									<span class="font-weight-bolder font-size-sm">{{__('cp.payment_method')}}</span>
 									<span class="font-weight-bolder font-size-h5">
 											@if($order->payment_method == 1)
-												{{__('cp.online')}}
+                                            {{__('cp.cache')}}
 										@elseif($order->payment_method == 2)
-												{{__('cp.cache')}}
+                                            {{__('cp.online')}}
 										@endif
 										</span>
 

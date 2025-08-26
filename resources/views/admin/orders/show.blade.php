@@ -194,23 +194,69 @@
 												</div>
 											</div>
 
-											 <div class="d-flex align-items-center flex-lg-fill mr-5 my-1">
-												<span class="mr-4">
-												<i class="fas fa-dollar-sign" style="font-size: 25px;"></i>
-												</span>
-												<div class="d-flex flex-column text-dark-75">
-													<span class="font-weight-bolder font-size-sm">{{__('cp.payment_method')}}</span>
-													<span class="font-weight-bolder font-size-h5">
-													     @if($order->payment_method == 1)
-													         {{__('cp.online')}}
-													    @elseif($order->payment_method == 2)
-													         {{__('cp.cache')}}
-													    @endif
+                                            <div class="d-flex align-items-center flex-lg-fill mr-5 my-1">
+    <span class="mr-4">
+        <i class="fas fa-dollar-sign" style="font-size: 25px;"></i>
+    </span>
+                                                <div class="d-flex flex-column text-dark-75">
+                                                    <span class="font-weight-bolder font-size-sm">{{__('cp.payment_method')}}</span>
+                                                    <span class="font-weight-bolder font-size-h5">
+            @if($order->payment_method == 1)
+                                                            {{__('cp.cache')}}
+                                                        @elseif($order->payment_method == 2)
+                                                            {{__('cp.online')}}
+                                                        @endif
+        </span>
+                                                </div>
+                                            </div>
 
-													    </span>
-
-												</div>
-											</div>
+                                            <div class="d-flex align-items-center flex-lg-fill mr-5 my-1">
+    <span class="mr-4">
+        @switch($order->payment_status)
+            @case('completed')
+                <i class="fas fa-check-circle text-success" style="font-size: 25px;"></i>
+                @break
+            @case('pending')
+                <i class="fas fa-clock text-warning" style="font-size: 25px;"></i>
+                @break
+            @case('pending_payment')
+                <i class="fas fa-credit-card text-info" style="font-size: 25px;"></i>
+                @break
+            @case('failed')
+                <i class="fas fa-times-circle text-danger" style="font-size: 25px;"></i>
+                @break
+            @case('cancelled')
+                <i class="fas fa-ban text-danger" style="font-size: 25px;"></i>
+                @break
+            @default
+                <i class="fas fa-question-circle text-secondary" style="font-size: 25px;"></i>
+        @endswitch
+    </span>
+                                                <div class="d-flex flex-column text-dark-75">
+                                                    <span class="font-weight-bolder font-size-sm">{{__('cp.payment_status')}}</span>
+                                                    <span class="font-weight-bolder font-size-h5">
+            @switch($order->payment_status)
+                                                            @case('completed')
+                                                                {{__('cp.completed')}}
+                                                                @break
+                                                            @case('pending')
+                                                                {{__('cp.pending')}}
+                                                                @break
+                                                            @case('pending_payment')
+                                                                {{__('cp.pending_payment')}}
+                                                                @break
+                                                            @case('failed')
+                                                                {{__('cp.failed')}}
+                                                                @break
+                                                            @case('cancelled')
+                                                                {{__('cp.cancelled')}}
+                                                                @break
+                                                            @default
+                                                                {{__('cp.unknown')}}
+                                                        @endswitch
+        </span>
+                                                </div>
+                                            </div>
 
 										</div>
 									 	<div class="separator separator-solid my-7"></div>
