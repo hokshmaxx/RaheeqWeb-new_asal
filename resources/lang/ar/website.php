@@ -353,7 +353,7 @@ return [
      'Time of receipt' => 'وقت الاستلام',
      'You didn\'t add any products to the Cart' => 'لم تقم باضافة اي منتج للسلة',
 
-     'vender' =>'البائعين',
+     'vender' =>'البراند',
      'vender_request_register' =>'طلب تسجيل بائع',
      'vender_request' =>'طلب',
      'house_building' =>'بناء منزل',

@@ -146,7 +146,7 @@
     <div class="breadcrumb-container">
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('home') }}">{{__('cp.home')}}</a></li>
                 <li class="breadcrumb-item"><a href="{{ route('category', [$product->category->id, Str::slug($product->category->name)]) }}">{{ $product->category->name }}</a></li>
                 <li class="breadcrumb-item active">{{ $product->name }}</li>
             </ol>
