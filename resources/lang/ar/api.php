@@ -6,6 +6,8 @@ return [
     'wrongPromo' => 'كود التفعيل الذي ادخلته  غير صحيح أو انتهت صلاحيته',
     'completeOrder' => 'سعدنا بخدمتكم , تم الأنتهاء من غسيل السيارة',
     'newOrder' => 'طلب جديد',
+    'deleted'=>'تم المسح',
+
     'ok' => ' تمت العملية بنجاح!',
     'wrongCode' => 'رمز التفعيل الذي ادخلته  غير صحيح أو انتهت صلاحيته',
     'you_have_late_order' => 'لديك طلب متأخر يرجى معالجته',
@@ -43,7 +45,7 @@ return [
 
     'ApprovedActive' => 'فعال/نشط',
     'NewRequest' => 'طلب جديد',
-    
+
     'SendCodeLimit' => 'لقد تجازت الحد المسموح به لإرسال الكود',
     'CodeSentSuccessfully' => 'تم إرسال الكود بنجاح',
     'DeliveryTimeMustBeBetween' => 'وقت التوصيل يجب أن يكون بين ',
@@ -242,8 +244,8 @@ return [
 
     'not_active' => 'غير مفعل',
     'active' => 'مفعل',
-    
-    
+
+
 
     'banned_account' => 'الحساب محظور',
 
@@ -268,7 +270,7 @@ return [
     'not_edit' => 'لم يتم التعديل',
     'sentYouMessage' => 'ارسل اليك رسالة',
     'AllFieldsAreRequired' => 'جميع الحقول مطلوبة',
-    
+
     'you_will_wait_aprovment_to_edit_price' => 'سنقوم بمراجعة تغيير السعر للاعتماد',
     'product_en_name_edited_from' => 'تم تغيير اسم المنتج الانجليزي من ',
     'product_ar_name_edited_from' => 'تم تغيير اسم المنتج العربي من ',
@@ -279,13 +281,13 @@ return [
     'product_discount_price_edited_from' => 'تم تعديل سعر الخصم المنتج من ',
 
     'OrderIsOnDelivery'=>'طلبك في طريقه إليك',
-    
+
     'OrderIsPreparing'=>'جاري الآن تحضير طلبك',
-    
+
     'OrderIsComplete'=>'شكرا لك تم تسليم الطلب',
     'OrderIsCancel'=>'عذرا، لقد تم إلغاء طلبك',
     'wait_approval' => 'تم ارسال المنتج للمراجعة',
-    
+
     'your_product_accepted' => 'تم قبول المنتج الخاص فيك ',
 
 

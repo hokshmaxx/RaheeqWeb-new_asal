@@ -115,11 +115,11 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                     </div>
                                  </div>
-                                            
-                                
+
+
                             </div>
                         </div>
 
@@ -132,7 +132,7 @@
         </div>
 
         <div class="card-body card-custom card-stretch gutter-b">
-            <div class="row"> 
+            <div class="row">
     <div class="col-md-6 order-2 order-xxl-1">
         <!--begin::Advance Table Widget 2-->
         <div class="card card-custom card-stretch gutter-b">
@@ -140,13 +140,13 @@
             <div class="card-header border-0 pt-5">
                 <h3 class="card-title align-items-start flex-column">
                     <span class="card-label font-weight-bolder text-dark">@lang('cp.last_users')</span>
-                    
+
                 </h3>
-                
+
                   <div class="card-toolbar">
         					<a href="{{url(getLocal().'/admin/users')}}" class="btn btn-info font-weight-bolder font-size-sm mr-3">@lang('cp.all')</a>
 					    </div>
-               
+
             </div>
             <!--end::Header-->
             <!--begin::Body-->
@@ -169,7 +169,7 @@
                         <tbody>
                         @forelse($last_users as $one)
                             <tr class="odd gradeX" id="tr-{{$one->id}}">
-                                
+
 
                                 <td class="v-align-middle wd-5p"><img src="{{$one->image}}" width="50px" height="50px"></td>
 
@@ -192,8 +192,8 @@
                                        class="btn btn-sm btn-clean btn-icon" title="{{__('cp.show')}}">
                                         <i class="la la-eye"></i>
                                     </a>
-                                    
-                                 
+
+
                                     <!--<a href="{{url(getLocal().'/admin/users/'.$one->id.'/createNotification')}}"-->
                                     <!--   class="btn btn-sm btn-clean btn-icon" title="{{__('cp.message')}}">-->
                                     <!--    <i class="la la-comment"></i>-->
@@ -208,7 +208,7 @@
 
                         </tbody>
                     </table>
-           
+
                 </div>
                 <!--end::Table-->
             </div>
@@ -223,13 +223,13 @@
             <div class="card-header border-0 pt-5">
                 <h3 class="card-title align-items-start flex-column">
                     <span class="card-label font-weight-bolder text-dark">@lang('cp.top_sales_products')</span>
-                    
+
                 </h3>
-                
+
                   <div class="card-toolbar">
         					<a href="{{url(getLocal().'/admin/products')}}" class="btn btn-info font-weight-bolder font-size-sm mr-3">@lang('cp.all')</a>
 					    </div>
-               
+
             </div>
             <!--end::Header-->
             <!--begin::Body-->
@@ -252,7 +252,7 @@
                         <tbody>
                         @forelse($top_sales_products as $one)
                             <tr class="odd gradeX" id="tr-{{$one->id}}">
-                                
+
 
                                 <td class="v-align-middle wd-5p"><img src="{{$one->product->image}}" width="50px" height="50px"></td>
 
@@ -275,8 +275,8 @@
                                        class="btn btn-sm btn-clean btn-icon" title="{{__('cp.show')}}">
                                         <i class="la la-eye"></i>
                                     </a>
-                                    
-                                 
+
+
                                     <!--<a href="{{url(getLocal().'/admin/users/'.$one->id.'/createNotification')}}"-->
                                     <!--   class="btn btn-sm btn-clean btn-icon" title="{{__('cp.message')}}">-->
                                     <!--    <i class="la la-comment"></i>-->
@@ -291,7 +291,7 @@
 
                         </tbody>
                     </table>
-           
+
                 </div>
                 <!--end::Table-->
             </div>
@@ -306,13 +306,13 @@
                     <div class="card-header border-0 pt-5">
                         <h3 class="card-title align-items-start flex-column">
                             <span class="card-label font-weight-bolder text-dark">@lang('cp.last_orders')</span>
-                            
+
                         </h3>
-                        
+
                         <div class="card-toolbar">
         					<a href="{{url(getLocal().'/admin/orders')}}" class="btn btn-info font-weight-bolder font-size-sm mr-3">@lang('cp.all')</a>
 					    </div>
-                       
+
                     </div>
                     <!--end::Header-->
                     <!--begin::Body-->
@@ -333,9 +333,9 @@
                                 <tbody>
                                 @forelse($last_orders as $one)
                                     <tr class="odd gradeX" id="tr-{{$one->id}}">
-                                        
 
- 
+
+
                                         <td class="v-align-middle wd-25p">{{$one->user->name}}</td>
                                         <td class="v-align-middle wd-25p">{{$one->user->email}}</td>
                                         <td class="v-align-middle wd-25p">{{$one->total}}</td>
@@ -351,8 +351,8 @@
                                                class="btn btn-sm btn-clean btn-icon" title="{{__('cp.show')}}">
                                                 <i class="la la-eye"></i>
                                             </a>
-                                            
-                                          
+
+
                                         </td>
                                     </tr>
                                 @empty
@@ -362,7 +362,7 @@
 
                                 </tbody>
                             </table>
-                   
+
                         </div>
                         <!--end::Table-->
                     </div>
@@ -426,8 +426,8 @@
 				</div>
 			</div>
      <!--       <div class="row">-->
-              
-                
+
+
      <!--           	<div class="col-lg-6">-->
 					<!--	<div class="card card-custom gutter-b">-->
 					<!--		<div class="card-body">-->
@@ -437,10 +437,10 @@
 					<!--		</div>-->
 					<!--	</div>-->
 					<!--</div>-->
-									
-									
+
+
      <!--           <div class="col-md-6">-->
-                    
+
      <!--               	<div class="card card-custom gutter-b">-->
 					<!--		<div class="card-body">-->
 					<!--		  <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">-->
@@ -448,12 +448,12 @@
      <!--                        </div>-->
 					<!--		</div>-->
 					<!--	</div>-->
-						
-						
-                    
+
+
+
      <!--           </div>-->
      <!--               <div class="col-md-6">-->
-                        
+
      <!--                   	<div class="card card-custom gutter-b">-->
 					<!--		<div class="card-body">-->
 					<!--		  <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">-->
@@ -461,8 +461,8 @@
      <!--                         </div>-->
 					<!--		</div>-->
 					<!--	</div>-->
-						
-                      
+
+
      <!--                    </div>-->
      <!--       </div>-->
 
@@ -573,8 +573,8 @@
                 //         }
                 //     }
                 // });
-                
-                
+
+
                 // var ctx = document.getElementById('orders_static_total');
                 // var myChart = new Chart(ctx, {
                 //     //type:  horizontalBar  line   bar   radar   doughnut    polar    bubble    scatter
@@ -641,7 +641,7 @@
                 //         }
                 //     }
                 // });
-                
+
                 // var ctx = document.getElementById('myChart2');
                 // var mixedChart = new Chart(ctx, {
                 //     type: 'bar',
@@ -701,12 +701,12 @@
                 //             }]
                 //         }
                 //     }
-                // }); 
+                // });
             </script>
 
             <script>
-                
-                
+
+
                 "use strict";
 
 // Shared Colors Definition
@@ -724,7 +724,7 @@ function generateBubbleData(baseval, count, yrange) {
       var x = Math.floor(Math.random() * (750 - 1 + 1)) + 1;;
       var y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min;
       var z = Math.floor(Math.random() * (75 - 15 + 1)) + 15;
-  
+
       series.push([x, y, z]);
       baseval += 86400000;
       i++;
@@ -768,7 +768,7 @@ var KTApexChartsDemo = function () {
 					enabled: true
 				}
 			},
-			dataLabels: { 	
+			dataLabels: {
 				enabled: true
 			},
 			stroke: {
@@ -782,7 +782,7 @@ var KTApexChartsDemo = function () {
 			},
 			xaxis: {
 				categories: [@forelse(@$orders_static as $items)'{{$items->months}}',  @empty  'No DATA',  @endforelse],
-				
+
 			},
 			colors: [primary]
 		};
@@ -808,7 +808,7 @@ var KTApexChartsDemo = function () {
 					enabled: true
 				}
 			},
-			dataLabels: { 	
+			dataLabels: {
 				enabled: true
 			},
 			stroke: {
@@ -826,7 +826,7 @@ var KTApexChartsDemo = function () {
                             @empty
                                 'No DATA',
                             @endforelse],
-				
+
 			},
 			colors: ['#f64e60']
 		};
@@ -852,7 +852,7 @@ var KTApexChartsDemo = function () {
 					enabled: true
 				}
 			},
-			dataLabels: { 	
+			dataLabels: {
 				enabled: true
 			},
 			stroke: {
@@ -870,7 +870,7 @@ var KTApexChartsDemo = function () {
                             @empty
                                 'No DATA',
                             @endforelse],
-				
+
 			},
 			colors: ['#1bc5bd']
 		};

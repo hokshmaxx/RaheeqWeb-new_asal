@@ -15,36 +15,36 @@ return [
     'enter_correct_mobile_number' => 'Please Enter correct Mobile Number',
     'open' => 'Open',
     'sorryWeDontCoverThisArea' => 'Sorry we don\'t cover this area',
-    
+
     'paymentMethodDafterNotActive' => 'Payment method dafter not active, Please contact with admin',
     'paymentMethodCashNotActive' => 'Payment method cash not active, Please contact with admin',
     'paymentMethodWalletNotActive' => 'Payment method wallet not active, Please contact with admin',
     'paymentMethodCartNotActive' => 'Payment method card not active, Please contact with admin',
 
-    
+
     'DeliveryTimeMustBeBetween' => 'Delivery time must be between',
-    
+
     'pleaseSelectDeliveryMethod' => 'Please select delivery method',
-    
+
     'ApprovedActive' => 'Active',
     'your_dafter_is_close' => 'Your dafter is close',
     'NewRequest' => 'New Request',
     'your_order_ready' => 'Your order ready',
     'WeCoverThisArea' => 'We cover this area',
-    
+
     'pleaseSelectYourAddress' => 'Please select your address',
-    
+
     'frozen' => 'Frozen',
-    
+
     'youCantCreateNewPassword' => 'You can\'t create new password, Because you have one',
 
-    
+
     'CouponNotSupportArea' => 'Coupon not support this area',
     'CouponNotSupportStore' => 'Coupon not support this store',
-    
+
     'youCantOpenMoreDafters' => 'You can\'t open more two dafters',
     'storeBlockedYourDafter' => 'Due to store blocked your dafter, you can\'t request new one.',
-    
+
     'pleaseEnterYourAddress' => 'Please enter your address',
 
     'driver_not_found' => 'Driver Not Found',
@@ -59,22 +59,23 @@ return [
 
     'no_emp_with_this_mobile' => 'No employee with this mobile',
     'emp_account_not_activate' => 'Employee account not activate',
-    
+
     'SendCodeLimit' => 'Send Code Limit',
     'CodeSentSuccessfully' => 'Code Sent Successfully',
-    
+
 
     'you_dont_have_drivers' => 'You don\'t have drivers',
 
     'addition' => 'Addition',
     'product_deleted_from_order' => 'Product deleted from order',
     'not_active_now' => 'Not Active Now',
+    'deleted'=>'deleted',
 
 
     'close' => 'Close',
-    
 
-    
+
+
     'DeliveryCostMustBeBetween' => 'Delivery Cost Must Be Between',
 
     'new' => 'New',
@@ -148,7 +149,7 @@ return [
     'add_new_receipt' => 'Thanks, New a receipt amount:',
     'dear' => 'Dear',
     'favorite' => 'Favorite',
-    
+
     'Approved' => 'Approved',
 
     'you_cant_delete_this_fav' => 'You can\'t delete this favorite list',
@@ -229,7 +230,7 @@ return [
     'you_dont_have_any_dafter_credit' => 'You dont have any dafter credit',
     'your_order_updated_successfully' => 'Your Order has been updated successfully',
     'address_not_found' => 'The address is not valid',
-    
+
     'youCanAddToCartFromOneStore_only' => 'You can add to cart from one store only, do you want to clear your cart then add the product ?',
     'You_will_receive_code' => 'You will receive code on',
     'incorrect_code' => 'Incorrect code',
@@ -239,8 +240,8 @@ return [
     'resetPassword' => 'Reset Password',
     'not_edit' => 'not edit',
     'you_dont_have_order_with_this_store' => 'You dont have order with this store',
-    
-    
+
+
     'you_will_wait_aprovment_to_edit_price' => 'You will wait aprovment to edit price',
     'product_en_name_edited_from' => 'Product en name edited from ',
     'product_ar_name_edited_from' => 'Product ar name edited from ',
@@ -249,11 +250,11 @@ return [
     'product_preparing_time_edited_from' => 'Product preparing time edited from ',
     'added_new_images_to_product' => 'Added new images to product',
     'product_discount_price_edited_from' => 'Product discount price edited from ',
- 
+
     'OrderIsOnDelivery'=>'Your Order is on Delivery',
-    
+
     'OrderIsPreparing'=>'Your Order in Preparing Now ',
-    
+
     'OrderIsComplete'=>'Thank You, Your Order is Complete',
     'OrderIsCancel'=>'Sorry!, Your Order is Cancel',
     'sentYouMessage'=>'Sent You Message',

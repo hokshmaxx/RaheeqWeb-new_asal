@@ -134,17 +134,36 @@ class ProductsController extends Controller
                     return $row->vender ? $row->vender->name : '-';
                 })
                 ->addColumn('variant_sku', function ($row) {
-                    return optional($row->variants->first())->sku ?? '-';
+                    if ($row->variants && $row->variants->count()) {
+                        return $row->variants->pluck('sku')->implode('<br>');
+                    }
+                    return '-';
+                })
+                ->addColumn('variant_name', function ($row) {
+                    if ($row->variants && $row->variants->count()) {
+                        return $row->variants->pluck('name')->implode('<br>');
+                    }
+                    return '-';
                 })
                 ->addColumn('variant_price', function ($row) {
-                    return optional($row->variants->first())->price ?? '-';
+                    if ($row->variants && $row->variants->count()) {
+                        return $row->variants->pluck('price')->implode('<br>');
+                    }
+                    return '-';
                 })
                 ->addColumn('variant_discount', function ($row) {
-                    return optional($row->variants->first())->discount_price ?? '-';
+                    if ($row->variants && $row->variants->count()) {
+                        return $row->variants->pluck('discount_price')->implode('<br>');
+                    }
+                    return '-';
                 })
                 ->addColumn('variant_quantity', function ($row) {
-                    return optional($row->variants->first())->quantity ?? '-';
+                    if ($row->variants && $row->variants->count()) {
+                        return $row->variants->pluck('quantity')->implode('<br>');
+                    }
+                    return '-';
                 })
+
                 ->addColumn('action', function ($row) {
                     return view('admin.products.btns')->with(['row' => $row])->render();
                 })

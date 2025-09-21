@@ -145,6 +145,7 @@
 {{--                               <th class="wd-10p"> {{ucwords(__('cp.age'))}}</th>--}}
                                <th class="wd-10p"> {{ucwords(__('cp.vendor'))}}</th>
                               <th class="wd-25p"> SKU</th>
+                              <th class="wd-25p"> {{ucwords(__('cp.variant'))}}</th>
                               <th class="wd-25p"> {{ucwords(__('cp.price'))}}</th>
                               <th class="wd-25p"> {{ucwords(__('cp.discount_price'))}}</th>
                               <th class="wd-10p"> {{ucwords(__('cp.status'))}}</th>
@@ -211,6 +212,7 @@
                     // { data: 'discount_price', name: 'discount_price'},
 
                 { data: 'variant_sku', name: 'variant_sku' },
+                { data: 'variant_name', name: 'variants_name' },
                 { data: 'variant_price', name: 'variant_price' },
                 { data: 'variant_discount', name: 'variant_discount' },
                 { data: 'variant_quantity', name: 'variant_quantity' },

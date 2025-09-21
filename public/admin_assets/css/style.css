@@ -425,7 +425,7 @@ table td img {
 }
 
 .text-right {
-     text-align: left !important; 
+     text-align: left !important;
 }
 
 .card-header .card-title {
@@ -581,11 +581,11 @@ div.dt-center-in-div {
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
     cursor: pointer;
   }
-  
+
   .toggle input:checked[type="checkbox"] {
     background: green;
   }
-  
+
   .toggle input[type="checkbox"]::before {
     z-index: 2;
     position: absolute;
@@ -599,28 +599,28 @@ div.dt-center-in-div {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     transition: .4s;
   }
-  
+
   input:checked[type="checkbox"]::before {
     left: 50px;
     background: #FFFFFF;
   }
-  
+
   .toggle {
     position: relative;
     display: inline;
   }
-  
+
   .toggle label {
     position: absolute;
     color: #fff;
     font-weight: 600;
     pointer-events: none;
   }
-  
+
   .toggle  .onbtn {
     bottom: 0px;
     left: 11px;
-}  
+}
 .toggle  .ofbtn {
     bottom: 0px;
     right: 8px;
