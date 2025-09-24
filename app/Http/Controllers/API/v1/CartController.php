@@ -104,12 +104,8 @@ class CartController extends Controller
 
     public function addProductToCart(Request $request)
     {
-        \Log::info('Adding product to cart:', [
-            'product_id' => $request->product_id,
-            'variant_id' => $request->input('variant_id'),
-            'quantity' => $request->quantity,
-            'fcm_token' => $request->fcm_token
-        ]);
+
+//        \Log::info(($request->all()));
 
         try {
             $settings = Setting::first();
@@ -120,18 +116,48 @@ class CartController extends Controller
 
             $vat = $settings->tax_amount;
 
-            // Check if product with same variant already exists in cart
-            $existingCart = Cart::where('fcm_token', $request->fcm_token)
-                ->where('product_id', $request->product_id)
-                ->where('variant_id', $request->input('variant_id'))
-                ->first();
+            $query = Cart::where('product_id', $request->product_id)
+                ->where('variant_id',  $request->input('variant_id'));
 
+
+            if (Auth::guard('api')->check()) {
+                $user_id = Auth::guard('api')->user()->id;
+                $query->where(function ($q) use ($user_id, $request) {
+                    $q->where('user_id', $user_id);
+                    if ($request->fcm_token) {
+                        $q->orWhere('fcm_token', $request->fcm_token);
+                    }
+                });
+            } else {
+                if ($request->fcm_token) {
+                    $query->where('fcm_token', $request->fcm_token);
+                }
+            }
+
+            $existingCart = $query->first();
+
+
+            // Check if product with same variant already exists in cart
+//            $existingCart = Cart::where('fcm_token', $request->fcm_token)
+//                ->where('product_id', $request->product_id)
+//                ->where('variant_id', $request->input('variant_id'))
+//                ->first();
+
+
+            \Log::info('asdsads',[$existingCart]);
             if ($existingCart) {
                 // If exists, increment quantity
                 $existingCart->increment('quantity', $request->quantity ?? 1);
 
                 $count_products = Cart::where('fcm_token', $request->fcm_token)->sum('quantity');
                 $message = __('api.quantityUpdated');
+
+                \Log::info('Adding product to cart:', [
+                    'product_id' => $request->product_id,
+                    'variant_id' => $request->input('variant_id'),
+                    'quantity' => $request->quantity,
+                    'fcm_token' => $request->fcm_token
+                ]);
 
                 return response()->json([
                     'status' => true,
@@ -141,6 +167,7 @@ class CartController extends Controller
                     'action' => 'updated'
                 ]);
             }
+
 
             // Create new cart entry
             $myCart = new Cart();
@@ -1900,6 +1927,7 @@ class CartController extends Controller
     {
         $settings = Setting::first();
 
+
         // Check if purchasing is suspended
         if ($settings->is_alowed_buying == 1) {
             $message = __('api.Purchase_is_suspended');
@@ -1963,6 +1991,7 @@ class CartController extends Controller
             return response()->json(['status' => false, 'code' => 600, 'message' => $message]);
         }
 
+
         // Initialize calculation variables
         $count_products = $carts->count();
         $total_cart = 0;
@@ -1994,15 +2023,20 @@ class CartController extends Controller
 
         // Calculate delivery charges
         if ($request->has('address_id') && is_numeric($request->address_id)) {
-            $address = UserAddress::query()->findOrFail($request->address_id);
+
+            $address = UserAddress::find($request->address_id);
+
             if (!$address) {
-                $message = __('api.not_found');
+
+                $message = __('api.address_not_found');
                 return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
             }
 
+
             $area_cost = Area::query()->findOrFail($address->area_id);
             $delivery_charge = $area_cost->delivery_charges ?? 0;
-        } elseif ($request->has('area_id') && $request->area_id != '') {
+        }
+        elseif ($request->has('area_id') && $request->area_id != '') {
             $area_cost = Area::query()->findOrFail($request->area_id);
             $delivery_charge = $area_cost->delivery_charges ?? 0;
         }
@@ -2020,6 +2054,7 @@ class CartController extends Controller
                 $total_cart = round($total_cart - $discount, 3);
             }
         }
+
 
         // Calculate VAT
         $vat_amount = $total_cart * $vat / 100;
