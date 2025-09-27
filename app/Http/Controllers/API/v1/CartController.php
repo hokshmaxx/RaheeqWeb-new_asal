@@ -1927,7 +1927,6 @@ class CartController extends Controller
     {
         $settings = Setting::first();
 
-
         // Check if purchasing is suspended
         if ($settings->is_alowed_buying == 1) {
             $message = __('api.Purchase_is_suspended');
@@ -1991,6 +1990,28 @@ class CartController extends Controller
             return response()->json(['status' => false, 'code' => 600, 'message' => $message]);
         }
 
+        // Validate stock availability before processing
+        foreach ($carts as $cart) {
+            if ($cart->variant) {
+                // Check variant stock
+                if ($cart->variant->quantity < $cart->quantity) {
+                    return response()->json([
+                        'status' => false,
+                        'code' => 400,
+                        'message' => "Insufficient stock for variant. Available: {$cart->variant->quantity}, Requested: {$cart->quantity}"
+                    ]);
+                }
+            } else {
+                // Check product stock
+                if ($cart->product->quantity < $cart->quantity) {
+                    return response()->json([
+                        'status' => false,
+                        'code' => 400,
+                        'message' => "Insufficient stock for product. Available: {$cart->product->quantity}, Requested: {$cart->quantity}"
+                    ]);
+                }
+            }
+        }
 
         // Initialize calculation variables
         $count_products = $carts->count();
@@ -2023,15 +2044,12 @@ class CartController extends Controller
 
         // Calculate delivery charges
         if ($request->has('address_id') && is_numeric($request->address_id)) {
-
             $address = UserAddress::find($request->address_id);
 
             if (!$address) {
-
                 $message = __('api.address_not_found');
                 return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
             }
-
 
             $area_cost = Area::query()->findOrFail($address->area_id);
             $delivery_charge = $area_cost->delivery_charges ?? 0;
@@ -2054,7 +2072,6 @@ class CartController extends Controller
                 $total_cart = round($total_cart - $discount, 3);
             }
         }
-
 
         // Calculate VAT
         $vat_amount = $total_cart * $vat / 100;
@@ -2100,8 +2117,11 @@ class CartController extends Controller
             $address = UserAddress::findOrFail($request->address_id);
         }
 
-        // Create order
+        // Start database transaction
+        DB::beginTransaction();
+
         try {
+            // Create order
             $order = new Order();
             $order->total = $final_total;
             $order->sub_total = $total_cart;
@@ -2139,7 +2159,7 @@ class CartController extends Controller
 
             $order->save();
 
-            // Create order products
+            // Create order products and update quantities
             if ($order) {
                 foreach ($carts as $cart) {
                     // Calculate individual product price
@@ -2167,6 +2187,18 @@ class CartController extends Controller
                     $productOrder->price = $originalPrice;
                     $productOrder->save();
 
+                    // Update variant or product quantity
+                    if ($cart->variant) {
+                        // Update variant quantity
+                        $cart->variant->decrement('quantity', $cart->quantity);
+
+                        // Optionally update the main product quantity as well
+                        $cart->product->decrement('quantity', $cart->quantity);
+                    } else {
+                        // Update product quantity only
+                        $cart->product->decrement('quantity', $cart->quantity);
+                    }
+
                     // Send notification to vendor
                     $this->notifyVendor($cart->product_id, $order);
                 }
@@ -2180,7 +2212,9 @@ class CartController extends Controller
 
                 // Handle payment method
                 if ($request->payment_method == 1) {
-                    // Cash payment - order is complete
+                    // Cash payment - order is complete, commit transaction
+                    DB::commit();
+
                     $message = __('api.order_placed_successfully');
 
                     // Handle FCM token for new users
@@ -2212,6 +2246,8 @@ class CartController extends Controller
                     // Online payment - create Tap payment
                     $paymentData = $this->createMobileTapPayment($order, $request);
                     if ($paymentData && isset($paymentData['payment_url'])) {
+                        // Commit transaction for successful payment URL generation
+                        DB::commit();
 
                         // Handle FCM token for new users
                         $user = null;
@@ -2241,9 +2277,9 @@ class CartController extends Controller
                             'user' => $user
                         ]);
                     } else {
-                        // Payment creation failed, update order status
-                        $order->payment_status = 'failed';
-                        $order->save();
+                        // Payment creation failed, rollback transaction
+                        DB::rollBack();
+
                         return response()->json([
                             'status' => false,
                             'code' => 500,
@@ -2252,10 +2288,14 @@ class CartController extends Controller
                     }
                 }
             } else {
+                DB::rollBack();
                 $message = __('api.order_creation_failed');
                 return response()->json(['status' => false, 'code' => 500, 'message' => $message]);
             }
         } catch (\Exception $e) {
+            // Rollback transaction on any error
+            DB::rollBack();
+
             \Log::error('Checkout Error: ' . $e->getMessage(), [
                 'user_id' => $user_id ?? null,
                 'request_data' => $request->all(),
@@ -2269,7 +2309,6 @@ class CartController extends Controller
             ]);
         }
     }
-
     /**
      * Create Tap payment for mobile app
      *
