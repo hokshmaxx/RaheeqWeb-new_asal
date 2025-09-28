@@ -197,97 +197,267 @@ class UserController extends Controller
 
     }
 
+//    public function login(Request $request)
+//    {
+//        $settings = Setting::first();
+//        if ($settings->is_alowed_login == 1) {
+//
+//            $message = __('api.loginStoped');
+//            return response()->json(['status' => true, 'message' => $message]);
+//        } else {
+//
+//            $email = $request->get('email');
+//            $password = $request->get('password');
+//
+//            $validator = Validator::make($request->all(), [
+//                'email' => 'required',
+//                'password' => 'required',
+//            ]);
+//            if ($validator->fails()) {
+//                return response()->json(['status' => false, 'code' => 200,
+//                    'message' => implode("\n", $validator->messages()->all())]);
+//            }
+//
+//            if (filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
+//                $conditions = ['email' => $request->email, 'password' => $request->password];
+//            } else {
+//                $conditions = ['mobile' => $request->email, 'password' => $request->password];
+//            }
+//
+//
+//            if (Auth::once($conditions)) {
+//
+//                $user = Auth::user();
+//                if ($user->status == 'not_active') {
+//
+//                    $message = (app()->getLocale() == "ar") ? 'الحساب غير مفعل' : 'The account is not active';
+//                    return response()->json(['status' => false, 'code' => 210, 'message' =>
+//                        $message]);
+//                } elseif ($user->verified == 0) {
+//
+//                    $code = new VerificationCode();
+//                    $code->mobile = $user->mobile;
+//                    $code->code = 1111;
+//                    $code->save();
+//
+//
+//                    $message = __('api.Account_must_be_verified');
+//                    return response()->json(['status' => true, 'code' => 210, 'message' => $message]);
+//
+//                } else {
+//                    if ($request->has('fcmToken')) {
+//                        // Token::updateOrCreate(['device_type' => $request->get('type_mobile'), 'fcm_token' => $request->get('fcmToken'), 'lang' => app()->getLocale()]
+//                        //     , ['user_id' => $user->id]);
+//
+//
+//                        Token::updateOrCreate([
+//                            'user_id' => $user->id
+//                        ] ,
+//                        [
+//                            'fcm_token' => $request->get('fcmToken'),
+//                            'device_type' => $request->get('type_mobile'),
+//                            'lang' => app()->getLocale(),
+//                            'user_id' => $user->id,
+//
+//                        ]);
+//                    }
+//                    $user['access_token'] = $user->createToken('mobile')->accessToken;
+//
+//
+////                $tokens = $user->tokens;
+////                if (!$tokens->count()) {
+////                    $user['access_token'] = $user->createToken('mobile')->accessToken;
+////                } else {
+////                    $user['access_token'] = $tokens->first()->id;
+////                }
+//
+//                    return response()->json(['status' => true, 'code' => 200, 'user' => $user]);
+//                }
+//            } else {
+//
+//                $EmailData = User::query()->where(['email' => $email])->first();
+//                if ($EmailData) {
+//                    $message = __('api.wrong_password');
+//
+//                    return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
+//
+//                } else {
+//                    $message = __('api.wrong_email2');
+//
+//                    return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
+//                }
+//            }
+//        }
+//    }
+
     public function login(Request $request)
     {
         $settings = Setting::first();
         if ($settings->is_alowed_login == 1) {
-
             $message = __('api.loginStoped');
             return response()->json(['status' => true, 'message' => $message]);
-        } else {
+        }
 
-            $email = $request->get('email');
-            $password = $request->get('password');
+        // Check if this is a social login request
+        if ($request->has('login_type') && in_array($request->login_type, ['facebook', 'google', 'apple'])) {
+            return $this->handleSocialLogin($request);
+        }
 
-            $validator = Validator::make($request->all(), [
-                'email' => 'required',
-                'password' => 'required',
+        // Regular email/password login
+        $email = $request->get('email');
+        $password = $request->get('password');
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'code' => 200,
+                'message' => implode("\n", $validator->messages()->all())
             ]);
-            if ($validator->fails()) {
-                return response()->json(['status' => false, 'code' => 200,
-                    'message' => implode("\n", $validator->messages()->all())]);
-            }
+        }
 
-            if (filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
-                $conditions = ['email' => $request->email, 'password' => $request->password];
+        if (filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
+            $conditions = ['email' => $request->email, 'password' => $request->password];
+        } else {
+            $conditions = ['mobile' => $request->email, 'password' => $request->password];
+        }
+
+        if (Auth::once($conditions)) {
+            $user = Auth::user();
+
+            if ($user->status == 'not_active') {
+                $message = (app()->getLocale() == "ar") ? 'الحساب غير مفعل' : 'The account is not active';
+                return response()->json(['status' => false, 'code' => 210, 'message' => $message]);
+            } elseif ($user->verified == 0) {
+                $code = new VerificationCode();
+                $code->mobile = $user->mobile;
+                $code->code = 1111;
+                $code->save();
+
+                $message = __('api.Account_must_be_verified');
+                return response()->json(['status' => true, 'code' => 210, 'message' => $message]);
             } else {
-                $conditions = ['mobile' => $request->email, 'password' => $request->password];
+                return $this->handleSuccessfulLogin($user, $request);
             }
-
-
-            if (Auth::once($conditions)) {
-
-                $user = Auth::user();
-                if ($user->status == 'not_active') {
-
-                    $message = (app()->getLocale() == "ar") ? 'الحساب غير مفعل' : 'The account is not active';
-                    return response()->json(['status' => false, 'code' => 210, 'message' =>
-                        $message]);
-                } elseif ($user->verified == 0) {
-
-                    $code = new VerificationCode();
-                    $code->mobile = $user->mobile;
-                    $code->code = 1111;
-                    $code->save();
-
-
-                    $message = __('api.Account_must_be_verified');
-                    return response()->json(['status' => true, 'code' => 210, 'message' => $message]);
-
-                } else {
-                    if ($request->has('fcmToken')) {
-                        // Token::updateOrCreate(['device_type' => $request->get('type_mobile'), 'fcm_token' => $request->get('fcmToken'), 'lang' => app()->getLocale()]
-                        //     , ['user_id' => $user->id]);
-
-
-                        Token::updateOrCreate([
-                            'user_id' => $user->id 
-                        ] ,
-                        [
-                            'fcm_token' => $request->get('fcmToken'), 
-                            'device_type' => $request->get('type_mobile'),
-                            'lang' => app()->getLocale(),
-                            'user_id' => $user->id,
-                        
-                        ]);
-                    }
-                    $user['access_token'] = $user->createToken('mobile')->accessToken;
-                    
-
-//                $tokens = $user->tokens;
-//                if (!$tokens->count()) {
-//                    $user['access_token'] = $user->createToken('mobile')->accessToken;
-//                } else {
-//                    $user['access_token'] = $tokens->first()->id;
-//                }
-
-                    return response()->json(['status' => true, 'code' => 200, 'user' => $user]);
-                }
+        } else {
+            $EmailData = User::query()->where(['email' => $email])->first();
+            if ($EmailData) {
+                $message = __('api.wrong_password');
+                return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
             } else {
-
-                $EmailData = User::query()->where(['email' => $email])->first();
-                if ($EmailData) {
-                    $message = __('api.wrong_password');
-
-                    return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
-
-                } else {
-                    $message = __('api.wrong_email2');
-
-                    return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
-                }
+                $message = __('api.wrong_email2');
+                return response()->json(['status' => false, 'code' => 200, 'message' => $message]);
             }
         }
+    }
+
+    /**
+     * Handle social login (Facebook, Google, Apple)
+     */
+    private function handleSocialLogin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'login_type' => 'required|in:facebook,google,apple',
+            'social_id' => 'required|string',
+            'email' => 'required|email',
+            'name' => 'required|string',
+            'fcmToken' => 'nullable|string',
+            'type_mobile' => 'nullable|string|in:android,ios',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'code' => 400,
+                'message' => implode("\n", $validator->messages()->all())
+            ]);
+        }
+
+        $loginType = $request->login_type;
+        $socialId = $request->social_id;
+        $email = $request->email;
+        $name = $request->name;
+
+        try {
+            // Check if user exists with this social ID
+            $user = User::where($loginType . '_id', $socialId)->first();
+
+            if (!$user) {
+                // Check if user exists with this email
+                $user = User::where('email', $email)->first();
+
+                if ($user) {
+                    // Update existing user with social ID
+                    $user->update([
+                        $loginType . '_id' => $socialId,
+                    ]);
+                } else {
+                    // Create new user
+                    $user = User::create([
+                        'name' => $name,
+                        'email' => $email,
+                        'password' => bcrypt(Str::random(16)), // Random password for social users
+                        $loginType . '_id' => $socialId,
+                        'verified' => 1, // Auto-verify social login users
+                        'status' => 'active',
+                        'type_mobile' => $request->get('type_mobile', 'android'),
+                        // Add mobile field if provided
+                        'mobile' => $request->get('mobile', null),
+                    ]);
+                }
+            }
+
+            // Check if user account is active
+            if ($user->status == 'not_active') {
+                $message = (app()->getLocale() == "ar") ? 'الحساب غير مفعل' : 'The account is not active';
+                return response()->json(['status' => false, 'code' => 210, 'message' => $message]);
+            }
+
+            return $this->handleSuccessfulLogin($user, $request);
+
+        } catch (\Exception $e) {
+            \Log::error('Social Login Error: ' . $e->getMessage(), [
+                'login_type' => $loginType,
+                'social_id' => $socialId,
+                'email' => $email,
+                'stack_trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Social login failed. Please try again.'
+            ]);
+        }
+    }
+
+    /**
+     * Handle successful login (both regular and social)
+     */
+    private function handleSuccessfulLogin($user, $request)
+    {
+        if ($request->has('fcmToken')) {
+            Token::updateOrCreate([
+                'user_id' => $user->id
+            ], [
+                'fcm_token' => $request->get('fcmToken'),
+                'device_type' => $request->get('type_mobile', 'android'),
+                'lang' => app()->getLocale(),
+                'user_id' => $user->id,
+            ]);
+        }
+
+        $user['access_token'] = $user->createToken('mobile')->accessToken;
+
+        return response()->json([
+            'status' => true,
+            'code' => 200,
+            'user' => $user
+        ]);
     }
 
 
@@ -396,7 +566,7 @@ class UserController extends Controller
             'longitude' => 'required',
             'latitude' => 'required',
             'address' => 'required',
-            
+
 
         ]);
 
@@ -431,7 +601,7 @@ class UserController extends Controller
             'address'       => $request->address,
         ]);
 
-        
+
 
         $Address = UserAddress::query()->with('area')->findOrFail($data->id);
 
@@ -463,7 +633,7 @@ class UserController extends Controller
             ]);
 
 
-            
+
             if($request->defult == 1) {
                 UserAddress::where('user_id',auth('api')->user()->id)
                 ->update([
@@ -471,7 +641,7 @@ class UserController extends Controller
                 ]);
             }
 
- 
+
 
             $address->address_name  = $request->address_name;
             $address->address_type  = $request->address_type;
@@ -534,8 +704,8 @@ class UserController extends Controller
             $message = 'The email not found';
             return response()->json(['status' => false, 'code' => 400,'message' => $message ]);
         }
-  
-        $token = $this->broker()->createToken($user); 
+
+        $token = $this->broker()->createToken($user);
         $user->notify(new ResetPassword($token));
         $message = __('api.resetPassword');
         return response()->json(['status' => true, 'code' => 200, 'message' => $message]);
@@ -654,6 +824,6 @@ class UserController extends Controller
         return mainResponse(true, $message, $data, 200, 'items', '');
     }
 
-    
-   
+
+
 }

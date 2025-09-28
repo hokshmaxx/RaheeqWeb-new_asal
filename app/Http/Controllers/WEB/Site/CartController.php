@@ -1346,6 +1346,233 @@ class CartController extends Controller
 //        }
 //    }
 
+
+
+//    public function storeCheckOut(Request $request) {
+//        $settings = Setting::first();
+//        if ($settings->is_alowed_buying == 1) {
+//            $message = __('api.Purchase_is_suspended');
+//            return response()->json(['status' => true, 'message' => $message, 'code' => 600]);
+//        }
+//
+//        if (Auth::check()) {
+//            $user_id = auth()->user()->id;
+//            $validator = Validator::make($request->all(), [
+//                'address_id' => 'required|exists:user_addresses,id',
+//                'payment_method' => 'required|in:1,2', // 1 = Cash, 2 = Online (Tap)
+//            ]);
+//            if ($validator->fails()) {
+//                return response()->json(['status' => false, 'code' => 400,
+//                    'message' => implode("\n", $validator->messages()->all())]);
+//            }
+//        } else {
+//            $validator = Validator::make($request->all(), [
+//                'area_id' => 'required',
+//                'name' => 'required',
+//                'email' => 'required|email|unique:users',
+//                'mobile' => 'required',
+//                'street' => 'required',
+//                'address_name' => 'required',
+//                'payment_method' => 'required|in:1,2', // 1 = Cash, 2 = Online (Tap)
+//            ]);
+//            if ($validator->fails()) {
+//                return response()->json(['status' => false, 'code' => 400,
+//                    'message' => implode("\n", $validator->messages()->all())]);
+//            }
+//        }
+//
+//        // Get cart items
+//        if (auth()->check()) {
+//            $carts = Cart::where('user_id', Auth::user()->id)
+//                ->orWhere('user_key', Session::get('cart.ids'))
+//                ->with(['product', 'variant', 'giftPackaging'])
+//                ->get();
+//        } else {
+//            $carts = Cart::where('user_key', Session::get('cart.ids'))
+//                ->with(['product', 'variant', 'giftPackaging'])
+//                ->get();
+//        }
+//
+//        if ($carts->isEmpty()) {
+//            $message = __('api.cartEmpty');
+//            return response()->json(['status' => false, 'code' => 600, 'message' => $message]);
+//        }
+//
+//        $count_products = count($carts);
+//        $total_cart = 0;
+//        $vat = $settings->tax_amount;
+//        $vat_amount = 0;
+//        $discount = 0;
+//        $delivery_charge = 0;
+//
+//        // Calculate cart total
+//        foreach ($carts as $cart) {
+//            $basePrice = $cart->variant && $cart->variant->price && $cart->variant->discount_price > 0
+//                ? $cart->variant->discount_price : $cart->variant->price;
+//            $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
+//            $total_cart += ($basePrice + $packagingPrice) * $cart->quantity;
+//        }
+//
+//        // Calculate delivery charges
+//        if ($request->has('address_id') && is_numeric($request->address_id)) {
+//            $address = UserAddress::query()->findOrFail($request->address_id);
+//            if (!isset($address)) {
+//                $message = __('api.not_found');
+//                return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
+//            }
+//            $area_cost = Area::query()->findOrFail($address->area_id);
+//            $delivery_charge = $area_cost->delivery_charges;
+//        } elseif ($request->has('area_id') && $request->area_id != '') {
+//            $area_cost = Area::query()->findOrFail($request->area_id);
+//            $delivery_charge = $area_cost->delivery_charges;
+//        } else {
+//            $delivery_charge = 0;
+//        }
+//
+//        // Apply coupon discount
+//        $promo = Coupon::where('code', $request->get('code_name'))
+//            ->whereDate('end_date', '>=', date('Y-m-d'))
+//            ->whereDate('start_date', '<=', date('Y-m-d'))
+//            ->where('status', 'active')
+//            ->first();
+//
+//        if ($promo) {
+//            if ($promo->percent > 0) {
+//                $discount = ($total_cart * $promo->percent) / 100;
+//                $total_cart = round($total_cart - $discount, 3);
+//            }
+//        }
+//
+//        $vat_amount = $total_cart * $vat / 100;
+//        $final_total = $total_cart + $vat_amount + $delivery_charge;
+//        $final_total = $final_total - $discount;
+//
+//        // Create user if guest
+//        if (!auth()->check()) {
+//            $newUser = new User();
+//            $newUser->password = bcrypt($request->get('password'));
+//            $newUser->email = $request->email;
+//            $newUser->name = $request->name;
+//            $newUser->mobile = $request->mobile;
+//            $newUser->type_mobile = $request->type_mobile;
+//            $newUser->save();
+//
+//            $address = UserAddress::query()->create([
+//                'address_name' => $request->address_name,
+//                'area_id' => $request->area_id,
+//                'street' => $request->street,
+//                'user_id' => $newUser->id,
+//            ]);
+//
+//            $user_id = $newUser->id;
+//            Auth::login($newUser);
+//        }
+//
+//        // Create order
+//        $order = new Order();
+//        $order->total = $final_total;
+//        $order->sub_total = $total_cart;
+//        $order->count_items = $count_products;
+//        $order->vat_percent = $vat;
+//        $order->vat_amount = $vat_amount;
+//        $order->delivery_cost = $delivery_charge;
+//        $order->discount = $discount;
+//        $order->discount_code = $promo->code ?? '';
+//        $order->user_id = $user_id ?? auth()->user()->id;
+//        $order->payment_method = $request->payment_method; // 1 = Cash, 2 = Online
+//        $order->payment_status = $request->payment_method == 1 ? 'pending' : 'pending_payment';
+//        $order->address_id = $address->id;
+//        $order->fcm_token = $request->fcm_token ?? null;
+//        $order->name = (isset($newUser)) ? $newUser->name : auth()->user()->name;
+//        $order->email = (isset($newUser)) ? $newUser->email : auth()->user()->email;
+//        $order->mobile = (isset($newUser)) ? $newUser->mobile : auth()->user()->mobile;
+//        $order->area_id = $address->area_id;
+//        $order->street = $address->street ?? '';
+//        $order->address_name = $address->address_name ?? '';
+//        $order->block = $address->block ?? '';
+//        $order->house_number = $address->house_building ?? '';
+//
+//        if ($request->delivery_note) {
+//            $note = Deleverynote::create([
+//                'delivery_note' => $request->delivery_note
+//            ]);
+//            $order->delivery_note_id = $note->id;
+//        }
+//
+//        $order->save();
+//
+//        if ($order) {
+//            // Create order products
+//            foreach ($carts as $one) {
+//                $price = $one->variant && $one->variant->price && $one->variant->discount_price > 0 && $one->variant->discount_price < $one->variant->price
+//                    ? $one->variant->discount_price : $one->variant->price;
+//
+//                $ProductOrder = new OrderProduct();
+//                $ProductOrder->order_id = $order->id;
+//                $ProductOrder->product_id = $one->product_id;
+//                $ProductOrder->product_variant_id = $one->variant->id;
+//                $ProductOrder->quantity = $one->quantity;
+//                $ProductOrder->gift_packaging_id = $one->gift_packaging_id;
+//                $ProductOrder->offer_price = ($price < $one->variant->price) ? $price : 0;
+//                $ProductOrder->price = $one->variant->price;
+//                $ProductOrder->save();
+//
+//                // Send vendor notification
+//                $message = __('api.NewOrder');
+//                $Vender = Product::where('id', $one->product_id)->pluck('vender_id');
+//                if (!empty($Vender[0])) {
+//                    $order_id = $order->id;
+//                    $action_type = 'order';
+//                    $object_id = $order->id;
+//                    $tokens_ios = Venders::where('id', $Vender[0])->where('device_type', 'ios')->pluck('fcm_token')->toArray();
+//                    $tokens = Venders::where('id', $Vender[0])->pluck('fcm_token')->toArray();
+//                    sendNotificationToUsers($tokens, $action_type, $object_id, $message);
+//
+//                    $notifiy = new Notifiy();
+//                    $notifiy->user_id = $Vender[0];
+//                    $notifiy->order_id = $order_id;
+//                    $notifiy->message = $message;
+//                    $notifiy->save();
+//                }
+//            }
+//
+//            // Clear cart
+//            Cart::where(function ($query) {
+//                $query->where('user_id', Auth::id());
+//                if (Session::has('cart.ids')) {
+//                    $query->orWhere('user_key', Session::get('cart.ids'));
+//                }
+//            })->delete();
+//
+//            // Handle payment method
+//            if ($request->payment_method == 1) {
+//                // Cash payment - order is complete
+//                $message = __('api.ok');
+//                return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'order' => $order]);
+//            } else {
+//                // Online payment - create Tap payment
+//                $paymentUrl = $this->createTapPayment($order);
+//                if ($paymentUrl) {
+//                    return response()->json([
+//                        'status' => true,
+//                        'code' => 200,
+//                        'message' => 'Redirecting to payment',
+//                        'order' => $order,
+//                        'payment_url' => $paymentUrl
+//                    ]);
+//                } else {
+//                    // Payment creation failed, update order status
+//                    $order->payment_status = 'failed';
+//                    $order->save();
+//                    return response()->json(['status' => false, 'code' => 500, 'message' => 'Payment creation failed']);
+//                }
+//            }
+//        } else {
+//            $message = __('api.not_found');
+//            return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
+//        }
+//    }
+
     public function storeCheckOut(Request $request) {
         $settings = Setting::first();
         if ($settings->is_alowed_buying == 1) {
@@ -1394,6 +1621,29 @@ class CartController extends Controller
         if ($carts->isEmpty()) {
             $message = __('api.cartEmpty');
             return response()->json(['status' => false, 'code' => 600, 'message' => $message]);
+        }
+
+        // Validate stock availability before processing
+        foreach ($carts as $cart) {
+            if ($cart->variant) {
+                // Check variant stock
+                if ($cart->variant->quantity < $cart->quantity) {
+                    return response()->json([
+                        'status' => false,
+                        'code' => 400,
+                        'message' => "Insufficient stock for variant. Available: {$cart->variant->quantity}, Requested: {$cart->quantity}"
+                    ]);
+                }
+            } else {
+                // Check product stock
+                if ($cart->product->quantity < $cart->quantity) {
+                    return response()->json([
+                        'status' => false,
+                        'code' => 400,
+                        'message' => "Insufficient stock for product. Available: {$cart->product->quantity}, Requested: {$cart->quantity}"
+                    ]);
+                }
+            }
         }
 
         $count_products = count($carts);
@@ -1445,129 +1695,166 @@ class CartController extends Controller
         $final_total = $total_cart + $vat_amount + $delivery_charge;
         $final_total = $final_total - $discount;
 
-        // Create user if guest
-        if (!auth()->check()) {
-            $newUser = new User();
-            $newUser->password = bcrypt($request->get('password'));
-            $newUser->email = $request->email;
-            $newUser->name = $request->name;
-            $newUser->mobile = $request->mobile;
-            $newUser->type_mobile = $request->type_mobile;
-            $newUser->save();
+        // Start database transaction
+        DB::beginTransaction();
 
-            $address = UserAddress::query()->create([
-                'address_name' => $request->address_name,
-                'area_id' => $request->area_id,
-                'street' => $request->street,
-                'user_id' => $newUser->id,
-            ]);
+        try {
+            // Create user if guest
+            if (!auth()->check()) {
+                $newUser = new User();
+                $newUser->password = bcrypt($request->get('password'));
+                $newUser->email = $request->email;
+                $newUser->name = $request->name;
+                $newUser->mobile = $request->mobile;
+                $newUser->type_mobile = $request->type_mobile;
+                $newUser->save();
 
-            $user_id = $newUser->id;
-            Auth::login($newUser);
-        }
+                $address = UserAddress::query()->create([
+                    'address_name' => $request->address_name,
+                    'area_id' => $request->area_id,
+                    'street' => $request->street,
+                    'user_id' => $newUser->id,
+                ]);
 
-        // Create order
-        $order = new Order();
-        $order->total = $final_total;
-        $order->sub_total = $total_cart;
-        $order->count_items = $count_products;
-        $order->vat_percent = $vat;
-        $order->vat_amount = $vat_amount;
-        $order->delivery_cost = $delivery_charge;
-        $order->discount = $discount;
-        $order->discount_code = $promo->code ?? '';
-        $order->user_id = $user_id ?? auth()->user()->id;
-        $order->payment_method = $request->payment_method; // 1 = Cash, 2 = Online
-        $order->payment_status = $request->payment_method == 1 ? 'pending' : 'pending_payment';
-        $order->address_id = $address->id;
-        $order->fcm_token = $request->fcm_token ?? null;
-        $order->name = (isset($newUser)) ? $newUser->name : auth()->user()->name;
-        $order->email = (isset($newUser)) ? $newUser->email : auth()->user()->email;
-        $order->mobile = (isset($newUser)) ? $newUser->mobile : auth()->user()->mobile;
-        $order->area_id = $address->area_id;
-        $order->street = $address->street ?? '';
-        $order->address_name = $address->address_name ?? '';
-        $order->block = $address->block ?? '';
-        $order->house_number = $address->house_building ?? '';
-
-        if ($request->delivery_note) {
-            $note = Deleverynote::create([
-                'delivery_note' => $request->delivery_note
-            ]);
-            $order->delivery_note_id = $note->id;
-        }
-
-        $order->save();
-
-        if ($order) {
-            // Create order products
-            foreach ($carts as $one) {
-                $price = $one->variant && $one->variant->price && $one->variant->discount_price > 0 && $one->variant->discount_price < $one->variant->price
-                    ? $one->variant->discount_price : $one->variant->price;
-
-                $ProductOrder = new OrderProduct();
-                $ProductOrder->order_id = $order->id;
-                $ProductOrder->product_id = $one->product_id;
-                $ProductOrder->product_variant_id = $one->variant->id;
-                $ProductOrder->quantity = $one->quantity;
-                $ProductOrder->gift_packaging_id = $one->gift_packaging_id;
-                $ProductOrder->offer_price = ($price < $one->variant->price) ? $price : 0;
-                $ProductOrder->price = $one->variant->price;
-                $ProductOrder->save();
-
-                // Send vendor notification
-                $message = __('api.NewOrder');
-                $Vender = Product::where('id', $one->product_id)->pluck('vender_id');
-                if (!empty($Vender[0])) {
-                    $order_id = $order->id;
-                    $action_type = 'order';
-                    $object_id = $order->id;
-                    $tokens_ios = Venders::where('id', $Vender[0])->where('device_type', 'ios')->pluck('fcm_token')->toArray();
-                    $tokens = Venders::where('id', $Vender[0])->pluck('fcm_token')->toArray();
-                    sendNotificationToUsers($tokens, $action_type, $object_id, $message);
-
-                    $notifiy = new Notifiy();
-                    $notifiy->user_id = $Vender[0];
-                    $notifiy->order_id = $order_id;
-                    $notifiy->message = $message;
-                    $notifiy->save();
-                }
+                $user_id = $newUser->id;
+                Auth::login($newUser);
             }
 
-            // Clear cart
-            Cart::where(function ($query) {
-                $query->where('user_id', Auth::id());
-                if (Session::has('cart.ids')) {
-                    $query->orWhere('user_key', Session::get('cart.ids'));
-                }
-            })->delete();
+            // Create order
+            $order = new Order();
+            $order->total = $final_total;
+            $order->sub_total = $total_cart;
+            $order->count_items = $count_products;
+            $order->vat_percent = $vat;
+            $order->vat_amount = $vat_amount;
+            $order->delivery_cost = $delivery_charge;
+            $order->discount = $discount;
+            $order->discount_code = $promo->code ?? '';
+            $order->user_id = $user_id ?? auth()->user()->id;
+            $order->payment_method = $request->payment_method; // 1 = Cash, 2 = Online
+            $order->payment_status = $request->payment_method == 1 ? 'pending' : 'pending_payment';
+            $order->address_id = $address->id;
+            $order->fcm_token = $request->fcm_token ?? null;
+            $order->name = (isset($newUser)) ? $newUser->name : auth()->user()->name;
+            $order->email = (isset($newUser)) ? $newUser->email : auth()->user()->email;
+            $order->mobile = (isset($newUser)) ? $newUser->mobile : auth()->user()->mobile;
+            $order->area_id = $address->area_id;
+            $order->street = $address->street ?? '';
+            $order->address_name = $address->address_name ?? '';
+            $order->block = $address->block ?? '';
+            $order->house_number = $address->house_building ?? '';
 
-            // Handle payment method
-            if ($request->payment_method == 1) {
-                // Cash payment - order is complete
-                $message = __('api.ok');
-                return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'order' => $order]);
-            } else {
-                // Online payment - create Tap payment
-                $paymentUrl = $this->createTapPayment($order);
-                if ($paymentUrl) {
-                    return response()->json([
-                        'status' => true,
-                        'code' => 200,
-                        'message' => 'Redirecting to payment',
-                        'order' => $order,
-                        'payment_url' => $paymentUrl
-                    ]);
+            if ($request->delivery_note) {
+                $note = Deleverynote::create([
+                    'delivery_note' => $request->delivery_note
+                ]);
+                $order->delivery_note_id = $note->id;
+            }
+
+            $order->save();
+
+            if ($order) {
+                // Create order products and update quantities
+                foreach ($carts as $one) {
+                    $price = $one->variant && $one->variant->price && $one->variant->discount_price > 0 && $one->variant->discount_price < $one->variant->price
+                        ? $one->variant->discount_price : $one->variant->price;
+
+                    $ProductOrder = new OrderProduct();
+                    $ProductOrder->order_id = $order->id;
+                    $ProductOrder->product_id = $one->product_id;
+                    $ProductOrder->product_variant_id = $one->variant->id;
+                    $ProductOrder->quantity = $one->quantity;
+                    $ProductOrder->gift_packaging_id = $one->gift_packaging_id;
+                    $ProductOrder->offer_price = ($price < $one->variant->price) ? $price : 0;
+                    $ProductOrder->price = $one->variant->price;
+                    $ProductOrder->save();
+
+                    // Update variant quantity
+                    if ($one->variant) {
+                        $one->variant->decrement('quantity', $one->quantity);
+
+                        // Optionally update the main product quantity as well
+                        $one->product->decrement('quantity', $one->quantity);
+                    } else {
+                        // Update product quantity only if no variant
+                        $one->product->decrement('quantity', $one->quantity);
+                    }
+
+                    // Send vendor notification
+                    $message = __('api.NewOrder');
+                    $Vender = Product::where('id', $one->product_id)->pluck('vender_id');
+                    if (!empty($Vender[0])) {
+                        $order_id = $order->id;
+                        $action_type = 'order';
+                        $object_id = $order->id;
+                        $tokens_ios = Venders::where('id', $Vender[0])->where('device_type', 'ios')->pluck('fcm_token')->toArray();
+                        $tokens = Venders::where('id', $Vender[0])->pluck('fcm_token')->toArray();
+                        sendNotificationToUsers($tokens, $action_type, $object_id, $message);
+
+                        $notifiy = new Notifiy();
+                        $notifiy->user_id = $Vender[0];
+                        $notifiy->order_id = $order_id;
+                        $notifiy->message = $message;
+                        $notifiy->save();
+                    }
+                }
+
+                // Clear cart
+                Cart::where(function ($query) {
+                    $query->where('user_id', Auth::id());
+                    if (Session::has('cart.ids')) {
+                        $query->orWhere('user_key', Session::get('cart.ids'));
+                    }
+                })->delete();
+
+                // Handle payment method
+                if ($request->payment_method == 1) {
+                    // Cash payment - order is complete, commit transaction
+                    DB::commit();
+
+                    $message = __('api.ok');
+                    return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'order' => $order]);
                 } else {
-                    // Payment creation failed, update order status
-                    $order->payment_status = 'failed';
-                    $order->save();
-                    return response()->json(['status' => false, 'code' => 500, 'message' => 'Payment creation failed']);
+                    // Online payment - create Tap payment
+                    $paymentUrl = $this->createTapPayment($order);
+                    if ($paymentUrl) {
+                        // Commit transaction for successful payment URL generation
+                        DB::commit();
+
+                        return response()->json([
+                            'status' => true,
+                            'code' => 200,
+                            'message' => 'Redirecting to payment',
+                            'order' => $order,
+                            'payment_url' => $paymentUrl
+                        ]);
+                    } else {
+                        // Payment creation failed, rollback transaction
+                        DB::rollBack();
+
+                        return response()->json(['status' => false, 'code' => 500, 'message' => 'Payment creation failed']);
+                    }
                 }
+            } else {
+                DB::rollBack();
+                $message = __('api.not_found');
+                return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
             }
-        } else {
-            $message = __('api.not_found');
-            return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
+        } catch (\Exception $e) {
+            // Rollback transaction on any error
+            DB::rollBack();
+
+            \Log::error('Store Checkout Error: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'request_data' => $request->all(),
+                'stack_trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => 'An error occurred while processing your order'
+            ]);
         }
     }
 
