@@ -75,7 +75,7 @@ class UserController extends Controller
                 'confirm_password' => 'required|min:6|same:password',
                 'email' => 'required|email|unique:users',
                 'mobile' => 'required|digits_between:8,12|unique:users',
-                'type_mobile' => 'required',
+//                'type_mobile' => 'required',
             ]);
             if ($validator->fails()) {
                 return response()->json(['status' => false, 'code' => 201,
@@ -86,7 +86,7 @@ class UserController extends Controller
             $newUser->email = $email;
             $newUser->name = $request->name;
             $newUser->mobile = $mobile;
-            $newUser->type_mobile = $request->type_mobile;
+//            $newUser->type_mobile = $request->type_mobile;
 
             if ($request->hasFile('image')) {
                 $imageProfile = $request->file('image');
