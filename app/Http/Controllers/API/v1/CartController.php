@@ -2317,6 +2317,7 @@ class CartController extends Controller
         try {
             $tapApiKey = config('services.tap.secret_key');
 
+
             $paymentData = [
                 'amount' => $order->total,
                 'currency' => 'KWD',
@@ -2328,7 +2329,7 @@ class CartController extends Controller
                         'number' => $order->mobile
                     ]
                 ],
-                'source' => ['id' => 'src_card'],
+                'source' => ['id' => 'src_all'],
                 'redirect' => [
                     'url' => config('app.url') . '/api/tap/callback'
 //                    'url' => 'http://192.168.1.2' . '/api/tap/callback'

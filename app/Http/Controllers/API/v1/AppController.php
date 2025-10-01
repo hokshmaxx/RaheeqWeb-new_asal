@@ -87,6 +87,7 @@ class AppController extends Controller
     public function getProducts(Request $request)
     {
 
+
         if ($request->category_id == null) {
             $data = Category::query()
                     ->where('status', 'active')
