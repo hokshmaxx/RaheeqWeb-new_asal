@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\v1;
 
 use App\Models\Admin;
 use App\Models\CartAddition;
+use GPBMetadata\Google\Api\Log;
 use Illuminate\Support\Str;
 
 use App\Models\Order;
@@ -293,6 +294,7 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
+
         $settings = Setting::first();
         if ($settings->is_alowed_login == 1) {
             $message = __('api.loginStoped');
@@ -361,6 +363,7 @@ class UserController extends Controller
      */
     private function handleSocialLogin(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'login_type' => 'required|in:facebook,google,apple',
             'social_id' => 'required|string',
@@ -383,6 +386,9 @@ class UserController extends Controller
         $email = $request->email;
         $name = $request->name;
 
+        \Log::info('loginxxx',[$email]);
+
+
         try {
             // Check if user exists with this social ID
             $user = User::where($loginType . '_id', $socialId)->first();
@@ -396,6 +402,7 @@ class UserController extends Controller
                     $user->update([
                         $loginType . '_id' => $socialId,
                     ]);
+                    $user->save();
                 } else {
                     // Create new user
                     $user = User::create([
@@ -409,6 +416,9 @@ class UserController extends Controller
                         // Add mobile field if provided
                         'mobile' => $request->get('mobile', null),
                     ]);
+
+                    $user->save();
+
                 }
             }
 

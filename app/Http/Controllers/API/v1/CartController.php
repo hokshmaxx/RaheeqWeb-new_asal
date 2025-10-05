@@ -2142,6 +2142,7 @@ class CartController extends Controller
             $order->email = $newUser ? $newUser->email : auth('api')->user()->email;
             $order->mobile = $newUser ? $newUser->mobile : auth('api')->user()->mobile;
             $order->area_id = $address->area_id;
+            $order->address_type = $address->address_type ?? '';
             $order->street = $address->street ?? '';
             $order->address_name = $address->address_name ?? '';
             $order->block = $address->block ?? '';

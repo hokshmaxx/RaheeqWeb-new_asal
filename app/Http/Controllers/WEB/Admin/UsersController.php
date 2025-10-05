@@ -42,31 +42,31 @@ class UsersController extends Controller
             'settings' => $this->settings,
 
         ]);
-        
+
          $route=Route::currentRouteAction();
-         $route_name = substr($route, strpos($route, "@") + 1);   
+         $route_name = substr($route, strpos($route, "@") + 1);
          $this->middleware(function ($request, $next) use($route_name){
          if(can('users')){
-            return $next($request);  
+            return $next($request);
          }
           if($route_name== 'index' ){
              if(can(['users-show' , 'users-create' , 'users-edit' , 'users-delete'])){
-                 return $next($request);  
+                 return $next($request);
              }
           }elseif($route_name== 'create' || $route_name== 'store'){
               if(can('users-create')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }elseif($route_name== 'edit' || $route_name== 'update'){
               if(can('users-edit')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }elseif($route_name== 'destroy' || $route_name== 'delete'){
               if(can('users-delete')){
-                 return $next($request);  
-             } 
+                 return $next($request);
+             }
           }else{
-              return $next($request);  
+              return $next($request);
           }
           if($request->ajax()){
             $message = __('cp.you_dont_have_premession');
@@ -85,7 +85,7 @@ class UsersController extends Controller
             if ($request->get('name') != null)
                 $items->where('name',$request->get('name'));
         }
- 
+
         if ($request->has('email')) {
             if ($request->get('email') != null)
                 $items->where('email',$request->get('email'));
@@ -192,7 +192,7 @@ class UsersController extends Controller
         //     });
         // }
         // catch(Exception $e) {
-        //     // do any thing  
+        //     // do any thing
         // }
         return redirect()->back()->with('status', __('cp.create'));
 
@@ -288,9 +288,9 @@ class UsersController extends Controller
             // });
         }
         catch(Exception $e) {
-            // do any thing  
+            // do any thing
         }
-        
+
         return redirect()->back()->with('status', __('cp.update'));
     }
 
@@ -298,39 +298,40 @@ class UsersController extends Controller
     {
         $item = User::query()->findOrFail($id);
         if ($item) {
-            User::query()->where('id', $id)->delete();
+            User::destroy($id);
+//            User::query()->where('id', $id)->delete();
             return "success";
         }
         return "fail";
     }
 
-   
+
     public function addresses(Request $request , $id)
     {
         $item = User::findOrFail($id);
-    
+
         $addresses = UserAddress::query();
           if ($request->has('area_id')) {
             if ($request->get('area_id') != null)
                 $addresses->where('area_id', $request->get('area_id'));
         }
-        
-      
+
+
           if ($request->has('street')) {
             if ($request->get('street') != null)
                 $addresses->where('street', $request->get('street'));
         }
-        
- 
+
+
             $addresses = $addresses->where('user_id',$id)->orderBy('id','desc')->paginate($this->settings->paginate);
 
         return view('admin.users.addresses.home',[
             'item'=>$item ,
             'addresses'=>$addresses ,
-               
+
         ]);
     }
-    
+
       public function createAddress($id)
     {
         $item = User::findOrFail($id);
@@ -363,7 +364,7 @@ class UsersController extends Controller
 
          return redirect()->back()->with('status', __('cp.create'));
     }
-    
+
          public function editAddress($id, $address)
     {
         $item = User::findOrFail($id);
@@ -375,7 +376,7 @@ class UsersController extends Controller
             'areas'=>$areas,
         ]);
     }
-    
+
          public function updateAddress(Request $request ,$id,$address)
     {
          $validator = Validator::make($request->all(), [
@@ -386,7 +387,7 @@ class UsersController extends Controller
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-        
+
        $item = UserAddress::findOrFail($address);
        $item->address_name= $request->name;
        $item->street= $request->street;
@@ -396,16 +397,16 @@ class UsersController extends Controller
        // $item->latitude= $request->latitude;
        // $item->longitude= $request->longitude;
         $item->save();
-            
+
               return redirect()->back()->with('status', __('cp.update'));
     }
-    
+
       public function deleteAddress($id)
     {
          UserAddress::findOrFail($id)->delete();
          return 'success';
     }
-   
+
 
       public function createNotification($id)
     {
@@ -534,7 +535,7 @@ class UsersController extends Controller
         }
 
     }
- 
+
 
     public function exportUsers(Request $request)  {
         return Excel::download(new UsersExport($request), 'users.xlsx');

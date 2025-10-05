@@ -28,8 +28,8 @@ class User extends Authenticatable
         'password', 'fcm_token' , 'created_at', 'updated_at', 'deleted_at'
     ];
 
-      protected $fillable = ['name','image'];
 
+    protected $guarded = ['id'];
 
 
 
