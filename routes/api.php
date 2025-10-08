@@ -48,6 +48,8 @@ Route::post('/signUp', 'API\v1\UserController@signUp');
 Route::post('/forgotPassword', 'API\v1\UserController@forgotPassword');
 
 Route::get('getCategories', 'API\v1\AppController@getCategories');
+Route::get('/getCategoryVendor/{vendorId}','API\v1\AppController@getCategoriesByVendor');
+
 Route::post('update-gift-packaging', 'API\v1\CartController@updateGiftPackaging');
 Route::get('getProducts', 'API\v1\AppController@getProducts');
 Route::get('getProductDetails/{id}', 'API\v1\AppController@getProductDetails');

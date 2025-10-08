@@ -67,6 +67,23 @@ class AppController extends Controller
 
     }
 
+    public function getCategoriesByVendor($vendorId) {
+        $data = Category::where('status', 'active')
+            ->whereHas('products', function($query) use ($vendorId) {
+                $query->where('status', 'active')
+                    ->where('vendor_id', $vendorId);
+            })
+            ->get();
+
+        $message = __('api.ok');
+        return response()->json([
+            'status' => true,
+            'code' => 200,
+            'message' => $message,
+            'items' => $data
+        ]);
+    }
+
     public function getAges()
     {
         $data = Age::query()->where('status', 'active')->get();
