@@ -62,7 +62,7 @@ class AppController extends Controller
 //            })
 //            ->get();
         $message = __('api.ok');
-        return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'items' => $data]);
+        return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'items' => []]);
 
     }
 
