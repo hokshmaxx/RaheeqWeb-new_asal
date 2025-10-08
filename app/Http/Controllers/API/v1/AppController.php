@@ -55,9 +55,11 @@ class AppController extends Controller
 
     public function getCategories()
     {
-        $data = Category::query()
-            ->where('status', 'active')
-            ->whereHas('products')
+        $data =  Category::query()
+            ->join('products', 'categories.id', '=', 'products.category_id')
+            ->where('categories.status', 'active')
+            ->select('categories.*')
+            ->distinct()
             ->get();
         $message = __('api.ok');
         return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'items' => $data]);
