@@ -55,7 +55,7 @@ class AppController extends Controller
 
     public function getCategories()
     {
-        $data = Category::query()->where('status', 'active')->get();
+        $data = Category::query()->where('status', 'active')->has('products')->get();
         $message = __('api.ok');
         return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'items' => $data]);
 
