@@ -55,12 +55,13 @@ class AppController extends Controller
 
     public function getCategories()
     {
-        $data = Category::query()
-            ->where('status', 'active')
-            ->whereHas('products', function($query) {
-                $query->where('status', 'active');
-            })
-            ->get();
+        $data = DB::table('categories')
+        ->join('products', 'categories.id', '=', 'products.category_id')
+        ->where('categories.status', 'active')
+        ->where('products.status', 'active')
+        ->select('categories.*')
+        ->distinct()
+        ->get();
 
 
         $message = __('api.ok');
