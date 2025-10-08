@@ -62,15 +62,15 @@ class VenderController extends Controller
         return array('jpg', 'png', 'jpeg', 'gif', 'bmp');
     }
 
- 
-    public function login(Request $request) {        
+
+    public function login(Request $request) {
         $field = filter_var($request->get('email'), FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
         $request->merge([$field => $request->get('email')]);
         if (Auth::guard('vender')->attempt($request->only($field, 'password'))) {
 
             $check_vender = Venders::query()->where('email',$request->get('email'))->limit(1)->get();
-         
-            
+
+
             if($check_vender[0]->status != 'active'){
                 $message = (app()->getLocale() == "ar") ? 'الحساب غير مفعل' : 'The account not active';
                 // return [$message];
@@ -98,7 +98,7 @@ class VenderController extends Controller
     }
 
     public function MyProfile() {
-        
+
         if (auth('api')->check()) {
             $vender_id = auth('api')->user()->id;
             $user = Venders::query()->findOrFail($vender_id);
@@ -114,7 +114,7 @@ class VenderController extends Controller
 
     public function vender_editProfile(Request $request) {
         if (!empty(auth('api')->user()->id)) {
-            
+
             $id =  auth('api')->user()->id;
             $user = Venders::query()->findOrFail($id);
             $validator = Validator::make($request->all(), [
@@ -122,12 +122,12 @@ class VenderController extends Controller
                 'email' => 'required|email|unique:venders',
                 'mobile' => 'required|mobile|unique:venders',
             ]);
-    
+
             $user->name = ($request->has('name')) ? $request->get('name') : $user->name;
             $user->email = ($request->has('email')) ? $request->get('email') : $user->email;
             $user->mobile = $request->get('mobile') ? $request->get('mobile') : $user->mobile;
-    
-    
+
+
             if ($request->hasFile('image_profile')) {
                 $imageProfile = $request->file('image_profile');
                 $extention = $imageProfile->getClientOriginalExtension();
@@ -150,7 +150,7 @@ class VenderController extends Controller
         } else {
             $message = __('api.error');
             return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
-        }        
+        }
     }
 
 //    Request Registor ..
@@ -170,7 +170,7 @@ class VenderController extends Controller
         if ($validator->fails()) {
             return response()->json(['status' => false, 'code' => 204,
             'message' => implode("\n", $validator->messages()->all())]);
-        } 
+        }
 
         $newVender = new Vender_requersts();
         $newVender->email = $email;
@@ -189,16 +189,16 @@ class VenderController extends Controller
         $timestamp_today = date('Y-m-d');
 
         if (!empty(auth('api')->user()->id)) {
-            
+
             $query =  DB::table('orders')
                     ->leftJoin('order_products', 'orders.id', '=', 'order_products.order_id')
                     ->leftJoin('products','order_products.product_id', '=','products.id' )
                     ->select('orders.*','products.*','order_products.*')
-                    ->where('products.vender_id',auth('api')->user()->id)  
+                    ->where('products.vender_id',auth('api')->user()->id)
                     ->where('orders.payment_status',1);
-            
+
             $visitor = Venders::where('id',auth('api')->user()->id)->first();
-            
+
             $data = [
                 'total_sale' =>  $query ->sum('sub_total'),
                 'annual_sale' => $query ->where('orders.ordered_date', '>=', $timestamp_year)->sum('sub_total'),
@@ -206,11 +206,11 @@ class VenderController extends Controller
                 'today_sale' => $query->where('orders.ordered_date', '>', $timestamp_today)->sum('sub_total'),
                 'visiter' => $visitor->visitor,
             ];
-          
+
 
             $message = __('api.ok');
             return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'items' => $data]);
-               
+
         } else {
             $message = __('api.error');
             return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
@@ -226,7 +226,7 @@ class VenderController extends Controller
                 'street' => 'required',
             ]);
             $data = [
-                'fulladdress' => $request->get('fulladdress'), 
+                'fulladdress' => $request->get('fulladdress'),
                 'area' => $request->get('area'),
                 'street'=>$request->get('street'),
             ];
@@ -234,7 +234,7 @@ class VenderController extends Controller
             if ($Vender_address >= 1) {
                 $query = Venders_address::where('vender_id', auth('api')->user()->id);
                 $query->update($data);
-                
+
                 $message  = __('api.ok');
                 return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data'=>$data ]);
             } else {
@@ -253,7 +253,7 @@ class VenderController extends Controller
             return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
         }
     }
-    
+
     /**
      * Change Profile Photo
      */
@@ -275,51 +275,51 @@ class VenderController extends Controller
                 })->save("uploads/images/venders/$file_name");
                 $image = $file_name;
             }
-            
+
             $upload_profile = Venders::where('id', auth('api')->user()->id);
-            $upload_profile->update(['image'=>$image]);   
+            $upload_profile->update(['image'=>$image]);
 
             $data = Venders::where('id', auth('api')->user()->id)->get();
             $message  = __('api.ok');
             return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'data' => $data]);
-        
+
         } else {
              $message = __('api.error');
             return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
         }
-        
+
     }
 
     public function password_update(Request $request){
         if (!empty(auth('api')->user()->id)) {
-           
+
             $rules = [
                 'password' => 'required|min:6',
                 'new_password' => 'required|min:6',
                 'confirm_password' => 'required|min:6|same:new_password',
-            ]; 
-    
+            ];
+
             $validator = Validator::make($request->all(), $rules);
             if ($validator->fails()) {
                 return response()->json(['status' => false, 'code' => 200,
                     'message' => implode("\n", $validator->messages()->all())]);
             }
-            
+
             $field = filter_var($request->get('email'), FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
             $request->merge([$field => $request->get('email')]);
-            
+
             if (Auth::guard('vender')->attempt($request->only($field, 'password'))) {
-                
+
                 $new_password = bcrypt($request->get('new_password'));
 
                 $update_password = Venders::where('id', auth('api')->user()->id);
-                $update_password->update(['password'=>$new_password]); 
-                
+                $update_password->update(['password'=>$new_password]);
+
 
                 $message  = __('api.ok');
                 return response()->json(['status' => true, 'code' => 200, 'message' => $message]);
-            
-    
+
+
             } else {
                 $message = __('api.error');
                 return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
@@ -328,7 +328,7 @@ class VenderController extends Controller
             $message = __('api.error');
             return response()->json(['status' => false, 'code' => 201, 'message' => $message]);
         }
-        
+
     }
 
     /**
@@ -356,9 +356,9 @@ class VenderController extends Controller
                         ->orWhereTranslationLike('description', '%' . request()->get('search') . '%');
                 });
             }
-            
+
                     $products = $products->where('status', 'active')
-                                        ->where('vender_id',auth('api')->user()->id) 
+                                        ->where('vender_id',auth('api')->user()->id)
                                         ->paginate($this->paginate)->items();
             $check = ($this->paginate > count($products)) ? false : true;
             $message = __('api.ok');
@@ -367,8 +367,10 @@ class VenderController extends Controller
     }
 
     public function getCategory(Request $request) {
-        $category = Category::query()->where('status','active')->get();
-      
+        $categories = Category::query()
+            ->where('status', 'active')
+            ->whereHas('products')
+            ->get();
         $ages = Age::query()->where('status','active')->get();
         $data = [
             'Category' => $category,
@@ -380,14 +382,14 @@ class VenderController extends Controller
     }
 
     public function update_token(Request $request) {
-        
+
         $data = [
-            'fcm_token' => $request->get('fcm_token'), 
+            'fcm_token' => $request->get('fcm_token'),
         ];
 
         if ($request->get('user_type') == 1 ){
             $update_token = Token::where('user_id', auth('api')->user()->id);
-            $token = $update_token->update($data); 
+            $token = $update_token->update($data);
             if ($token) {
                 $message = __('api.ok');
             } else{
@@ -398,7 +400,7 @@ class VenderController extends Controller
         } else if($request->get('user_type') == 2 ) {
             $update_token = Venders::where('venders.id', auth('api')->user()->id);
             $token=  $update_token->update($data);
-           
+
             if ($token) {
              $message = __('api.ok');
             } else{
