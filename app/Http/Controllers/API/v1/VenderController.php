@@ -367,10 +367,8 @@ class VenderController extends Controller
     }
 
     public function getCategory(Request $request) {
-        $category = Category::query()
-            ->where('status', 'active')
-            ->whereHas('products')
-            ->get();
+        $category = Category::query()->where('status','active')->get();
+
         $ages = Age::query()->where('status','active')->get();
         $data = [
             'Category' => $category,
