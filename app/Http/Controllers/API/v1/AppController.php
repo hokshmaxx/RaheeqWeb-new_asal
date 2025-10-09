@@ -71,7 +71,7 @@ class AppController extends Controller
         $data = Category::where('status', 'active')
             ->whereHas('products', function($query) use ($vendorId) {
                 $query->where('status', 'active')
-                    ->where('vendor_id', $vendorId);
+                    ->where('vender_id', $vendorId);
             })
             ->get();
 
