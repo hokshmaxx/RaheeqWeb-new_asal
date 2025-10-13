@@ -95,6 +95,7 @@ class ProductsController extends Controller
     {
         $data = Product::query();
 
+
         if ($request->has('status') && $request->get('status') !== null) {
             $data->where('status', $request->get('status'));
         }
@@ -114,6 +115,9 @@ class ProductsController extends Controller
         if ($request->ajax()) {
             return Datatables::of(
                 $data->with('category', 'age', 'translations', 'vitamin', 'venders','variants')->orderByDesc('id')
+
+
+
             )
                 ->editColumn('status', function ($row) {
                     return view('admin.settings.status_lable')->with(['row' => $row])->render();
@@ -130,8 +134,14 @@ class ProductsController extends Controller
                 ->addColumn('index', function ($row) {
                     return view('admin.settings.table_index')->with(['row' => $row])->render();
                 })
-                ->addColumn('vender', function ($row) {
-                    return $row->vender ? $row->vender->name : '-';
+                ->addColumn('venders', function ($row) {
+                    \Log::info('hokshmxxxxx', [$row->venders->name_ar??'']);;
+
+                    if ($row->venders) {
+                        return app()->getLocale() == 'ar' ? $row->venders->name_ar??'' : $row->venders->name_en??'';
+                    } else {
+                        return '-';
+                    }
                 })
                 ->addColumn('variant_sku', function ($row) {
                     if ($row->variants && $row->variants->count()) {
@@ -172,6 +182,7 @@ class ProductsController extends Controller
                 ->make(true);
         }
 
+        \Log::info('hokshmxxxxx',[$data]);
         $ages = Age::get();
         $vendors = Venders::get();
 

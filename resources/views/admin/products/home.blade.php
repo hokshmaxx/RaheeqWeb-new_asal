@@ -206,7 +206,8 @@
                     { data: 'name', name: 'translations.name' ,orderable: false},
                     { data: 'category.name', name: 'category.id',orderable: false},
                     // { data: 'age.name', name: 'age.id',orderable: false},
-                     { data: 'venders.name', name: 'venders.id',orderable: false},
+
+                     { data: 'venders', name: 'venders',orderable: false},
                     // { data: 'sku', name: 'sku'},
                     // { data: 'price', name: 'price'},
                     // { data: 'discount_price', name: 'discount_price'},
