@@ -1,47 +1,87 @@
-<!DOCTYPE html>
+
 <html>
 <head>
-	<meta charset="utf-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="description" content="Skipper Fly">
+    <meta name="keywords" content="Skipper Fly">
 
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-	<meta name="description" content="Skipper Fly">
-	<meta name="keywords" content="Skipper Fly">
+    <title>
+        @yield('title')
+    </title>
 
-	<title>
-		@yield('title')
-	</title>
+    <!-- Stylesheets -->
+    @yield('css')
 
-	<!-- Stylesheets -->
-
-	@yield('css')
-
-	<link href="{{ url('css/bootstrap.css') }}" rel="stylesheet">
-	<link href="{{ url('css/fontawesome-all.css') }}" rel="stylesheet">
-	<link href="{{ url('css/animate.css') }}" rel="stylesheet" type="text/css" />
-	<link href="{{ url('css/emojionearea.min.css') }}" rel="stylesheet" type="text/css" />
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
-	<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
-	<link  href="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.css" rel="stylesheet">
-	<link href="{{ url('css/vendors.css') }}" rel="stylesheet" />
+    <link href="{{ url('css/bootstrap.css') }}" rel="stylesheet">
+    <link href="{{ url('css/fontawesome-all.css') }}" rel="stylesheet">
+    <link href="{{ url('css/animate.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ url('css/emojionearea.min.css') }}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+    <link  href="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.css" rel="stylesheet">
+    <link href="{{ url('css/vendors.css') }}" rel="stylesheet" />
     <link href="{{ url('css/style.css') }}" rel="stylesheet">
 
+    @if(app()->getLocale() == 'ar')
+        <link href="{{url('css/bootstrap-rtl.min.css')}}" rel="stylesheet">
+        <link href="{{url('css/rtl.css')}}" rel="stylesheet">
+    @endif
 
+    <!-- Responsive -->
+    <link href="{{ url('css/responsive.css') }}" rel="stylesheet">
 
-@if(app()->getLocale() == 'ar')
-    	<link href="{{url('css/bootstrap-rtl.min.css')}}" rel="stylesheet">
-    	<link href="{{url('css/rtl.css')}}" rel="stylesheet">
-	@endif
+    <!-- Cairo Font - Must be AFTER all other CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+    <style>
+        /* Set Cairo as the base font - MOST IMPORTANT */
+        :root {
+            --font-family-base: 'Cairo', sans-serif;
+        }
 
-	<!-- Responsive -->
-	<link href="{{ url('css/responsive.css') }}" rel="stylesheet">
-	<script src="{{ url('js/jquery-3.3.1.min.js') }}"></script>
-{{--    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>--}}
+        * {
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        html,
+        body {
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        /* All text elements */
+        h1, h2, h3, h4, h5, h6,
+        p, span, div, a, button,
+        input, textarea, select,
+        label, li, ul, ol, td, th,
+        .btn, .form-control, .modal,
+        .dropdown-menu, .navbar {
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        /* Select2 dropdown */
+        .select2-container,
+        .select2-selection,
+        .select2-results {
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        /* Menu items */
+        .main_menu,
+        .mmenu,
+        .dropdown_profile,
+        .notifications_list {
+            font-family: 'Cairo', sans-serif !important;
+        }
+    </style>
+
+    <script src="{{ url('js/jquery-3.3.1.min.js') }}"></script>
     <script src="https://cdn.tiny.cloud/1/h21rul0lri8f1wuiahke5dyfy97df45xbhijowifclarmsmv/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 
 </head>
-
 <body>
 	<div class="mobile-menu">
 	    <div class="menu-mobile">

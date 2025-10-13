@@ -24,7 +24,7 @@ Version: 1.0
     outline:none;
 }
 body{
-    font-family: 'Montserrat', sans-serif;
+    font-family: Cairo, Droid, Raleway, wf_segoe-ui_normal, "Helvetica Neue", Helvetica, Arial, sans-serif, serif;
     background-color: #ffffff;
     font-size:12px;
     font-weight:400;
@@ -35,7 +35,7 @@ ul{
     list-style: none;
 }
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Montserrat', sans-serif;
+    font-family: Cairo, Droid, Raleway, wf_segoe-ui_normal, "Helvetica Neue", Helvetica, Arial, sans-serif, serif;
     font-weight: 700;
     font-style: normal;
     margin: 0;
@@ -920,13 +920,13 @@ img{
     color: #20385D;
     display: block;
     margin-bottom: 20px;
-    font-family: 'Montserrat-Regular', sans-serif;
+    font-family: Cairo, Droid, Raleway, wf_segoe-ui_normal, "Helvetica Neue", Helvetica, Arial, sans-serif, serif;
 }
 .big-product .sec-title strong span {
     margin-left: 20px;
     color: #363636;
     font-size: 14px;
-    font-family: 'Montserrat-Light', sans-serif;
+    font-family: Cairo, Droid, Raleway, wf_segoe-ui_normal, "Helvetica Neue", Helvetica, Arial, sans-serif, serif;
 }
 .big-product .sec-title h6 {
     color: #20385E;

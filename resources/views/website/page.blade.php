@@ -65,23 +65,23 @@
 
                             <div class="single-feature mb-12 mt-12">
                                 <div class="icon-box-wrap d-flex align-items-center mb-2">
-                                    
+
                                     <p >{!! $page->description !!}</p>
                                 </div>
                             </div>
-                        
+
                         </div>
                     </div>
-                  
+
                 </div>
             </div>
         </section>
         <!--about us section end-->
     </div>
-   
 
 
-   
+
+
 </div>
 
 <!--body content wrap end-->
@@ -120,7 +120,7 @@
                                     <li class="mb-2"><a href="{{$settings->twitter}}"><span class="ti-twitter"></span>  {{__('cp.twitter')}}</a></li>
                                     <li class="mb-2"><a href="{{$settings->instagram}}"><span class="ti-instagram"></span>  {{__('cp.instagram')}}</a></li>
                                     <li class="mb-2"><a href="{{$settings->linked_in}}"><span class="ti-linkedin"></span>  {{__('cp.linked_in')}}</a></li>
-                                  
+
                                 </ul>
                             </div>
                         </div>

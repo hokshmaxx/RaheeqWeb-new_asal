@@ -30,7 +30,54 @@
 	<script src="{{asset('website/js/jquery-3.2.1.min.js')}}"></script>
 	     @yield('css')
 
+
 	 @yield('socialMeta')
+    <!-- Cairo Font - Must be AFTER all other CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Set Cairo as the base font - MOST IMPORTANT */
+        :root {
+            --font-family-base: 'Cairo', sans-serif;
+        }
+
+        * {
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        html,
+        body {
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        /* All text elements */
+        h1, h2, h3, h4, h5, h6,
+        p, span, div, a, button,
+        input, textarea, select,
+        label, li, ul, ol, td, th,
+        .btn, .form-control, .modal,
+        .dropdown-menu, .navbar {
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        /* Select2 dropdown */
+        .select2-container,
+        .select2-selection,
+        .select2-results {
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        /* Menu items */
+        .main_menu,
+        .mmenu,
+        .dropdown_profile,
+        .notifications_list {
+            font-family: 'Cairo', sans-serif !important;
+        }
+    </style>
+
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
