@@ -318,7 +318,7 @@ return [
     'On Delivery' => 'في الطريق',
     'Completed' => 'مكتمل',
     'SKU' => 'SKU',
-    'Do You Want To Proceed To Checkout As ?' => 'هل تريد متابعة الشراء ك ؟',
+    'Do You Want To Proceed To Checkout As ?' => 'هل تريد متابعة الشراء  ؟',
     'Guest' => 'زائر',
     'User' => 'مستخدم',
     'Privacy Policy' => 'سياسة الخصوصية',

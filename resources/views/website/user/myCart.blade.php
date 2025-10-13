@@ -86,7 +86,14 @@
                                 <div class="txt-product">
                                     <div>
 
-                                        <p>{{$cart->product->name}}--({{$cart->variant->variantType->name_en}}) </p>
+                                        <p>{{ $cart->product->name }}</p>
+                                        @if($cart->variant && $cart->variant->variantType)
+                                            <small class="text-muted">
+                                                {{ app()->getLocale() == 'ar' ? $cart->variant->variantType->name_ar : $cart->variant->variantType->name_en }}:
+                                                {{ app()->getLocale() == 'ar' ? $cart->variant->name : $cart->variant->name_en }}
+                                            </small>
+                                        @endif
+
                                         <div class="quantity-item">
                                             @if($cart->variant->quantity > 0)
                                                 <div class="quantity">
@@ -113,7 +120,7 @@
 {{--                                    @else--}}
 {{--                                        <strong>{{$cart->product->price}} @lang('website.KWD')</strong>--}}
 {{--                                    @endif--}}
-  @if($cart->variant->discount_price > 0 )
+                     @if($cart->variant->discount_price > 0 )
                                         <strong>{{number_format($cart->variant->discount_price,3)}} @lang('website.KWD')</strong>
                                     @else
                                         <strong>{{number_format($cart->variant->price,3)}} @lang('website.KWD')</strong>

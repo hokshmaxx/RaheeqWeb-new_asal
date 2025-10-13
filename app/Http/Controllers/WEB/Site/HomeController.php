@@ -56,6 +56,18 @@ class HomeController extends Controller
       $venders = Venders::where('status','active')->get();
       $products=Product::where('status','active')->orderBy('id','desc')->take(6)->get();
 
+        if (auth()->check()) {
+            $carts = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        }
+
+//
         $currentLocale = App::getLocale();
 
         $banners = Banner::where('status', 'active')
@@ -72,10 +84,13 @@ class HomeController extends Controller
             'products'=> $products,
             'venders'=>$venders,
             'banners'=> $banners,
+            'carts'=>$carts,
             ]);
 
 
     }
+
+
     public function prouctDetails (Request $request,$id,$slug)
     {
 

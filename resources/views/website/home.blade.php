@@ -373,6 +373,53 @@
                 transform: translate3d(0, 0, 0);
             }
         }
+        /* Cart Quantity Badge Circle - Always Left */
+        .cart-quantity-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px !important;
+            right: auto !important;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
+            border: 2px solid white;
+        }
+
+        /* For larger numbers (10+) */
+        .cart-quantity-badge.large {
+            width: 38px;
+            height: 32px;
+            border-radius: 16px;
+            font-size: 12px;
+            padding: 0 6px;
+        }
+
+        /* Bounce animation */
+        @keyframes badgeBounce {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.2); }
+            50% { transform: scale(0.9); }
+            75% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .cart-quantity-badge.animate {
+            animation: badgeBounce 0.6s ease;
+        }
+
+        /* Make sure figure has position relative */
+        .item-product figure {
+            position: relative;
+        }
     </style>
 @endsection
 
@@ -442,14 +489,24 @@
             <div class="row">
                 @foreach($products as $product)
                     @php
-                        $variant = $product->variants->first(); // You can customize this to get the default one
+                        $variant = $product->variants->first();
+                        // Find cart quantity for this product
+                        $cartItem = $carts->where('product_id', $product->id)->first();
+                        $cartQuantity = $cartItem ? $cartItem->quantity : 0;
                     @endphp
                     <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-4">
                         <div class="item-product procard wow fadeInUp">
-                            <figure>
+                            <figure style="position: relative;">
                                 <a href="{{ route('prouctDetails', [$product->id, Str::slug($product->name)]) }}">
                                     <img src="{{ $product->image }}" alt="{{ $product->name }}" loading="lazy" />
                                 </a>
+
+                                <!-- Cart Quantity Badge -->
+                                @if($cartQuantity > 0)
+                                    <span class="cart-quantity-badge" data-product-id="{{ $product->id }}">
+                                    {{ $cartQuantity }}
+                                </span>
+                                @endif
 
                                 @if($product->is_favorite == 1)
                                     <a class="btn_favorite item_fav removeFromFavorite" data-id="{{ $product->id }}">
@@ -466,10 +523,9 @@
                                         $dis_percent = ($variant->price - $variant->discount_price) / $variant->price * 100;
                                         $dis_percent = round($dis_percent);
                                     @endphp
-                                @if($dis_percent>0)
-                                    <span class="offer-product">{{ $dis_percent }}% OFF</span>
+                                    @if($dis_percent>0)
+                                        <span class="offer-product">{{ $dis_percent }}% OFF</span>
                                     @endif
-
                                 @endif
                             </figure>
 
@@ -492,17 +548,9 @@
 
                                 <div>
                                     @if($variant && $variant->quantity > 0)
-{{--                                        @if($product->is_cart == 0)--}}
-                                            <a class="btn-site addToCart" data-id="{{ $product->id }} "  data-variant-id="{{ $product->variants->first()->id??0 }}">
-                                                <span>@lang('website.addToCart')</span>
-                                            </a>
-{{--                                        @else--}}
-{{--                                            <a class="btn-site removeFromCart" data-id="{{ $product->id }}">--}}
-{{--                                                <span>@lang('website.removefromCart')</span>--}}
-{{--                                            </a>--}}
-{{--                                        @endif--}}
-
-{{--                                        //--}}
+                                        <a class="btn-site addToCart" data-id="{{ $product->id }}" data-variant-id="{{ $product->variants->first()->id??0 }}">
+                                            <span>@lang('website.addToCart')</span>
+                                        </a>
                                     @else
                                         <div class="soldOut">
                                             <strong>@lang('website.Sold Out')</strong>
@@ -521,7 +569,6 @@
             </div>
         </div>
     </section>
-
     <!-- Rest of your sections (video, contact) remain the same -->
 @endsection
 
