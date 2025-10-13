@@ -297,8 +297,9 @@ class UsersController extends Controller
     public function destroy($id)
     {
         $item = User::query()->findOrFail($id);
+
         if ($item) {
-            User::destroy($id);
+            $item->forceDelete();
 //            User::query()->where('id', $id)->delete();
             return "success";
         }

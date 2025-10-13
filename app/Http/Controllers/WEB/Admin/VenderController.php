@@ -314,7 +314,8 @@ class VenderController extends Controller
 
         $item = Venders::query()->findOrFail($id);
         if ($item) {
-            Venders::query()->where('id', $id)->delete();
+          //  Venders::query()->where('id', $id)->delete();
+            $item->forceDelete();
             return "success";
         }
         return "fail";
