@@ -76,10 +76,10 @@
   </style>
 
 
-		 @if(app()->getLocale() == 'ar')
-		 <link href="{{asset('/admin_assets/plugins/global/fonts/keenthemes-icons/ki.rtl.css')}}" rel="stylesheet" type="text/css" />
-		 <link href="{{asset('/admin_assets/css/rtl.css')}}" rel="stylesheet" type="text/css" />
-		 @endif
+{{--		 @if(app()->getLocale() == 'ar')--}}
+{{--		 <link href="{{asset('/admin_assets/plugins/global/fonts/keenthemes-icons/ki.rtl.css')}}" rel="stylesheet" type="text/css" />--}}
+{{--		 <link href="{{asset('/admin_assets/css/rtl.css')}}" rel="stylesheet" type="text/css" />--}}
+{{--		 @endif--}}
 
 {{--        <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>--}}
         <script src="https://cdn.tiny.cloud/1/h21rul0lri8f1wuiahke5dyfy97df45xbhijowifclarmsmv/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
@@ -103,10 +103,10 @@
 					<span></span>
 				</button>
 				<!--end::Aside Mobile Toggle-->
-				<!--begin::Header Menu Mobile Toggle-->
-				<button class="btn p-0 burger-icon ml-4" id="kt_header_mobile_toggle">
-					<span></span>
-				</button>
+{{--				<!--begin::Header Menu Mobile Toggle-->--}}
+{{--				<button class="btn p-0 burger-icon ml-4" id="kt_header_mobile_toggle">--}}
+{{--					<span></span>--}}
+{{--				</button>--}}
 				<!--end::Header Menu Mobile Toggle-->
 				<!--begin::Topbar Mobile Toggle-->
 				<button class="btn btn-hover-text-primary p-0 ml-2" id="kt_header_mobile_topbar_toggle">

@@ -93,7 +93,7 @@ class CartController extends Controller
             $total +=round( ($basePrice + $packagingPrice) * $cart->quantity,3);
         }
 
-        $total = number_format($total, 3,);
+        $total = number_format($total, 3);
         return view('website.user.myCart', [
             'carts' => $carts,
             'total' => $total,

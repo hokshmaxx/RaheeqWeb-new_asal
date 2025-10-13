@@ -82,14 +82,108 @@
     .breadcrumb-item.active { color:   var(--text-color); font-weight: bold; }
 
     /* Product Gallery */
-    .product-gallery { display: flex; flex-direction: column; gap: 10px; }
-    .product-main-image { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .product-main-image img { width: 100%; height: auto; object-fit: contain; }
-    .product-thumbnails { display: flex; gap: 10px; }
-    .product-thumbnail { width: 70px; height: 70px; border: 2px solid transparent; border-radius: 5px; cursor: pointer; overflow: hidden; transition: border-color 0.3s; }
-    .product-thumbnail:hover, .product-thumbnail.active { border-color: var(--main-color); }
-    .product-thumbnail img { width: 100%; height: 100%; object-fit: contain; }
+    .product-gallery {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+    }
 
+    .product-main-image {
+        width: 100%;
+        height: 400px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f8f8f8;
+    }
+
+    .product-main-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    .product-thumbnails {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 10px 0;
+        scroll-behavior: smooth;
+    }
+
+    .product-thumbnails::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .product-thumbnails::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .product-thumbnails::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    .product-thumbnails::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .product-thumbnail {
+        min-width: 80px;
+        width: 80px;
+        height: 80px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        background: #f8f8f8;
+    }
+
+    .product-thumbnail:hover {
+        border-color: #007bff;
+        transform: scale(1.05);
+    }
+
+    .product-thumbnail.active {
+        border-color: #007bff;
+        box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+    }
+
+    .product-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .product-main-image {
+            height: 300px;
+        }
+
+        .product-thumbnail {
+            min-width: 60px;
+            width: 60px;
+            height: 60px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .product-main-image {
+            height: 250px;
+        }
+
+        .product-thumbnail {
+            min-width: 50px;
+            width: 50px;
+            height: 50px;
+        }
+    }
     /* Product Info */
     /*.product-info { padding-left: 30px; }*/
     .product-title { font-size: 28px; font-weight: 600; margin-bottom: 15px;    white-space: normal;
@@ -160,15 +254,22 @@
                 <div class="product-main-image">
                     <img src="{{ $product->image }}" alt="{{ $product->name }}" id="mainImage">
                 </div>
-                <div class="product-thumbnails">
-                    @foreach ($product->images as $image)
-                        <div class="product-thumbnail">
-                            <img src="{{ $image }}" alt="Thumbnail">
+                <div class="product-thumbnails" id="thumbnailContainer">
+                    {{-- First thumbnail is the main product image --}}
+                    <div class="product-thumbnail active" data-image="{{ $product->image }}">
+                        <img src="{{ $product->image }}" alt="Main Thumbnail">
+                    </div>
+
+                    {{-- Then all additional images --}}
+                    @foreach ($product->images as $index => $image)
+                        <div class="product-thumbnail" data-image="{{ $image->image }}">
+                            <img src="{{ $image->image }}" alt="Thumbnail {{ $index + 1 }}">
                         </div>
                     @endforeach
                 </div>
             </div>
         </div>
+
 
         <!-- Product Information -->
         <div class="col-md-6">
@@ -443,6 +544,124 @@
             toolbar: 'undo redo | formatselect | bold italic underline | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
             height: 300,
             menubar: false,
+        });
+
+
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mainImage = document.getElementById('mainImage');
+            const container = document.getElementById('thumbnailContainer');
+            let autoPlayInterval;
+            let currentIndex = 0;
+            let allThumbnails = [];
+
+            // Function to update thumbnails array
+            function updateThumbnailsArray() {
+                allThumbnails = Array.from(document.querySelectorAll('.product-thumbnail'));
+            }
+
+            // Function to add click event to thumbnails
+            function addThumbnailClickEvent(thumbnail) {
+                thumbnail.addEventListener('click', function() {
+                    // Stop auto-play when user clicks
+                    clearInterval(autoPlayInterval);
+
+                    const newImageSrc = this.getAttribute('data-image');
+                    mainImage.src = newImageSrc;
+
+                    // Remove active class from all thumbnails
+                    allThumbnails.forEach(t => t.classList.remove('active'));
+
+                    // Add active class to clicked thumbnail
+                    this.classList.add('active');
+
+                    // Update current index
+                    currentIndex = allThumbnails.indexOf(this);
+
+                    // Restart auto-play after 3 seconds
+                    setTimeout(startAutoPlay, 3000);
+                });
+            }
+
+            // Function to change to next image
+            function nextImage() {
+                // Get only the original thumbnails (not duplicates)
+                const originalThumbnails = Array.from(container.querySelectorAll('.product-thumbnail')).slice(0, allThumbnails.length);
+
+                currentIndex++;
+
+                // Reset to beginning when reaching the end
+                if (currentIndex >= originalThumbnails.length) {
+                    currentIndex = 0;
+                }
+
+                const currentThumbnail = originalThumbnails[currentIndex];
+                const newImageSrc = currentThumbnail.getAttribute('data-image');
+                mainImage.src = newImageSrc;
+
+                // Update active state on all thumbnails
+                document.querySelectorAll('.product-thumbnail').forEach(t => t.classList.remove('active'));
+                currentThumbnail.classList.add('active');
+
+                // Scroll thumbnail into view
+                currentThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+
+            // Function to start auto-play
+            function startAutoPlay() {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = setInterval(nextImage, 1000); // Change every 1 second
+            }
+
+            // Initialize
+            updateThumbnailsArray();
+            allThumbnails.forEach(thumbnail => {
+                addThumbnailClickEvent(thumbnail);
+            });
+
+            // Start auto-play
+            startAutoPlay();
+
+            // Auto-scroll thumbnails with carousel loop behavior
+            let scrollInterval;
+            function startThumbnailScroll() {
+                scrollInterval = setInterval(() => {
+                    const maxScroll = container.scrollWidth - container.clientWidth;
+
+                    // Smooth scroll
+                    container.scrollLeft += 1;
+
+                    // When reaching the end, smoothly loop back to start
+                    if (container.scrollLeft >= maxScroll) {
+                        setTimeout(() => {
+                            container.scrollTo({ left: 0, behavior: 'smooth' });
+                        }, 500);
+                    }
+                }, 30); // Scroll speed
+            }
+
+            // Start thumbnail auto-scroll
+            startThumbnailScroll();
+
+            // Pause both auto-play and scroll when user hovers over gallery
+            const gallery = document.querySelector('.product-gallery');
+            gallery.addEventListener('mouseenter', function() {
+                clearInterval(autoPlayInterval);
+                clearInterval(scrollInterval);
+            });
+
+            gallery.addEventListener('mouseleave', function() {
+                startAutoPlay();
+                startThumbnailScroll();
+            });
+
+            // Pause scroll when user manually scrolls
+            container.addEventListener('wheel', function() {
+                clearInterval(scrollInterval);
+                setTimeout(startThumbnailScroll, 2000);
+            });
         });
     </script>
 

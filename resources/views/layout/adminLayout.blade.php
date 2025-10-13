@@ -76,10 +76,10 @@
   </style>
 
 
-		 @if(app()->getLocale() == 'ar')
-		 <link href="{{asset('/admin_assets/plugins/global/fonts/keenthemes-icons/ki.rtl.css')}}" rel="stylesheet" type="text/css" />
-		 <link href="{{asset('/admin_assets/css/rtl.css')}}" rel="stylesheet" type="text/css" />
-		 @endif
+{{--		 @if(app()->getLocale() == 'ar')--}}
+{{--		 <link href="{{asset('/admin_assets/plugins/global/fonts/keenthemes-icons/ki.rtl.css')}}" rel="stylesheet" type="text/css" />--}}
+{{--		 <link href="{{asset('/admin_assets/css/rtl.css')}}" rel="stylesheet" type="text/css" />--}}
+{{--		 @endif--}}
 
 {{--        <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>--}}
         <script src="https://cdn.tiny.cloud/1/h21rul0lri8f1wuiahke5dyfy97df45xbhijowifclarmsmv/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>

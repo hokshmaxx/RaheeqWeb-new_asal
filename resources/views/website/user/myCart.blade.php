@@ -114,9 +114,9 @@
 {{--                                        <strong>{{$cart->product->price}} @lang('website.KWD')</strong>--}}
 {{--                                    @endif--}}
   @if($cart->variant->discount_price > 0 )
-                                        <strong>{{$cart->variant->discount_price}} @lang('website.KWD')</strong>
+                                        <strong>{{number_format($cart->variant->discount_price,3)}} @lang('website.KWD')</strong>
                                     @else
-                                        <strong>{{$cart->variant->price}} @lang('website.KWD')</strong>
+                                        <strong>{{number_format($cart->variant->price,3)}} @lang('website.KWD')</strong>
                                     @endif
 
 

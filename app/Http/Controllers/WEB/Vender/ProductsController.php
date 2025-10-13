@@ -89,23 +89,21 @@ class ProductsController extends Controller
 
     public function index(Request $request)
     {
-        $id= auth()->guard('vender')->user()->id;
+        $id = auth()->guard('vender')->user()->id;
+
         $data = Product::query()
-                ->where('vender_id',$id);
-//        dd($data);
+            ->where('vender_id', $id);
 
-        if ($request->has('status')) {
-            if ($request->get('status') != null)
-                $data->where('status', $request->get('status'));
-        }
-        if ($request->has('name')) {
-            if ($request->get('name') != null)
-                $data->whereTranslationLike('name', $request->get('name'));
+        if ($request->has('status') && $request->get('status') != null) {
+            $data->where('status', $request->get('status'));
         }
 
-        // if ($request->has('age')) {
-        //     if ($request->get('age') != null)
-        //         $data->where('age_id', $request->get('age'));
+        if ($request->has('name') && $request->get('name') != null) {
+            $data->whereTranslationLike('name', $request->get('name'));
+        }
+
+        // if ($request->has('age') && $request->get('age') != null) {
+        //     $data->where('age_id', $request->get('age'));
         // }
 
         if ($request->ajax()) {
@@ -147,7 +145,9 @@ class ProductsController extends Controller
                     return 'tr-' . $row->id;
                 })
                 ->editColumn('image', function ($row) {
-                    return '<a href="' . $row->image . '" target="_blank"><img src="' . $row->image . '" width="50px" height="50px" style="border-radius: 10% !important;"></a>';
+                    return '<a href="' . $row->image . '" target="_blank">
+                            <img src="' . $row->image . '" width="50px" height="50px" style="border-radius: 10% !important;">
+                        </a>';
                 })
                 ->editColumn('created_at', function ($row) {
                     return $row->created_at->format('Y-m-d H:i:s');
@@ -158,15 +158,25 @@ class ProductsController extends Controller
                 ->addColumn('action', function ($row) {
                     return view('vender.products.btns')->with(['row' => $row])->render();
                 })
-                ->rawColumns(['action', 'index', 'image', 'status'])
+                ->rawColumns([
+                    'action',
+                    'index',
+                    'image',
+                    'status',
+                    'variant_sku',
+                    'variant_name',
+                    'variant_price',
+                    'variant_discount',
+                    'variant_quantity'
+                ])
                 ->make(true);
         }
-        $ages=Age::get();
+
+        $ages = Age::get();
         $vitamins = ProductVitamin::get();
 
-
         return view('vender.products.home', [
-            'ages'=>$ages,
+            'ages' => $ages,
         ]);
     }
 
