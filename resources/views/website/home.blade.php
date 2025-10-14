@@ -319,6 +319,7 @@
         /*    background: #ddd;*/
         /*    margin: 0 5px;*/
         /*    border-radius: 50%;*/
+
         /*    display: inline-block;*/
         /*    transition: 0.3s;*/
         /*}*/
