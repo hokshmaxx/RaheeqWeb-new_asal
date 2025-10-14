@@ -72,7 +72,7 @@ $(document).ready(function(){
         });
     });
 
-
+    //
     $('#home_slider').owlCarousel({
         loop: false,
         margin: 0,
@@ -82,7 +82,8 @@ $(document).ready(function(){
         items:1,
         dots: true,
         nav: false,
-        autoplay: true
+        autoplay: true,
+        autoHeight: true
     });
 
     $('#categoris_slider').owlCarousel({
