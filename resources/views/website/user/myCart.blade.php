@@ -90,7 +90,7 @@
                                         @if($cart->variant && $cart->variant->variantType)
                                             <small class="text-muted">
                                                 {{ app()->getLocale() == 'ar' ? $cart->variant->variantType->name_ar : $cart->variant->variantType->name_en }}:
-                                                {{ app()->getLocale() == 'ar' ? $cart->variant->name : $cart->variant->name_en }}
+                                                {{$cart->variant->name}}
                                             </small>
                                         @endif
 

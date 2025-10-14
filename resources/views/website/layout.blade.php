@@ -25,6 +25,7 @@
 	<!-- Responsive -->
 	<link rel="icon" href="{{url('website/images/Raheeq_logo.png')}}">
 	<link href="{{asset('website/css/responsive.css')}}" rel="stylesheet">
+	<link href="{{asset('website/css/font-awesome.css')}}" rel="stylesheet">
 	<!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
 	<!--[if lt IE 9]><script src="js/respond.js"></script><![endif]-->
 	<script src="{{asset('website/js/jquery-3.2.1.min.js')}}"></script>
@@ -36,20 +37,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/themify-icons@1.0.1/css/themify-icons.css">
 
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
     <style>
         /* Set Cairo as the base font - MOST IMPORTANT */
         :root {
-            --font-family-base: 'Cairo', sans-serif;
+            --font-family-base: 'Cairo', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', 'themify', sans-serif;
+            --font-family-icons: 'Font Awesome 6 Free', 'Font Awesome 6 Brands', 'themify';
+
         }
 
         * {
-            font-family: 'Cairo', sans-serif !important;
+            font-family: 'Cairo', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', 'themify', sans-serif !important;
         }
 
         html,
         body {
-            font-family: 'Cairo', sans-serif !important;
+            font-family: 'Cairo', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', 'themify', sans-serif !important;
         }
 
         /* All text elements */
@@ -59,14 +67,14 @@
         label, li, ul, ol, td, th,
         .btn, .form-control, .modal,
         .dropdown-menu, .navbar {
-            font-family: 'Cairo', sans-serif !important;
+            font-family: 'Cairo', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', 'themify', sans-serif !important;
         }
 
         /* Select2 dropdown */
         .select2-container,
         .select2-selection,
         .select2-results {
-            font-family: 'Cairo', sans-serif !important;
+            font-family: 'Cairo', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', 'themify', sans-serif !important;
         }
 
         /* Menu items */
@@ -74,7 +82,11 @@
         .mmenu,
         .dropdown_profile,
         .notifications_list {
-            font-family: 'Cairo', sans-serif !important;
+            font-family: 'Cairo', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', 'themify', sans-serif !important;
+        }
+        .icon {
+            font-family: var(--font-family-icons);
+            font-weight: 900; /* required for solid icons */
         }
     </style>
 
@@ -275,7 +287,7 @@
 									<li><a href="{{route('pages','about-us')}}">@lang('website.ABOUT US')</a></li>
 									<li><a href="{{route('contact')}}">@lang('website.Contact Us')</a></li>
 									<li><a href="{{route('pages','privacy-policy')}}">@lang('website.Privacy Policy')</a></li>
-									<li><a href="{{route('pages','terms-of-use')}}">@lang('website.Term Of Use')</a></li>
+{{--									<li><a href="{{route('pages','terms-of-use')}}">@lang('website.Term Of Use')</a></li>--}}
 									<!--<li><a href="faq.html">FAQ</a></li>-->
 								</ul>
 							</div>
@@ -297,7 +309,7 @@
 									<li><a href="{{route('pages','quality-products')}}">@lang('website.Quality Products')</a></li>
 									<li><a href="{{route('pages','free-sample-with-every-Order')}}">@lang('website.Free Sample with Every Order')</a></li>
 									<li><a href="{{route('pages','fast-shipping-handling')}}">@lang('website.Fast Shipping & Handling')</a></li>
-									<li><a href="{{route('pages','reliable-customer-Service')}}">@lang('website.Reliable Customer Service')</a></li>
+{{--									<li><a href="{{route('pages','reliable-customer-Service')}}">@lang('website.Reliable Customer Service')</a></li>--}}
 								</ul>
 							</div>
 						</div>
