@@ -121,7 +121,10 @@
 <div class="row">
     @foreach($products as $product)
         @php
-            $variant = $product->variants->first(); // get first or default variant
+            $variant = $product->variants->first();
+            // Find cart quantity for this product
+            $cartItem = $carts->where('product_id', $product->id)->first();
+            $cartQuantity = $cartItem ? $cartItem->quantity : 0;
         @endphp
         <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-4">
             <div class="item-product procard wow fadeInUp">
@@ -130,6 +133,12 @@
                         <img src="{{ $product->image }}" alt="{{ $product->name }}" loading="lazy" />
                     </a>
 
+                    <!-- Cart Quantity Badge -->
+                    @if($cartQuantity > 0)
+                        <span class="cart-quantity-badge" data-product-id="{{ $product->id }}">
+                                    {{ $cartQuantity }}
+                                </span>
+                    @endif
                     @if($product->is_favorite == 1)
                         <a class="btn_favorite item_fav removeFromFavorite" data-id="{{ $product->id }}">
                             <i class="fas fa-heart"></i>

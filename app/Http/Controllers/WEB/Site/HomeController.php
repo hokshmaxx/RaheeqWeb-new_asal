@@ -181,17 +181,28 @@ class HomeController extends Controller
         $products=Product::where('category_id',$id)->where('status','active')->orderBy('id','desc')->paginate(12);
       }
 
+        if (auth()->check()) {
+            $carts = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        }
 
       if ($request->ajax()) {
             $is_more='yes';
             if($products->count() < 12){$is_more='no';}
-            $view = view('website.more_blad.product_items')->with(['products'=>$products])->render();
+            $view = view('website.more_blad.product_items')->with(['products'=>$products,'carts'=>$carts])->render();
             return response()->json(['html' => $view,'is_more'=>$is_more]);
         }
 
         return view('website.profucts_by_categories',[
             'category'=> $category,
             'products'=> $products,
+            'carts'=>$carts,
             ]);
     }
 
@@ -204,15 +215,26 @@ class HomeController extends Controller
             $products=Product::where('status','active')->where('discount_price','>',0)->where('offer_end_date' ,'>=', now()->toDateString())->orderBy('discount_price','desc')->paginate(12);
         }
 
+        if (auth()->check()) {
+            $carts = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        }
         if ($request->ajax()) {
             $is_more='yes';
             if($products->count() < 12){$is_more='no';}
-            $view = view('website.more_blad.product_items')->with(['products'=>$products])->render();
+            $view = view('website.more_blad.product_items')->with(['products'=>$products,'carts'=>$carts])->render();
             return response()->json(['html' => $view,'is_more'=>$is_more]);
         }
 
         return view('website.offers',[
             'products'=> $products,
+            'carts'=>$carts,
             ]);
     }
 
@@ -226,17 +248,28 @@ class HomeController extends Controller
         else{
             $products=Product::where('status','active')->orderBy('id','desc')->paginate(12);
         }
+        if (auth()->check()) {
+            $carts = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        }
 
 
         if ($request->ajax()) {
             $is_more='yes';
             if($products->count() < 12){$is_more='no';}
-            $view = view('website.more_blad.product_items')->with(['products'=>$products])->render();
+            $view = view('website.more_blad.product_items')->with(['products'=>$products,'carts'=>$carts])->render();
             return response()->json(['html' => $view,'is_more'=>$is_more]);
         }
 
         return view('website.newArrival',[
             'products'=> $products,
+            'carts'=>$carts,
             ]);
     }
 
@@ -251,17 +284,28 @@ class HomeController extends Controller
             $products=Product::where('status','active')->whereTranslationLike('name', '%'. $search.'%')->orderBy('id','desc')->paginate(12);
         }
 
+        if (auth()->check()) {
+            $carts = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        }
 
         if ($request->ajax()) {
             $is_more='yes';
             if($products->count() < 12){$is_more='no';}
-            $view = view('website.more_blad.product_items')->with(['products'=>$products])->render();
+            $view = view('website.more_blad.product_items')->with(['products'=>$products,'carts'=>$carts])->render();
             return response()->json(['html' => $view,'is_more'=>$is_more]);
         }
 
         return view('website.searchProducts',[
             'products'=> $products,
             'search'=> $search,
+            'carts'=>$carts,
             ]);
     }
 
@@ -310,16 +354,27 @@ class HomeController extends Controller
     public function myFavorites(Request $request)
     {
         $items = Favorite::where('user_id',auth()->id())->with('product')->paginate(12);
+        if (auth()->check()) {
+            $carts = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        }
 
         if ($request->ajax()) {
             $is_more='yes';
             if($items->count() < 12){$is_more='no';}
-            $view = view('website.more_blad.moreFavorites')->with(['items'=>$items])->render();
+            $view = view('website.more_blad.moreFavorites')->with(['items'=>$items,'carts'=>$carts])->render();
             return response()->json(['html' => $view,'is_more'=>$is_more]);
         }
 
          return view('website.myFavorites',[
             'items'=> $items,
+             'carts'=>$carts,
             ]);
 
     }
@@ -413,11 +468,21 @@ class HomeController extends Controller
         } else {
             $products=Product::where('vender_id',$id)->where('status','active')->orderBy('id','desc')->paginate(12);
         }
+        if (auth()->check()) {
+            $carts = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        }
 
         if ($request->ajax()) {
             $is_more='yes';
             if($products->count() < 12){$is_more='no';}
-            $view = view('website.more_blad.product_items')->with(['products'=>$products])->render();
+            $view = view('website.more_blad.product_items')->with(['products'=>$products,'carts'=>$carts])->render();
             return response()->json(['html' => $view,'is_more'=>$is_more]);
         }
 
@@ -427,7 +492,9 @@ class HomeController extends Controller
             'category'=> $category,
             'products'=> $products,
             'categories'=> $categories,
+            'carts'=>$carts,
             'V_id'=>$id
+
         ]);
 
     }
@@ -462,11 +529,21 @@ class HomeController extends Controller
                     ->where('vender_id',$V_id)
                     ->orderBy('id','desc')->paginate(12);
         }
+        if (auth()->check()) {
+            $carts = Cart::where('user_id', Auth::user()->id)
+                ->orWhere('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        } else {
+            $carts = Cart::where('user_key', Session::get('cart.ids'))
+                ->with(['product', 'variant', 'giftPackaging'])
+                ->get();
+        }
 
         if ($request->ajax()) {
             $is_more='yes';
             if($products->count() < 12){$is_more='no';}
-            $view = view('website.more_blad.product_items')->with(['products'=>$products])->render();
+            $view = view('website.more_blad.product_items')->with(['products'=>$products,'carts'=>$carts])->render();
             return response()->json(['html' => $view,'is_more'=>$is_more]);
         }
 
@@ -474,6 +551,7 @@ class HomeController extends Controller
             'category'=> $category,
             'products'=> $products,
             'categories'=> $categories,
+            'carts'=>$carts,
             'V_id'=>$V_id
 
         ]);

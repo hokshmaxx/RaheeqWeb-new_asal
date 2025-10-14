@@ -378,6 +378,50 @@
         /*        !*padding: 10px;*!*/
         /*    }*/
         /*}*/
+
+        /* Cart Quantity Badge Circle - Always Left */
+        .cart-quantity-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px !important;
+            right: auto !important;
+            background: var(--main-color);
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
+            border: 2px solid white;
+        }
+
+        /* For larger numbers (10+) */
+        .cart-quantity-badge.large {
+            width: 38px;
+            height: 32px;
+            border-radius: 16px;
+            font-size: 12px;
+            padding: 0 6px;
+        }
+
+        /* Bounce animation */
+        @keyframes badgeBounce {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.2); }
+            50% { transform: scale(0.9); }
+            75% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .cart-quantity-badge.animate {
+            animation: badgeBounce 0.6s ease;
+        }
+
     </style>
 @endsection
 @section('content')

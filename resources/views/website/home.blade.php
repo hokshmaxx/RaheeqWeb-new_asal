@@ -379,7 +379,7 @@
             top: 8px;
             left: 8px !important;
             right: auto !important;
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+             background: var(--main-color);
             color: white;
             border-radius: 50%;
             width: 32px;
