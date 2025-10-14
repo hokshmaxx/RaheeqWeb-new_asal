@@ -114,7 +114,7 @@ $(document).ready(function(){
             }
 
         },
-        dots: false,
+        dots: true,
         // nav: true,
         navText:['<i class="ti-angle-left"></i>','<i class="ti-angle-right"></i>'],
         autoplay: false
@@ -150,7 +150,7 @@ $(document).ready(function(){
             }
 
         },
-        dots: false,
+        dots: true,
         // nav: true,
         navText:['<i class="ti-angle-left"></i>','<i class="ti-angle-right"></i>'],
         autoplay: false

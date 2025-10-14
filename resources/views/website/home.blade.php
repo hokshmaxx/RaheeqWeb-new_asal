@@ -420,7 +420,12 @@
         .item-product figure {
             position: relative;
         }
+
+
+
     </style>
+
+
 @endsection
 
 @section('content')
@@ -588,6 +593,7 @@
                 lazyLoad: true
             });
 
+
             // Categories slider - Touch enabled
             $("#categoris_slider").owlCarousel({
                 loop: true,
@@ -710,5 +716,7 @@
 
             new WOW().init();
         });
+
+
     </script>
 @endsection
