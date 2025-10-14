@@ -22,20 +22,20 @@
         /*}*/
 
         /* ==== Home Slider ==== */
-        /*#home_slider {*/
-        /*    padding: 0 20px;*/
-        /*}*/
+        #home_slider {
+            padding: 0 20px;
+        }
 
-        /*#home_slider .item {*/
-        /*    margin: 0 8px;*/
-        /*}*/
+        #home_slider .item {
+            margin: 0 8px;
+        }
 
-        /*#home_slider .item img {*/
-        /*    width: 100%;*/
-        /*    height: auto;*/
-        /*    border-radius: 16px;*/
-        /*    object-fit: fill;*/
-        /*}*/
+        #home_slider .item img {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            object-fit: cover;
+        }
 
         @media (max-width: 768px) {
             #home_slider .item img {
@@ -431,43 +431,6 @@
         }
 
 
-        .section_home {
-            width: 100%;
-            overflow: hidden;
-        }
-
-        #home_slider,
-        #home_slider .owl-stage-outer,
-        #home_slider .owl-stage,
-        #home_slider .item {
-            width: 100% !important;
-        }
-
-        #home_slider .item img {
-            width: 100%;
-            height: auto;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* Optional if you want a fixed height (hero style) */
-        @media (min-width: 768px) {
-            #home_slider .item {
-                height: 400px; /* adjust for desktop */
-            }
-            #home_slider .item img {
-                height: 100%;
-            }
-        }
-
-        @media (max-width: 767px) {
-            #home_slider .item {
-                height: 250px; /* adjust for mobile */
-            }
-            #home_slider .item img {
-                height: 100%;
-            }
-        }
 
     </style>
 
