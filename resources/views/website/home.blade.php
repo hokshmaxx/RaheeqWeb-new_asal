@@ -2,7 +2,62 @@
 @section('title'){{$setting->title}} @endsection
 @section('css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
     <style>
+        /* Swiper container styling */
+        .swiper {
+            width: calc(100% - 40px); /* 👈 adds left/right margin (20px each side) */
+            /*margin: 20px auto; !* center horizontally and add top/bottom spacing *!*/
+            border-radius: 20px; /* 👈 smooth rounded corners */
+            overflow: hidden; /* keep images inside rounded corners */
+        }
+
+        /* Each slide’s image */
+        .swiper-slide img {
+            width: 100%;
+            height: 70vh; /* 👈 shorter than full viewport; use 100vh for full height */
+            object-fit: fill;
+            border-radius: 20px; /* optional, matches container */
+            display: block;
+        }
+
+        /* Optional: customize dots */
+        .swiper-pagination-bullet {
+            background: #fff;
+            opacity: 0.7;
+        }
+        .swiper-pagination-bullet-active {
+            background: #ff9800;
+        }
+
+        /* Adjust height for tablets */
+        @media (max-width: 1024px) {
+            .swiper-slide img {
+                height: 60vh;
+            }
+        }
+
+        /* Adjust height for phones */
+        @media (max-width: 768px) {
+            .swiper-slide img {
+                height: 50vh;
+            }
+        }
+
+        /* Extra small phones */
+        @media (max-width: 480px) {
+            .swiper-slide img {
+                height: 30vh;
+            }
+        }
+        @media (max-width: 480px) {
+            .swiper-slide img {
+                height: 30vh;
+            }
+        }
+
+
         /* ==== General Section Styles ==== */
         .section_home, .section_categoris, .section_arrival, .section_video, .section_contact {
             padding: 60px 0;
@@ -439,16 +494,17 @@
 @endsection
 
 @section('content')
-    <section class="section_home">
-        <div class="owl-carousel" id="home_slider">
-            @foreach($banners as $banner)
-
-                <div class="item">
-                    <a href="{{$banner->link}}">
-                        <img src="{{$banner->image}}" alt="Banner" loading="lazy" />
-                    </a>
-                </div>
-            @endforeach
+    <section >
+        <div class="swiper">
+            <div class="swiper-wrapper">
+                @foreach($banners as $banner)
+                    <div class="swiper-slide">
+                        <img src="{{ $banner->image }}" alt="Banner">
+                    </div>
+                @endforeach
+            </div>
+            <!-- Add pagination -->
+            <div class="swiper-pagination"></div>
         </div>
     </section>
 
@@ -589,6 +645,8 @@
 
 @section('script')
     <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
     <script>
         $(document).ready(function(){
             // Home slider
@@ -662,6 +720,11 @@
                         items: 8
                     }
                 }
+            });
+            const swiper = new Swiper('.swiper', {
+                loop: true,
+                autoplay: { delay: 3000 },
+                pagination: { el: '.swiper-pagination', clickable: true },
             });
 
             // Your existing contact form script
