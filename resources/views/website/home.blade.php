@@ -7,7 +7,7 @@
     <style>
         /* Swiper container styling */
         .swiper {
-            width: calc(100% - 40px); /* 👈 adds left/right margin (20px each side) */
+            width: calc(100% - 10px); /* 👈 adds left/right margin (20px each side) */
             /*margin: 20px auto; !* center horizontally and add top/bottom spacing *!*/
             border-radius: 20px; /* 👈 smooth rounded corners */
             overflow: hidden; /* keep images inside rounded corners */
