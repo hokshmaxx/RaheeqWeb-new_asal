@@ -5,6 +5,9 @@ return [
     'ok' => 'Done Successfully',
     'wrongEmail' => 'The Email is not valid.',
     'account' => 'Account',
+    'addressType' => 'Address Type',
+    'addressTypeHint' => 'home / work',
+
     'QAR' => ' QAR ',
     'callUsNow' => ' Call Us Now ',
     'subscribe' => ' Subscribe ',

@@ -13,7 +13,7 @@ use App\Models\Cart;
 use App\Models\Area;
 use App\Models\Order;
 use App\Models\UserAddress;
- 
+
 use App\Models\Vender_requersts;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -39,25 +39,25 @@ class UsersController extends Controller
             'settings' => $this->settings,
 
         ]);
-        
+
 }
     public function loginView()
-    {  
+    {
      $type=   \Request::route()->getName();
         return view('website.login_register',[
             'type'=>$type,
             ]);
     }
-    
- 
+
+
         public function loginPost(Request $request)
     {
-      
+
         $rules = [
             'email' => 'required',
             'password' => 'required',
         ];
-        
+
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
             return response()->json([
@@ -76,27 +76,27 @@ class UsersController extends Controller
                     // $user = Auth::user();
                     // $user->last_login_at=Carbon::now()->toDateTimeString();
                     // $user->save();
-    
+
                     //  if(Session::get('cart.ids')!=null){
-                    
+
                     //      $user_cart=Cart::where('user_id',Auth::user()->id)->where('type',1)->pluck('target')->toArray();
                     //      $cart_item=Cart::where('user_id',Auth::user()->id)->where('type',1)->first();
                     //      if($cart_item){
-                    //         Cart::where('user_key',Session::get('cart.ids'))->where('type',1)->whereNotIn('target',$user_cart)->update(['user_id'=>$user->id,'user_key'=>$cart_item->user_key]); 
+                    //         Cart::where('user_key',Session::get('cart.ids'))->where('type',1)->whereNotIn('target',$user_cart)->update(['user_id'=>$user->id,'user_key'=>$cart_item->user_key]);
                     //          Session::forget('cart.ids');
-                    //           $new_cart = [   
-                    //                  "ids" => $cart_item->user_key,                    
+                    //           $new_cart = [
+                    //                  "ids" => $cart_item->user_key,
                     //             ];
                     //              Session::put('cart', $new_cart);
                     //      }
 
                     //   }
                           return response()->json(['status' => true, 'code' => 200]);
-                  
-                   
+
+
                 } else {
                     auth()->logout();
-                    
+
                     return response()->json(['message' => __('website.AccountNotActive') ,'code'=>403]);
                 }
         }
@@ -113,9 +113,9 @@ class UsersController extends Controller
     }
 
     public function registerPost (Request $request)
-    { 
+    {
         $settings = Setting::query()->first();
-        
+
         $validator = Validator::make($request->all(), [
             // 'mobile' => 'required|min:9|max:10|unique:users',//regex:/(05)[0-9]{8}/
             'email' => 'required|email:filter|unique:users',
@@ -123,8 +123,8 @@ class UsersController extends Controller
             'confirm_password' => 'required|min:6|same:password',
             'name' => 'required|min:3',
             'mobile' => 'nullable|digits_between:8,12|unique:users',
-        
-            
+
+
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -145,20 +145,20 @@ class UsersController extends Controller
                         $user = Auth::user();
                         return response()->json(['status' => true, 'code' => 200]);
                  }
-          
+
         } else {
             return redirect()->back()->withErrors([ __('site.Whoops')])->withInput();
         }
     }
- 
- 
+
+
        public function changePassword()
-    {  
+    {
          return view('website.user.change_password',[
             ]);
-    }  
+    }
 
-  
+
      public function updatePassword(Request $request)
     {
         $rules = [
@@ -189,11 +189,11 @@ class UsersController extends Controller
         return response()->json(['status' => false, 'code' => 500,'message' => $message ]);
     }
        public function myProfile()
-    {  
+    {
          return view('website.user.myProfile',[
             ]);
-    } 
-    
+    }
+
         public function updateMyProfile(Request $request) {
             $user_id = auth()->id();
             $user = User::query()->findOrFail($user_id);
@@ -202,7 +202,7 @@ class UsersController extends Controller
                 'email' => 'email|unique:users,email,'.$user->id,
                 // 'mobile' => 'nullable|digits_between:8,12|unique:users,'.$user->id,
                 ]);
-                
+
             if ($validator->fails()) {
                 return response()->json(['status' => false, 'code' => 400,
                     'validator' =>implode("\n",$validator-> messages()-> all())]);
@@ -216,7 +216,7 @@ class UsersController extends Controller
             $user->mobile = $mobile;
 
             $user->save();
-            if ($user) {  
+            if ($user) {
                 $user = User::query()->findOrFail($user_id);
                 $user['access_token'] = $user->createToken('mobile')->accessToken;
 
@@ -229,9 +229,9 @@ class UsersController extends Controller
                 'message' => $message ]);
             }
         }
-    
-    
-    
+
+
+
         public function myAddresses()
     {
         $items = UserAddress::query()->where('user_id', auth()->user()->id)->orderBy('id','desc')->with('area')->get();
@@ -243,9 +243,9 @@ class UsersController extends Controller
         ]);
 
     }
-    
-    
-    public function createAddress() {  
+
+
+    public function createAddress() {
        if(auth()->check()){
             $carts=Cart::where('user_id',Auth::user()->id)->orWhere('user_key',Session::get('cart.ids'))->with('product')->get();
         }else{
@@ -260,7 +260,7 @@ class UsersController extends Controller
               $total_cart += @$cart->product->price * @$cart->quantity;
            }
        }
-       
+
          $type=   \Request::route()->getName();
         return view('website.user.createAddress', [
             'carts' =>$carts,
@@ -271,7 +271,7 @@ class UsersController extends Controller
         ]);
     }
 
- 
+
     public function storeAddress(Request $request) {
 
         $validator = Validator::make($request->all(), [
@@ -280,6 +280,7 @@ class UsersController extends Controller
             'area_id' => 'required|exists:areas,id',
             'street' => 'required',
             'block' => 'required',
+            'address_type' => 'required',
             'house_building' => 'required',
         ]);
 
@@ -291,12 +292,13 @@ class UsersController extends Controller
             'address_name' => $request->name,
             'area_id' => $request->area_id,
             'street' => $request->street,
+            'address_type' => $request->address_type,
             'block' =>$request->block,
             'house_building'=>$request->house_building,
             'user_id' => auth()->user()->id,
         ]);
         $url=route('myAddresses');
-   
+
         if($request->next_path =='checkout'){
             $url=route('checkout');
         }
@@ -305,9 +307,9 @@ class UsersController extends Controller
 
 
     }
-    
-    public function editAddress($id) {  
-    
+
+    public function editAddress($id) {
+
         $areas=Area::where('status','active')->get();
         $address = UserAddress::where('user_id',Auth::user()->id)->where('id', $id)->first();
         $type=   \Request::route()->getName();
@@ -322,39 +324,41 @@ class UsersController extends Controller
     public function updateAddress(Request $request, $id)
     {
         $address = UserAddress::query()->where('user_id',auth()->id())->findOrFail($id);
-       
+
             $validator = Validator::make($request->all(), [
                 'name' => 'required',
                 'area_id' => 'required|exists:areas,id',
                 'block' => 'required',
                 'house_building' => 'required',
+                'address_type' => 'required',
                 'street' => 'required',
-                
+
             ]);
-            
+
             if ($validator->fails()) {
                 return response()->json(['status' => false, 'code' => 400,
                     'message' => implode("\n", $validator->messages()->all())]);
             }
-        
+
             $address->address_name = $request->name;
             $address->area_id = $request->area_id;
             $address->street = $request->street;
+            $address->address_type = $request->address_type;
             $address->block = $request->block;
             $address->house_building = $request->house_building;
             $address->defult = $request->defult;
             $address->save();
              $url=route('myAddresses');
-             
+
               if($request->next_path =='checkout'){
                 $url=route('checkout');
             }
-        
+
             if ($address) {
                 $message = __('api.ok');
                 return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'url'=>$url]);
-            } 
-            
+            }
+
             $message = __('api.error');
             return response()->json(['status' => false, 'code' => 500,
                 'message' => $message]);
@@ -393,10 +397,10 @@ class UsersController extends Controller
     {
         return view('website.vender.register');
     }
-    public function registerVenderPost (Request $request)    { 
-        
+    public function registerVenderPost (Request $request)    {
+
         $settings = Setting::query()->first();
-        
+
         $validator = Validator::make($request->all(), [
             // 'mobile' => 'required|min:9|max:10|unique:users',//regex:/(05)[0-9]{8}/
             'email' => 'required',
@@ -413,7 +417,7 @@ class UsersController extends Controller
         $newUser->name = $request->name;
         $newUser->storename = $request->storename;
         $newUser->comment = $request->comment;
-        
+
         $done = $newUser->save();
         if ($done) {
             return redirect()->route('login');

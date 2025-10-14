@@ -356,8 +356,10 @@ return [
      'vender' =>'البراند',
      'vender_request_register' =>'طلب تسجيل بائع',
      'vender_request' =>'طلب',
-     'house_building' =>'بناء منزل',
-     'block' => 'حاجز ',
+     'house_building' =>'بناء منزل شقه',
+     'block' => 'قطعه',
      'delivery_note' => 'ملاحظات التوصيل',
+     'addressType' => 'نوع العنوان ',
+     'addressTypeHint' => 'منزل مكتب ..',
 
  ];

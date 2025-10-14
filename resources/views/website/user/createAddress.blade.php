@@ -6,7 +6,7 @@
 
         <section class="section_page_site">
 		    <div class="container">
-                
+
 		        <div class="row">
 		             <div class="col-md-7">
                         <div class="sec-head">
@@ -15,8 +15,13 @@
                         <form class="form-address address_form">
                             @csrf
                             <div class="form-group">
+                                <input type="text" class="form-control" aria-placeholder="@lang('website.addressTypeHint')" name="address_type" placeholder="@lang('website.addressType')" required />
+                            </div>
+                            <div class="form-group">
                                 <input type="text" class="form-control" name="name" placeholder="@lang('website.name')" required />
                             </div>
+
+
                             <!--<div class="form-group">-->
                             <!--    <input type="email" class="form-control" placeholder="Enter Your Email" />-->
                             <!--</div>-->
@@ -33,7 +38,7 @@
                             <div class="form-group">
                                 <input type="text" class="form-control" name="street" placeholder="@lang('website.street')" required />
                             </div>
-                            
+
                             {{-- change in address  --}}
                             <div class="form-group">
                                 <input type="text" class="form-control" name="block" placeholder="@lang('website.block')" required />
@@ -105,10 +110,10 @@
 @endsection
 
 @section('script')
- 
+
    		<script>
  var preventSubmit = false;
- 
+
 $(document).on('click','.send_form',function (e) {
             e.preventDefault();
             var formData = new FormData($('.address_form')[0]);
@@ -123,7 +128,7 @@ $(document).on('click','.send_form',function (e) {
               if(preventSubmit){
                   preventSubmit = false;
                   return false;
-                  
+
               }
       // $('.contact_us').html('<i class="fa fa-spinner fa-spin" style="font-size: 20px;"></i>'+' '+'{{__('website.send')}}');
          $('.send_form').html('<i class="fa fa-spinner fa-spin" style="font-size: 20px;"></i>')
@@ -131,8 +136,8 @@ $(document).on('click','.send_form',function (e) {
         var ele = $(this);
         var id = $(this).data("id");
         $.ajax({
-            url: '{{url(app()->getLocale().'/createAddress')}}', 
-            type: "post", 
+            url: '{{url(app()->getLocale().'/createAddress')}}',
+            type: "post",
             data: formData,
             processData: false,
             contentType: false,
@@ -150,7 +155,7 @@ $(document).on('click','.send_form',function (e) {
                     $('input[name="_token"]') .val('{{ csrf_token() }}');
                     // location.href='{{route('home')}}';
                     return
-                }else if(response.validator !=null){    
+                }else if(response.validator !=null){
                             swal({
                             text: response.validator,
                             button: "{{__('website.oky')}}",
@@ -163,8 +168,8 @@ $(document).on('click','.send_form',function (e) {
                     $('.send_form').html('<span>{{__('website.Save')}}</span>')
                     $(".send_form").attr("disabled", false);
                 }
-            } 
-            
+            }
+
         });
     });
 	</script>
