@@ -56,6 +56,10 @@
 
         /* Carousel container fixes */
         #categoris_slider .owl-stage,
+        #venders_slider {
+            position: relative;
+            padding-bottom: 40px; /* add space below for dots */
+        }
         #venders_slider .owl-stage {
             display: flex;
             align-items: stretch;
@@ -300,19 +304,24 @@
         }
 
         .owl-carousel .owl-dots {
-            margin-top: 20px;
+            /*margin-top: 30px;*/
+            /*text-align: center;*/
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
             text-align: center;
         }
 
-        .owl-carousel .owl-dot {
-            width: 10px;
-            height: 10px;
-            background: #ddd;
-            margin: 0 5px;
-            border-radius: 50%;
-            display: inline-block;
-            transition: 0.3s;
-        }
+        /*.owl-carousel .owl-dot {*/
+        /*    width: 10px;*/
+        /*    height: 10px;*/
+        /*    background: #ddd;*/
+        /*    margin: 0 5px;*/
+        /*    border-radius: 50%;*/
+        /*    display: inline-block;*/
+        /*    transition: 0.3s;*/
+        /*}*/
 
         /*.owl-carousel .owl-dot.active {*/
         /*    width: 24px;*/
