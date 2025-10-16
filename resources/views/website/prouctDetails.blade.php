@@ -350,7 +350,7 @@
 {{--                                </div>--}}
 {{--                            @else--}}
                                 <div class="soldOut" style="display: none" id="soldOutId">
-                                    <h1>@lang('website.Sold Out')</h1>
+                                    <h3>@lang('website.Sold Out')</h3>
                                 </div>
 {{--                            @endif--}}
 {{--                        </div>--}}
