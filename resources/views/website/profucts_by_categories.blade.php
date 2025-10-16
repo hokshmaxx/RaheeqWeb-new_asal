@@ -3,22 +3,55 @@
 @section('css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.css">
     <style>
+        /* Swiper container styling */
+        .swiper {
+            width: calc(100% - 10px);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        /* Each slide's image */
+        .swiper-slide img {
+            width: 100%;
+            height: 70vh;
+            object-fit: fill;
+            border-radius: 20px;
+            display: block;
+        }
+
+        /* Optional: customize dots */
+        .swiper-pagination-bullet {
+            background: #fff;
+            opacity: 0.7;
+        }
+        .swiper-pagination-bullet-active {
+            background: #ff9800;
+        }
+
+        /* Adjust height for tablets */
+        @media (max-width: 1024px) {
+            .swiper-slide img {
+                height: 60vh;
+            }
+        }
+
+        /* Adjust height for phones */
+        @media (max-width: 768px) {
+            .swiper-slide img {
+                height: 50vh;
+            }
+        }
+
+        /* Extra small phones */
+        @media (max-width: 480px) {
+            .swiper-slide img {
+                height: 30vh;
+            }
+        }
+
         /* ==== General Section Styles ==== */
         .section_home, .section_categoris, .section_arrival, .section_video, .section_contact {
             padding: 60px 0;
-        }
-
-        .sec_head {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-
-        .sec_head h2 {
-            font-size: 36px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #222;
-            margin: 0;
         }
 
         /* ==== Home Slider ==== */
@@ -56,6 +89,11 @@
 
         /* Carousel container fixes */
         #categoris_slider .owl-stage,
+        #venders_slider {
+            position: relative;
+            padding-bottom: 40px;
+        }
+
         #venders_slider .owl-stage {
             display: flex;
             align-items: stretch;
@@ -87,19 +125,11 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
 
-        .item_categoris a, .item_venders a {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            text-decoration: none;
-            color: inherit;
-        }
-
         .item_categoris figure, .item_venders figure {
             position: relative;
             width: 100%;
             margin: 0;
-            padding-top: 100%; /* 1:1 Aspect Ratio */
+            padding-top: 100%;
             overflow: hidden;
             flex-shrink: 0;
         }
@@ -119,16 +149,17 @@
             transform: scale(1.05);
         }
 
+        /* UPDATED: Category and Vendor Name Styling - Larger and Bold */
         .item_categoris p, .item_venders p {
             margin: 15px 8px;
-            font-size: 15px;
-            font-weight: 600;
-            color: #333;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-color);
             padding: 0 8px;
             flex-grow: 1;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow: visible;
         }
 
         /* ==== Product Card ==== */
@@ -148,7 +179,6 @@
 
         .item-product figure {
             position: relative;
-            /*padding-top: 100%;*/
             overflow: hidden;
         }
 
@@ -197,27 +227,17 @@
             z-index: 2;
         }
 
-        /*!* Product Info *!*/
-        /*.txt-product {*/
-        /*    padding: 15px;*/
-        /*    text-align: center;*/
-        /*}*/
-
         .txt-product p {
             font-size: 14px;
             font-weight: 600;
             color: #333;
             margin: 0 0 8px;
-            /*height: 100px;*/
-            /*overflow: hidden;*/
-            /*display: -webkit-box;*/
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             white-space: normal;
             word-wrap: break-word;
             overflow: visible;
         }
-
 
         .txt-product strong {
             display: block;
@@ -266,31 +286,10 @@
         }
 
         /* ==== Button Site ==== */
-        .btn-site {
-            background: var(--main-color);
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 700;
-            border: none;
-            transition: 0.3s;
-            display: inline-block;
-            text-align: center;
-        }
-
         .btn-site:hover {
             background: var(--main-color);
             box-shadow: 0 6px 12px rgba(255,107,129,0.3);
             transform: translateY(-2px);
-        }
-
-        /* ==== Sold Out ==== */
-        .soldOut {
-            margin-top: 10px;
-            text-align: center;
-            font-weight: 700;
-            color: var(--main-color);
         }
 
         /* ==== Owl Carousel Customization ==== */
@@ -299,36 +298,25 @@
         }
 
         .owl-carousel .owl-dots {
-            margin-top: 20px;
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
             text-align: center;
         }
-
-        .owl-carousel .owl-dot {
-            width: 10px;
-            height: 10px;
-            background: #ddd;
-            margin: 0 5px;
-            border-radius: 50%;
-            display: inline-block;
-            transition: 0.3s;
-        }
-
-        /*.owl-carousel .owl-dot.active {*/
-        /*    width: 24px;*/
-        /*    border-radius: 6px;*/
-        /*    background: #ff6b81;*/
-        /*}*/
 
         /* ==== Responsive Tweaks ==== */
         @media (max-width: 767px) {
             .item_categoris p, .item_venders p {
-                font-size: 13px;
+                font-size: 15px;
+                font-weight: 700;
                 margin: 10px 5px;
                 white-space: normal;
                 -webkit-line-clamp: 2;
                 display: -webkit-box;
                 -webkit-box-orient: vertical;
-                height: 36px;
+                height: auto;
+                min-height: 40px;
             }
 
             #categoris_slider .item,
@@ -343,7 +331,8 @@
 
         @media (min-width: 768px) and (max-width: 991px) {
             .item_categoris p, .item_venders p {
-                font-size: 14px;
+                font-size: 16px;
+                font-weight: 700;
             }
         }
 
@@ -373,6 +362,83 @@
             }
         }
 
+        /* Cart Quantity Badge Circle - Always Left */
+        .cart-quantity-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px !important;
+            right: auto !important;
+            background: var(--main-color);
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
+            border: 2px solid white;
+        }
+
+        /* For larger numbers (10+) */
+        .cart-quantity-badge.large {
+            width: 38px;
+            height: 32px;
+            border-radius: 16px;
+            font-size: 12px;
+            padding: 0 6px;
+        }
+
+        /* Bounce animation */
+        @keyframes badgeBounce {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.2); }
+            50% { transform: scale(0.9); }
+            75% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .cart-quantity-badge.animate {
+            animation: badgeBounce 0.6s ease;
+        }
+        /* ========================================
+     BREADCRUMB TEXT - Bold & Large
+  ======================================== */
+
+        .breadcrumb-item {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .breadcrumb-item a {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .breadcrumb-item.active {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .breadcrumb-item,
+            .breadcrumb-item a,
+            .breadcrumb-item.active {
+                font-size: 16px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 991px) {
+            .breadcrumb-item,
+            .breadcrumb-item a,
+            .breadcrumb-item.active {
+                font-size: 18px;
+            }
+        }
     </style>
 @endsection
 @section('content')

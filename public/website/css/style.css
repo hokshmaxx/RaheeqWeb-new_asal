@@ -1298,19 +1298,17 @@ footer {
     font-size: 18px;
 }
 .soldOut {
-    text-align: center;
-    /*margin-top: 15px;*/
-    /*height: 45px;*/
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    /* background: rgb(0 0 0 / 33%); */
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
     display: flex;
-    color: var(--main-color);
-
-    padding: 10px 10px;
     align-items: center;
-    border-radius: 10px;
     justify-content: center;
-    background: #7a6e6e;
-    position: relative;
-    overflow: hidden;
+    color: var(--main-color);
 }
 /*.soldOut strong {*/
 /*    display: inline-block;*/

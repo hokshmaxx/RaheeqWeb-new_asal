@@ -7,18 +7,17 @@
     <style>
         /* Swiper container styling */
         .swiper {
-            width: calc(100% - 10px); /* 👈 adds left/right margin (20px each side) */
-            /*margin: 20px auto; !* center horizontally and add top/bottom spacing *!*/
-            border-radius: 20px; /* 👈 smooth rounded corners */
-            overflow: hidden; /* keep images inside rounded corners */
+            width: calc(100% - 10px);
+            border-radius: 20px;
+            overflow: hidden;
         }
 
-        /* Each slide’s image */
+        /* Each slide's image */
         .swiper-slide img {
             width: 100%;
-            height: 70vh; /* 👈 shorter than full viewport; use 100vh for full height */
+            height: 70vh;
             object-fit: fill;
-            border-radius: 20px; /* optional, matches container */
+            border-radius: 20px;
             display: block;
         }
 
@@ -51,30 +50,11 @@
                 height: 30vh;
             }
         }
-        @media (max-width: 480px) {
-            .swiper-slide img {
-                height: 30vh;
-            }
-        }
-
 
         /* ==== General Section Styles ==== */
         .section_home, .section_categoris, .section_arrival, .section_video, .section_contact {
             padding: 60px 0;
         }
-
-        /*.sec_head {*/
-        /*    text-align: center;*/
-        /*    margin-bottom: 50px;*/
-        /*}*/
-
-        /*.sec_head h2 {*/
-        /*    font-size: 36px;*/
-        /*    font-weight: 800;*/
-        /*    text-transform: uppercase;*/
-        /*    color: #222;*/
-        /*    margin: 0;*/
-        /*}*/
 
         /* ==== Home Slider ==== */
         #home_slider {
@@ -113,8 +93,9 @@
         #categoris_slider .owl-stage,
         #venders_slider {
             position: relative;
-            padding-bottom: 40px; /* add space below for dots */
+            padding-bottom: 40px;
         }
+
         #venders_slider .owl-stage {
             display: flex;
             align-items: stretch;
@@ -146,19 +127,11 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
 
-        /*.item_categoris a, .item_venders a {*/
-        /*    display: flex;*/
-        /*    flex-direction: column;*/
-        /*    height: 100%;*/
-        /*    text-decoration: none;*/
-        /*    color: inherit;*/
-        /*}*/
-
         .item_categoris figure, .item_venders figure {
             position: relative;
             width: 100%;
             margin: 0;
-            padding-top: 100%; /* 1:1 Aspect Ratio */
+            padding-top: 100%;
             overflow: hidden;
             flex-shrink: 0;
         }
@@ -178,17 +151,17 @@
             transform: scale(1.05);
         }
 
+        /* UPDATED: Category and Vendor Name Styling - Larger and Bold */
         .item_categoris p, .item_venders p {
             margin: 15px 8px;
-            font-size: 15px;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 700;
             color: var(--text-color);
             padding: 0 8px;
             flex-grow: 1;
             white-space: normal;
             word-wrap: break-word;
             overflow: visible;
-        }
         }
 
         /* ==== Product Card ==== */
@@ -208,7 +181,6 @@
 
         .item-product figure {
             position: relative;
-            /*padding-top: 100%;*/
             overflow: hidden;
         }
 
@@ -257,19 +229,11 @@
             z-index: 2;
         }
 
-        /*.txt-product {*/
-        /*    padding: 15px;*/
-        /*    text-align: center;*/
-        /*}*/
-
         .txt-product p {
             font-size: 14px;
             font-weight: 600;
             color: #333;
             margin: 0 0 8px;
-            /*height: 100px;*/
-            /*overflow: hidden;*/
-            /*display: -webkit-box;*/
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             white-space: normal;
@@ -324,34 +288,11 @@
         }
 
         /* ==== Button Site ==== */
-        /*.btn-site {*/
-        /*    background: var(--main-color);*/
-        /*    color: #fff;*/
-        /*    padding: 12px 24px;*/
-
-        /*    border-radius: 8px;*/
-        /*    font-size: 16px;*/
-        /*    font-weight: 700;*/
-        /*    border: none;*/
-        /*    transition: 0.3s;*/
-        /*    */
-        /*    !*display: inline-block;*!*/
-        /*    !*text-align: center;*!*/
-        /*}*/
-
         .btn-site:hover {
             background: var(--main-color);
             box-shadow: 0 6px 12px rgba(255,107,129,0.3);
             transform: translateY(-2px);
         }
-
-        /* ==== Sold Out ==== */
-        /*.soldOut {*/
-        /*    margin-top: 10px;*/
-        /*    text-align: center;*/
-        /*    font-weight: 700;*/
-        /*    color: var(--main-color);*/
-        /*}*/
 
         /* ==== Owl Carousel Customization ==== */
         .owl-carousel .owl-nav {
@@ -359,8 +300,6 @@
         }
 
         .owl-carousel .owl-dots {
-            /*margin-top: 30px;*/
-            /*text-align: center;*/
             position: absolute;
             bottom: 10px;
             left: 0;
@@ -368,33 +307,18 @@
             text-align: center;
         }
 
-        /*.owl-carousel .owl-dot {*/
-        /*    width: 10px;*/
-        /*    height: 10px;*/
-        /*    background: #ddd;*/
-        /*    margin: 0 5px;*/
-        /*    border-radius: 50%;*/
-
-        /*    display: inline-block;*/
-        /*    transition: 0.3s;*/
-        /*}*/
-
-        /*.owl-carousel .owl-dot.active {*/
-        /*    width: 24px;*/
-        /*    border-radius: 6px;*/
-        /*    background: #ff6b81;*/
-        /*}*/
-
         /* ==== Responsive Tweaks ==== */
         @media (max-width: 767px) {
             .item_categoris p, .item_venders p {
-                font-size: 13px;
+                font-size: 15px;
+                font-weight: 700;
                 margin: 10px 5px;
                 white-space: normal;
                 -webkit-line-clamp: 2;
                 display: -webkit-box;
                 -webkit-box-orient: vertical;
-                height: 36px;
+                height: auto;
+                min-height: 40px;
             }
 
             #categoris_slider .item,
@@ -409,7 +333,8 @@
 
         @media (min-width: 768px) and (max-width: 991px) {
             .item_categoris p, .item_venders p {
-                font-size: 14px;
+                font-size: 16px;
+                font-weight: 700;
             }
         }
 
@@ -438,13 +363,14 @@
                 transform: translate3d(0, 0, 0);
             }
         }
+
         /* Cart Quantity Badge Circle - Always Left */
         .cart-quantity-badge {
             position: absolute;
             top: 8px;
             left: 8px !important;
             right: auto !important;
-             background: var(--main-color);
+            background: var(--main-color);
             color: white;
             border-radius: 50%;
             width: 32px;
@@ -480,16 +406,7 @@
         .cart-quantity-badge.animate {
             animation: badgeBounce 0.6s ease;
         }
-
-        /* Make sure figure has position relative */
-        .item-product figure {
-            position: relative;
-        }
-
-
-
     </style>
-
 
 @endsection
 
