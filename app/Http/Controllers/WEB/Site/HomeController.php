@@ -459,7 +459,13 @@ class HomeController extends Controller
     public function productByVender(Request $request,$id)
     {
         $category=Venders::where('status','active')->findOrFail($id);
-        $categories=Category::where('status','active')->get();
+//        $categories=Category::where('status','active')->get();
+        $categories=   Category::where('status', 'active')
+            ->whereHas('products', function($query) use ($id) {
+                $query->where('status', 'active')
+                    ->where('vender_id', $id);
+            })
+            ->get();
 
         if($request->sort =='min') {
             $products = Product::where('vender_id',$id)->where('status','active')->orderBy('price','asc')->paginate(12);
@@ -506,7 +512,13 @@ class HomeController extends Controller
         Venders::where('id',$V_id)->update(['visitor' => $new_quantity]);
 
 
-      $categories=Category::where('status','active')->get();
+//      $categories=Category::where('status','active')->get();
+        $categories=  Category::where('status', 'active')
+            ->whereHas('products', function($query) use ($V_id) {
+                $query->where('status', 'active')
+                    ->where('vender_id', $V_id);
+            })
+            ->get();
       $category=Category::where('status','active')->findOrFail($id);
       if($request->sort =='min') {
 
