@@ -349,10 +349,12 @@
 {{--                                    </div>--}}
 {{--                                </div>--}}
 {{--                            @else--}}
-                                <div class="soldOut" style="display: none" id="soldOutId">
-                                    <h6>@lang('website.Sold Out')</h6>
-                                </div>
-{{--                            @endif--}}
+{{--                                <div class="soldOut" style="display: none" id="soldOutId">--}}
+{{--                                    <h6>@lang('website.Sold Out')</h6>--}}
+{{--                                </div>--}}
+                    <button class="soldOut" id="soldOutId" >@lang('website.Sold Out')</button>
+
+                    {{--                            @endif--}}
 {{--                        </div>--}}
 {{--                        <button class="removeFromCart" data-id="{{$product->id}}"> Remove from Cart </button>--}}
 
