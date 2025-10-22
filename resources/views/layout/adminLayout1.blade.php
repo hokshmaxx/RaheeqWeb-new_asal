@@ -15,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css?family=Cairo:300,400,600,700" rel="stylesheet"
           type="text/css"/>
 
+
     @if(app()->getLocale() == 'ar')
 
 

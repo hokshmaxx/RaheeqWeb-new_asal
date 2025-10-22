@@ -307,7 +307,7 @@
 								<h2>@lang('website.YOU WILL LOVE US FOR')</h2>
 								<ul class="mmenu">
 									<li><a href="{{route('pages','quality-products')}}">@lang('website.Quality Products')</a></li>
-									<li><a href="{{route('pages','free-sample-with-every-Order')}}">@lang('website.Free Sample with Every Order')</a></li>
+{{--									<li><a href="{{route('pages','free-sample-with-every-Order')}}">@lang('website.Free Sample with Every Order')</a></li>--}}
 									<li><a href="{{route('pages','fast-shipping-handling')}}">@lang('website.Fast Shipping & Handling')</a></li>
 {{--									<li><a href="{{route('pages','reliable-customer-Service')}}">@lang('website.Reliable Customer Service')</a></li>--}}
 								</ul>

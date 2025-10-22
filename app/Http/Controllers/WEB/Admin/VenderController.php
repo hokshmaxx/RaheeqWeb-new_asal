@@ -563,11 +563,13 @@ class VenderController extends Controller
     public function unverifiedVender(Request $request) {
         $items = venders::query()->where('status','not_active')->orderBy('id','desc');
 
-        if ($request->has('name')) {
-            if ($request->get('name') != null)
-                $items->where('name',$request->get('name'));
+        if ($request->has('name_en')) {
+            if ($request->get('name_en') != null)
+                $items->where('name_en',$request->get('name_en'));
+        } if ($request->has('name_ar')) {
+            if ($request->get('name_ar') != null)
+                $items->where('name_ar',$request->get('name_ar'));
         }
-
         if ($request->has('email')) {
             if ($request->get('email') != null)
                 $items->where('email',$request->get('email'));
@@ -613,9 +615,12 @@ class VenderController extends Controller
     public function verifiedVender(Request $request) {
         $items = venders::query()->where('status','active')->orderBy('id','desc');
 
-        if ($request->has('name')) {
-            if ($request->get('name') != null)
-                $items->where('name',$request->get('name'));
+        if ($request->has('name_en')) {
+            if ($request->get('name_en') != null)
+                $items->where('name_en',$request->get('name_en'));
+        } if ($request->has('name_ar')) {
+            if ($request->get('name_ar') != null)
+                $items->where('name_ar',$request->get('name_ar'));
         }
 
         if ($request->has('email')) {

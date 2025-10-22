@@ -3,7 +3,7 @@
 @endsection
 @section('css')
 
-  
+
 @section('content')
 <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
   <!--begin::Subheader-->
@@ -35,12 +35,12 @@
                       <span>{{__('cp.delete')}}</span>
                   </button> --}}
               </div>
-              
+
                <a href="{{url(getLocal().'/admin/exportvender')}}" class="btn btn-secondary  mr-2 btn-success">
                         <i class="icon-xl la la-file-excel"></i>
                         <span>{{__('cp.export')}}</span>
                     </a>
-                    
+
                     <a href="{{url(getLocal().'/admin/vender/create')}}" class="btn btn-secondary  mr-2 btn-success">
                         <i class="icon-xl la la-plus"></i>
                         <span>{{__('cp.add')}}</span>
@@ -157,7 +157,8 @@
 
                               <th class="wd-1p">ID</th>
                               <th class="wd-5p"> {{ucwords(__('cp.image'))}}</th>
-                              <th class="wd-25p"> {{ucwords(__('cp.name'))}}</th>
+                              <th class="wd-25p"> {{ucwords(__('cp.name_en'))}}</th>
+                              <th class="wd-25p"> {{ucwords(__('cp.name_ar'))}}</th>
                               <th class="wd-25p"> {{ucwords(__('cp.email'))}}</th>
                               <th class="wd-25p"> {{ucwords(__('cp.mobile'))}}</th>
                               <th class="wd-10p"> {{ucwords(__('cp.status'))}}</th>
@@ -166,7 +167,7 @@
                           </tr>
                           </thead>
                           <tbody>
-                  
+
                         </tbody>
                       </table>
                           {{-- $items->appends($_GET)->links("pagination::bootstrap-4") --}}
@@ -179,7 +180,7 @@
       </div>
       <!--end::Entry-->
     </div>
-    
+
     <div class="modal fade create_modal" id="basicModal" tabindex="-1" role="dialog" aria-labelledby="staticBackdrop" aria-hidden="true">
       <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
           <div class="modal-content">
@@ -190,20 +191,20 @@
                   </button>
               </div>
               <div class="modal-body">
-                  
+
                   <div class="add-employee-form">
                       <form class="create_form" action="index.html">
                           @csrf
-                         
+
                           <div class="row">
                               <div class="col-md-6">
                                   <div class="form-group">
                                       <label>{{__('cp.name')}}</label>
-                                      <input type="text" class="form-control form-control-solid" name="name" 
+                                      <input type="text" class="form-control form-control-solid" name="name"
                                           value="{{ old('name') }}" required />
                                   </div>
                               </div>
-    
+
                                 <div class="col-md-6">
                                       <div class="form-group ">
                                           <label>{{__('cp.gender')}}</label>
@@ -214,13 +215,13 @@
                                           </select>
                                       </div>
                                  </div>
-                          
+
                           </div>
                           <div class="row">
                               <div class="col-md-6">
                                   <div class="form-group">
                                       <label>{{__('cp.email')}}</label>
-                                      <input type="email" class="form-control form-control-solid" name="email" 
+                                      <input type="email" class="form-control form-control-solid" name="email"
                                           value="{{ old('email') }}" required />
                                   </div>
                               </div>
@@ -228,29 +229,29 @@
                               <div class="col-md-6">
                                   <div class="form-group">
                                       <label>{{__('cp.mobile')}}</label>
-                                      <input type="mobile" onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" class="form-control form-control-solid" name="mobile" 
+                                      <input type="mobile" onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" class="form-control form-control-solid" name="mobile"
                                           value="{{ old('mobile') }}" required />
                                   </div>
                               </div>
                           </div>
-    
+
                           <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>{{__('cp.password')}}</label>
-                                    <input type="password" class="form-control form-control-solid" name="password" 
+                                    <input type="password" class="form-control form-control-solid" name="password"
                                         value="{{ old('password') }}" required />
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>{{__('cp.confirm_password')}}</label>
-                                    <input type="password" class="form-control form-control-solid" name="confirm_password" 
+                                    <input type="password" class="form-control form-control-solid" name="confirm_password"
                                         value="{{ old('confirm_password') }}" required />
                                 </div>
                             </div>
                         </div>
-    
+
                       </form>
                   </div>
               </div>
@@ -261,16 +262,16 @@
           </div>
       </div>
     </div>
-    
-    
+
+
     @endsection
     @section('js')
     <script>
         $(document).ready(function() {
         // init datatable.
-        
+
         var dataTable = $('#kt_datatable1').DataTable({
-            
+
             destroy: true,
             processing: true,
             serverSide: true,
@@ -280,7 +281,7 @@
             buttons: table_btns,
             language: table_language ,
             "aaSorting": [[1,'desc'],[2,'desc']],
-            
+
             "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
             searching: true,
             "oLanguage": {
@@ -289,7 +290,7 @@
             search: {
             "regex": true
             },
-    
+
             ajax: {
                 url: "{{url(app()->getLocale().'/admin/verified_vender')}}",
                 type: 'GET',
@@ -299,7 +300,8 @@
                     { data: 'index', name: 'index' , orderable: false},
                     { data: 'id', name: 'id'},
                     { data: 'image', name: 'image'},
-                    { data: 'name', name: 'name'},
+                    { data: 'name_en', name: 'name_en'},
+                    { data: 'name_ar', name: 'name_ar'},
                     { data: 'email', name: 'email'},
                     { data: 'mobile', name: 'mobile'},
                     { data: 'status', name: 'status'},
@@ -313,9 +315,9 @@
         });
 
 
-        
+
         function delete_adv(id, iss_id, e) {
-            
+
             e.preventDefault();
             var url = '{{url(getLocal()."/admin/verified_vender")}}/' + id;
             var csrf_token = '{{csrf_token()}}';
@@ -340,9 +342,8 @@
         }
     </script>
     @endsection
-    
+
     @section('script')
-    
+
     @endsection
-    
-     
+
