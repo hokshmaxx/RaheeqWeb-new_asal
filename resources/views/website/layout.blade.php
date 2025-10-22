@@ -285,9 +285,8 @@
 								<h2>@lang('website.ABOUT US')</h2>
 								<ul class="mmenu">
 									<li><a href="{{route('pages','about-us')}}">@lang('website.ABOUT US')</a></li>
-									<li><a href="{{route('contact')}}">@lang('website.Contact Us')</a></li>
+{{--									<li><a href="{{route('contact')}}">@lang('website.Contact Us')</a></li>--}}
 									<li><a href="{{route('pages','privacy-policy')}}">@lang('website.Privacy Policy')</a></li>
-{{--									<li><a href="{{route('pages','terms-of-use')}}">@lang('website.Term Of Use')</a></li>--}}
 									<!--<li><a href="faq.html">FAQ</a></li>-->
 								</ul>
 							</div>
@@ -299,7 +298,9 @@
 									<li><a href="{{route('contact')}}">@lang('website.Contact Us')</a></li>
 									<!--<li><a href="centre.html">Info Centre</a></li>-->
 									<li><a href="{{route('pages','shipping-returns')}}">@lang('website.Shipping & Returns')</a></li>
-								</ul>
+                                    <li><a href="{{route('pages','terms-of-use')}}">@lang('website.Term Of Use')</a></li>
+
+                                </ul>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-6 col-xs-6">
@@ -307,7 +308,7 @@
 								<h2>@lang('website.YOU WILL LOVE US FOR')</h2>
 								<ul class="mmenu">
 									<li><a href="{{route('pages','quality-products')}}">@lang('website.Quality Products')</a></li>
-{{--									<li><a href="{{route('pages','free-sample-with-every-Order')}}">@lang('website.Free Sample with Every Order')</a></li>--}}
+									<li><a href="{{route('pages','free-sample-with-every-Order')}}">@lang('website.Free Sample with Every Order')</a></li>
 									<li><a href="{{route('pages','fast-shipping-handling')}}">@lang('website.Fast Shipping & Handling')</a></li>
 {{--									<li><a href="{{route('pages','reliable-customer-Service')}}">@lang('website.Reliable Customer Service')</a></li>--}}
 								</ul>
