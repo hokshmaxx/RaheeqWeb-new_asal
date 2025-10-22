@@ -1,490 +1,632 @@
 @extends('website.layout')
 @section('title', $product->name)
 @section('css')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 
-    .variant-box {
-        cursor: pointer;
-        width: fit-content;
-        transition: all 0.2s ease;
-        background-color:white;
+    <style>
+        /* ===================================
+           PRODUCT IMAGE CAROUSEL WITH DOTS
+           =================================== */
 
-    }
-    .variant-box.selected {
-        border-color: var(--main-color);
-        background-color:var(--main-color);
-        font-weight: bold;
-    }
-
-    .review-form {
-        /*width: 100px;*/
-
-        margin-top: 20px;
-    }
-
-    .review-form label {
-        font-weight: bold;
-        display: block;
-        margin-bottom: 5px;
-    }
-
-    .star-rating {
-        display: flex;
-
-        flex-direction: row-reverse;
-        justify-content: start;
-        gap: 8px;
-        font-size: 1.5rem;
-    }
-
-    /* Override for LTR languages */
-
-
-    .star-rating input[type="radio"] {
-
-        display: none;
-    }
-
-    .star-rating label {
-        font-size: 1.5em;
-        color: #ccc;
-        cursor: pointer;
-        transition: color 0.2s ease-in-out;
-    }
-
-    .star-rating input[type="radio"]:checked ~ label i,
-    .star-rating label:hover i,
-    .star-rating label:hover ~ label i {
-        color: gold;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 15px;
-        box-sizing: border-box;
-    }
-
-    .btn {
-        padding: 10px 20px;
-        font-weight: bold;
-    }
-
-    /* General Styling */
-    /*.product-detail-container { padding: 40px 0; }*/
-
-    /* Breadcrumbs */
-
-    .breadcrumb-container { background: #f9f9f9; padding: 10px 15px; margin-bottom: 25px; border-radius: 5px; }
-    .breadcrumb-item a { color: var(--text-color) }
-    .breadcrumb-item a:hover { text-decoration: underline; color: var(--main-color); }
-    .breadcrumb-item.active { color:   var(--text-color); font-weight: bold; }
-
-    /* Product Gallery */
-    .product-gallery {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        width: 100%;
-    }
-
-    .product-main-image {
-        width: 100%;
-        height: 400px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        overflow: hidden;
-        background: #f8f8f8;
-    }
-
-    .product-main-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        display: block;
-    }
-
-    .product-thumbnails {
-        display: flex;
-        gap: 10px;
-        overflow-x: auto;
-        padding: 10px 0;
-        scroll-behavior: smooth;
-    }
-
-    .product-thumbnails::-webkit-scrollbar {
-        height: 6px;
-    }
-
-    .product-thumbnails::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-
-    .product-thumbnails::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 10px;
-    }
-
-    .product-thumbnails::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-
-    .product-thumbnail {
-        min-width: 80px;
-        width: 80px;
-        height: 80px;
-        border: 2px solid #ddd;
-        border-radius: 6px;
-        overflow: hidden;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        flex-shrink: 0;
-        background: #f8f8f8;
-    }
-
-    .product-thumbnail:hover {
-        border-color: #007bff;
-        transform: scale(1.05);
-    }
-
-    .product-thumbnail.active {
-        border-color: #007bff;
-        box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
-    }
-
-    .product-thumbnail img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .product-main-image {
-            height: 300px;
+        .product-gallery {
+            width: 100%;
+            position: relative;
         }
 
-        .product-thumbnail {
-            min-width: 60px;
-            width: 60px;
-            height: 60px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .product-main-image {
-            height: 250px;
+        /* Main Image Carousel */
+        .main-image-swiper {
+            width: 100%;
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
 
-        .product-thumbnail {
-            min-width: 50px;
-            width: 50px;
-            height: 50px;
+        .main-image-swiper .swiper-slide {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f8f8;
         }
-    }
-    /* Product Info */
-    /*.product-info { padding-left: 30px; }*/
-    .product-title { font-size: 28px; font-weight: 600; margin-bottom: 15px;    white-space: normal;
-        word-wrap: break-word;
-        overflow: visible; }
-    .product-price { font-size: 24px; font-weight: 700; color: var(--main-color); margin-bottom: 15px; }
-    .regular-price del { color: #999; }
-    .product-rating { margin-bottom: 15px; }
-    .product-rating .stars i { color: #ffd700; margin-right: 5px; }
-    .btn-rate { background: none; color: var(--main-color); font-size: 14px; border: none; cursor: pointer; }
 
-    /* Add to Cart / Favorite Buttons */
-    .product-actions { display: flex; gap: 15px; margin-bottom: 25px; }
-    .addToCart,.removeFromCart, .addToFavorite,.removeFromFavorite { padding: 10px 20px; border-radius: 5px; font-size: 16px; color: white; cursor: pointer; }
-    .addToCart,.removeFromCart,.removeFromFavorite { background: #ff6b81; border: none; }
-    .addToCart,.removeFromCart,.removeFromFavorite:hover { background: var(--main-color); }
-    .addToFavorite,.removeFromFavorite { background: #6c757d; }
-    .addToFavorite,.removeFromFavorite:hover { background: #5a6268; }
-    .addToFavorite.active { background: #ff6b81; }
-    .removeFromFavorite.active { background: #ff6b81; }
+        .main-image-swiper .swiper-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
 
-    /* Product Description */
-    .product-description { margin-top: 25px; padding: 20px; background: #f9f9f9; border-radius: 10px; }
-    .product-description h5 { font-size: 20px; font-weight: 600; color: var(--text-color); margin-bottom: 15px; }
+        /* Thumbnail Carousel */
+        .thumbnail-swiper {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+        }
 
-    /* Reviews */
-    .product-reviews { margin: 25px; }
-    /*.review-form { margin-bottom: 20px; }*/
-    /*.review-item { padding: 15px; border: 1px solid #eee; border-radius: 5px; margin-bottom: 15px; }*/
+        .thumbnail-swiper .swiper-slide {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            opacity: 0.6;
+        }
 
+        .thumbnail-swiper .swiper-slide:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
 
-</style>
+        .thumbnail-swiper .swiper-slide-thumb-active {
+            border-color: var(--main-color, #007bff);
+            opacity: 1;
+        }
+
+        .thumbnail-swiper .swiper-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Navigation Arrows */
+        .swiper-button-next,
+        .swiper-button-prev {
+            color: var(--main-color, #007bff);
+            background: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .swiper-button-next:after,
+        .swiper-button-prev:after {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Pagination Dots */
+        .swiper-pagination {
+            position: absolute;
+            bottom: 15px !important;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .swiper-pagination-bullet {
+            width: 12px;
+            height: 12px;
+            background: rgba(255,255,255,0.5);
+            opacity: 1;
+            margin: 0 6px !important;
+            border: 2px solid white;
+            transition: all 0.3s ease;
+        }
+
+        .swiper-pagination-bullet-active {
+            background: var(--main-color, #007bff);
+            width: 30px;
+            border-radius: 6px;
+        }
+
+        /* Zoom on hover effect */
+        .main-image-swiper .swiper-slide img {
+            transition: transform 0.3s ease;
+        }
+
+        .main-image-swiper .swiper-slide:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-image-swiper {
+                height: 350px;
+            }
+
+            .thumbnail-swiper {
+                height: 80px;
+            }
+
+            .thumbnail-swiper .swiper-slide {
+                width: 80px;
+                height: 80px;
+            }
+
+            .swiper-button-next,
+            .swiper-button-prev {
+                width: 35px;
+                height: 35px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-image-swiper {
+                height: 300px;
+            }
+
+            .thumbnail-swiper {
+                height: 60px;
+            }
+
+            .thumbnail-swiper .swiper-slide {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        /* ===================================
+           EXISTING STYLES (Keep your styles)
+           =================================== */
+
+        .variant-box {
+            cursor: pointer;
+            width: fit-content;
+            transition: all 0.2s ease;
+            background-color:white;
+        }
+
+        .variant-box.selected {
+            border-color: var(--main-color);
+            background-color:var(--main-color);
+            font-weight: bold;
+        }
+
+        .review-form {
+            margin-top: 20px;
+        }
+
+        .review-form label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: start;
+            gap: 8px;
+            font-size: 1.5rem;
+        }
+
+        .star-rating input[type="radio"] {
+            display: none;
+        }
+
+        .star-rating label {
+            font-size: 1.5em;
+            color: #ccc;
+            cursor: pointer;
+            transition: color 0.2s ease-in-out;
+        }
+
+        .star-rating input[type="radio"]:checked ~ label i,
+        .star-rating label:hover i,
+        .star-rating label:hover ~ label i {
+            color: gold;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-weight: bold;
+        }
+
+        /* Breadcrumbs */
+        .breadcrumb-container {
+            background: #f9f9f9;
+            padding: 10px 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-color)
+        }
+
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
+            color: var(--main-color);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        /* Product Info */
+        .product-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow: visible;
+        }
+
+        .product-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--main-color);
+            margin-bottom: 15px;
+        }
+
+        .regular-price del {
+            color: #999;
+        }
+
+        .product-rating {
+            margin-bottom: 15px;
+        }
+
+        .product-rating .stars i {
+            color: #ffd700;
+            margin-right: 5px;
+        }
+
+        .btn-rate {
+            background: none;
+            color: var(--main-color);
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Add to Cart / Favorite Buttons */
+        .product-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .addToCart,.removeFromCart, .addToFavorite,.removeFromFavorite {
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .addToCart,.removeFromCart,.removeFromFavorite {
+            background: #ff6b81;
+            border: none;
+        }
+
+        .addToCart,.removeFromCart,.removeFromFavorite:hover {
+            background: var(--main-color);
+        }
+
+        .addToFavorite,.removeFromFavorite {
+            background: #6c757d;
+        }
+
+        .addToFavorite,.removeFromFavorite:hover {
+            background: #5a6268;
+        }
+
+        .addToFavorite.active {
+            background: #ff6b81;
+        }
+
+        .removeFromFavorite.active {
+            background: #ff6b81;
+        }
+
+        /* Product Description */
+        .product-description {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .product-description h5 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+
+        /* Reviews */
+        .product-reviews {
+            margin: 25px;
+        }
+    </style>
 @endsection
 
 @section('socialMeta')
-    <meta property="og:url"                content="{{Request::fullUrl()}}" />
-    <meta property="og:type"               content="article" />
-    <meta property="og:title"              content="{{$product->name}}" />
-    <meta property="og:description"        content="{{str_limit(strip_tags($product->description) ,  200)}}" />
-    <meta property="og:image"              content="{{url($product->image)}}" />
-    <meta property="fb:app_id" 			   content="17734562" />
+    <meta property="og:url" content="{{Request::fullUrl()}}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="{{$product->name}}" />
+    <meta property="og:description" content="{{str_limit(strip_tags($product->description), 200)}}" />
+    <meta property="og:image" content="{{url($product->image)}}" />
+    <meta property="fb:app_id" content="17734562" />
 
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@ASAL" />
     <meta name="twitter:creator" content="@ASAL" />
     <meta name="twitter:title" content="{{$product->name}}" />
-    <meta name="twitter:description" content="{{str_limit(strip_tags($product->description) ,  200)}}" />
+    <meta name="twitter:description" content="{{str_limit(strip_tags($product->description), 200)}}" />
     <meta name="twitter:image" content="{{url($product->image)}}" />
 @endsection
 
 @section('content')
-<div class="container product-detail-container ">
-    <!-- Breadcrumbs -->
-    <div class="breadcrumb-container">
-        <nav>
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('home') }}">{{__('cp.home')}}</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('category', [$product->category->id, Str::slug($product->category->name)]) }}">{{ $product->category->name }}</a></li>
-                <li class="breadcrumb-item active">{{ $product->name }}</li>
-            </ol>
-        </nav>
-    </div>
-
-    <div class="row">
-        <!-- Product Gallery -->
-        <div class="col-md-6">
-            <div class="product-gallery">
-                <div class="product-main-image">
-                    <img src="{{ $product->image }}" alt="{{ $product->name }}" id="mainImage">
-                </div>
-                <div class="product-thumbnails" id="thumbnailContainer">
-                    {{-- First thumbnail is the main product image --}}
-                    <div class="product-thumbnail active" data-image="{{ $product->image }}">
-                        <img src="{{ $product->image }}" alt="Main Thumbnail">
-                    </div>
-
-                    {{-- Then all additional images --}}
-                    @foreach ($product->images as $index => $image)
-                        <div class="product-thumbnail" data-image="{{ $image->image }}">
-                            <img src="{{ $image->image }}" alt="Thumbnail {{ $index + 1 }}">
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+    <div class="container product-detail-container">
+        <!-- Breadcrumbs -->
+        <div class="breadcrumb-container">
+            <nav>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('home') }}">{{__('cp.home')}}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('category', [$product->category->id, Str::slug($product->category->name)]) }}">{{ $product->category->name }}</a></li>
+                    <li class="breadcrumb-item active">{{ $product->name }}</li>
+                </ol>
+            </nav>
         </div>
 
-
-        <!-- Product Information -->
-        <div class="col-md-6">
-            <div class="product-info">
-                <h1 class="product-title">{{ $product->name }}</h1>
-
-                <!-- Pricing -->
-                <div class="product-price">
-    <span class="regular-price" id="regularPrice">
-        @if ($product->variants->first()->discount_price!=null &&$product->variants->first()->discount_price>0&&$product->variants->first()->discount_price<$product->variants->first()->price)
-            <del>{{ $product->variants->first()->price??0 }} KWD</del>
-        @endif
-    </span>
-                    <span id="finalPrice">
-        {{ $product->variants->first()->discount_price ?? $product->variants->first()->price??0 }} KWD
-    </span>
-                </div>
-
-                @if ($groupedVariants->count())
-                    @foreach ($groupedVariants as $variantTypeName => $variants)
-                        <div class="variant-type mb-4">
-                            <h5>{{ $variantTypeName }}</h5>
-                            <div class="variant-scroll-container d-flex overflow-auto gap-2">
-                                @foreach ($variants as $variant)
-
-                                    <div
-                                        class="variant-box border rounded p-2"
-                                        data-variant-id="{{ $variant->id }}"
-                                        data-price="{{ $variant->price }}"
-                                        data-quantity="{{ $variant->quantity }}"
-
-                                        data-discount-price="{{ $variant->discount_price }}"
-                                        onclick="selectVariant(this)"
-                                    >
-                                        {{ $variant->name }}
-                                    </div>
-                                @endforeach
+        <div class="row">
+            <!-- Product Gallery with Swiper Carousel -->
+            <div class="col-md-6">
+                <div class="product-gallery">
+                    <!-- Main Image Carousel -->
+                    <div class="swiper main-image-swiper">
+                        <div class="swiper-wrapper">
+                            <!-- Main product image -->
+                            <div class="swiper-slide">
+                                <img src="{{ $product->image }}" alt="{{ $product->name }}">
                             </div>
+
+                            <!-- Additional images -->
+                            @foreach ($product->images as $index => $image)
+                                <div class="swiper-slide">
+                                    <img src="{{ $image->image }}" alt="Product Image {{ $index + 1 }}">
+                                </div>
+                            @endforeach
                         </div>
-                    @endforeach
-                @endif
-                {{--                <!-- Product Variants -->--}}
-{{--                @if ($product->variants->count())--}}
-{{--                    <div class="product-variants">--}}
-{{--                        <label for="variant">Choose a variant:</label>--}}
-{{--                        <select id="variantSelect" class="form-control">--}}
-{{--                            @foreach ($product->variants as $index => $variant)--}}
-{{--                                <option value="{{ $variant->id }}" data-price="{{ $variant->price }}" data-discount-price="{{ $variant->discount_price }}" {{ $index === 0 ? 'selected' : '' }}>--}}
-{{--                                    {{ $variant->name }}--}}
-{{--                                </option>--}}
-{{--                            @endforeach--}}
-{{--                        </select>--}}
-{{--                    </div>--}}
-{{--                @endif--}}
-{{--                <!-- Ratings -->--}}
-                <div class="product-rating">
+
+                        <!-- Navigation Arrows -->
+                        <div class="swiper-button-next"></div>
+                        <div class="swiper-button-prev"></div>
+
+                        <!-- Pagination Dots -->
+                        <div class="swiper-pagination"></div>
+                    </div>
+
+                    <!-- Thumbnail Carousel -->
+                    <div class="swiper thumbnail-swiper">
+                        <div class="swiper-wrapper">
+                            <!-- Main product thumbnail -->
+                            <div class="swiper-slide">
+                                <img src="{{ $product->image }}" alt="Thumbnail">
+                            </div>
+
+                            <!-- Additional thumbnails -->
+                            @foreach ($product->images as $index => $image)
+                                <div class="swiper-slide">
+                                    <img src="{{ $image->image }}" alt="Thumbnail {{ $index + 1 }}">
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Information -->
+            <div class="col-md-6">
+                <div class="product-info">
+                    <h1 class="product-title">{{ $product->name }}</h1>
+
+                    <!-- Pricing -->
+                    <div class="product-price">
+                    <span class="regular-price" id="regularPrice">
+                        @if ($product->variants->first()->discount_price!=null &&$product->variants->first()->discount_price>0&&$product->variants->first()->discount_price<$product->variants->first()->price)
+                            <del>{{ $product->variants->first()->price??0 }} KWD</del>
+                        @endif
+                    </span>
+                        <span id="finalPrice">
+                        {{ $product->variants->first()->discount_price ?? $product->variants->first()->price??0 }} KWD
+                    </span>
+                    </div>
+
+                    @if ($groupedVariants->count())
+                        @foreach ($groupedVariants as $variantTypeName => $variants)
+                            <div class="variant-type mb-4">
+                                <h5>{{ $variantTypeName }}</h5>
+                                <div class="variant-scroll-container d-flex overflow-auto gap-2">
+                                    @foreach ($variants as $variant)
+                                        <div
+                                            class="variant-box border rounded p-2"
+                                            data-variant-id="{{ $variant->id }}"
+                                            data-price="{{ $variant->price }}"
+                                            data-quantity="{{ $variant->quantity }}"
+                                            data-discount-price="{{ $variant->discount_price }}"
+                                            onclick="selectVariant(this)"
+                                        >
+                                            {{ $variant->name }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
+
+                    <!-- Ratings -->
+                    <div class="product-rating">
                     <span class="stars">
                         @for ($i = 1; $i <= 5; $i++)
                             <i class="fa {{ $i <= $product->average_rating ? 'fa-star' : 'fa-star-o' }}"></i>
                         @endfor
                     </span>
-{{--                    <button class="btn-rate" data-toggle="modal" data-target="#rateProductModal">(Add Rating)</button>--}}
-                </div>
+                    </div>
 
-                <!-- Actions -->
-                <div class="product-actions">
-{{--                    @if( $product->is_cart)--}}
-{{--                        <div class="quantity-item">--}}
-{{--                            @if($cart->product->quantity > 0)--}}
-{{--                                <div class="quantity">--}}
-{{--                                    <div class="btn button-count dec jsQuantityDecrease" data-id="{{@$cart->product->id}}" minimum="1">--}}
-{{--                                        <i class="fa fa-minus" aria-hidden="true"></i>--}}
-{{--                                    </div>--}}
-{{--                                    <input type="text" name="count-quat1" class="count-quat" value="{{$cart->quantity}}" min="1" max="{{$cart->product->quantity}}">--}}
-{{--                                    <div class="btn button-count inc jsQuantityIncrease" max="{{$cart->product->quantity}}" data-id="{{@$cart->product->id}}">--}}
-{{--                                        <i class="fa fa-plus" aria-hidden="true"></i>--}}
-{{--                                    </div>--}}
-{{--                                </div>--}}
-{{--                            @else--}}
-{{--                                <div class="soldOut" style="display: none" id="soldOutId">--}}
-{{--                                    <h6>@lang('website.Sold Out')</h6>--}}
-{{--                                </div>--}}
-                    <button class="soldOut" id="soldOutId" >@lang('website.Sold Out')</button>
-
-                    {{--                            @endif--}}
-{{--                        </div>--}}
-{{--                        <button class="removeFromCart" data-id="{{$product->id}}"> Remove from Cart </button>--}}
-
-{{--                    @else--}}
+                    <!-- Actions -->
+                    <div class="product-actions">
+                        <button class="soldOut" id="soldOutId" style="display: none;">@lang('website.Sold Out')</button>
                         <button class="addToCart" data-id="{{ $product->id }}" data-variant-id="{{ $product->variants->first()->id??0 }}" id="addToCartButton">
                             {{__('website.addToCart')}}
                         </button>
 
-{{--                    @endif--}}
-
-                    @if($product->is_favorite)
+                        @if($product->is_favorite)
                             <button class="removeFromFavorite {{ $product->is_favorite ? 'active' : '' }}" data-id="{{$product->id}}">@lang('cp.RemovefromFavorites')</button>
                         @else
-                            <button class="addToFavorite  " data-id="{{$product->id}}">{{__('cp.AddtoFavorites')}}</button>
-
-
+                            <button class="addToFavorite" data-id="{{$product->id}}">{{__('cp.AddtoFavorites')}}</button>
                         @endif
+                    </div>
 
-{{--                    <button class="addToCart" data-id="{{$product->id}}">{{ $product->is_cart ? 'Remove from Cart' : 'Add to Cart' }}</button>--}}
-                </div>
-
-                <!-- Description -->
-                <div class="product-description">
-                    <h5>{{__('cp.ProductDescription')}}</h5>
-                    {!! $product->description !!}
+                    <!-- Description -->
+                    <div class="product-description">
+                        <h5>{{__('cp.ProductDescription')}}</h5>
+                        {!! $product->description !!}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Reviews -->
-    <div class="product-reviews row">
-        <h1>{{__('cp.CustomerReviews')}}</h1>
+        <!-- Reviews -->
+        <div class="product-reviews row">
+            <h1>{{__('cp.CustomerReviews')}}</h1>
 
-        <!-- Review Form (if user is logged in) -->
+            <!-- Review Form (if user is logged in) -->
+            @auth
+                <form action="{{ route('reviews.store') }}" method="POST" class="review-form col-md-6">
+                    @csrf
+                    <input type="hidden" name="product_id" value="{{ $product->id }}">
 
-        @auth
-            <form action="{{ route('reviews.store') }}" method="POST" class="review-form col-md-6">
-                @csrf
-                <input type="hidden" name="product_id" value="{{ $product->id }}">
-
-                <div >
-                    <label style="font-weight: bold; display: block; margin-bottom: 8px;">Rating:</label>
-
-                    <div class="star-rating ">
-                        <input type="radio" id="star5" name="rating" value="5" required /><label for="star5"><i class="fas fa-star"></i></label>
-                        <input type="radio" id="star4" name="rating" value="4" /><label for="star4"><i class="fas fa-star"></i></label>
-                        <input type="radio" id="star3" name="rating" value="3" /><label for="star3"><i class="fas fa-star"></i></label>
-                        <input type="radio" id="star2" name="rating" value="2" /><label for="star2"><i class="fas fa-star"></i></label>
-                        <input type="radio" id="star1" name="rating" value="1" /><label for="star1"><i class="fas fa-star"></i></label>
+                    <div>
+                        <label style="font-weight: bold; display: block; margin-bottom: 8px;">Rating:</label>
+                        <div class="star-rating">
+                            <input type="radio" id="star5" name="rating" value="5" required /><label for="star5"><i class="fas fa-star"></i></label>
+                            <input type="radio" id="star4" name="rating" value="4" /><label for="star4"><i class="fas fa-star"></i></label>
+                            <input type="radio" id="star3" name="rating" value="3" /><label for="star3"><i class="fas fa-star"></i></label>
+                            <input type="radio" id="star2" name="rating" value="2" /><label for="star2"><i class="fas fa-star"></i></label>
+                            <input type="radio" id="star1" name="rating" value="1" /><label for="star1"><i class="fas fa-star"></i></label>
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <label for="review">Review:</label>
-                    <textarea name="review" id="review" rows="4" class="form-control " required></textarea>
-                </div>
+                    <div>
+                        <label for="review">Review:</label>
+                        <textarea name="review" id="review" rows="4" class="form-control" required></textarea>
+                    </div>
 
-                <button type="submit" class="btn-site ">Submit Review</button>
-            </form>
-        @endauth
+                    <button type="submit" class="btn-site">Submit Review</button>
+                </form>
+            @endauth
 
-        <!-- Display Reviews -->
-        @foreach ($product->reviews as $review)
-            <div class="review-item">
-                <div class="reviewer-name">{{ $review->user->name }}</div>
-                <div class="review-stars">
-                    @for ($i = 1; $i <= 5; $i++)
-                        <i class="fa {{ $i <= $review->rating ? 'fa-star' : 'fa-star-o' }}"></i>
-                    @endfor
+            <!-- Display Reviews -->
+            @foreach ($product->reviews as $review)
+                <div class="review-item">
+                    <div class="reviewer-name">{{ $review->user->name }}</div>
+                    <div class="review-stars">
+                        @for ($i = 1; $i <= 5; $i++)
+                            <i class="fa {{ $i <= $review->rating ? 'fa-star' : 'fa-star-o' }}"></i>
+                        @endfor
+                    </div>
+                    <p>{{ $review->review }}</p>
                 </div>
-                <p>{{ $review->review }}</p>
-            </div>
-        @endforeach
+            @endforeach
+        </div>
     </div>
-</div>
 @endsection
 
-
-
 @section('script')
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const variantSelect = document.getElementById('variantSelect');
-            const regularPrice = document.getElementById('regularPrice');
-            const finalPrice = document.getElementById('finalPrice');
-            const addToCartBtn = document.getElementById('addToCartButton');
+        // Initialize Swiper Carousel
+        document.addEventListener('DOMContentLoaded', function() {
+            // Thumbnail Swiper
+            const thumbnailSwiper = new Swiper('.thumbnail-swiper', {
+                spaceBetween: 10,
+                slidesPerView: 4,
+                freeMode: true,
+                watchSlidesProgress: true,
+                breakpoints: {
+                    320: {
+                        slidesPerView: 3,
+                        spaceBetween: 8
+                    },
+                    480: {
+                        slidesPerView: 4,
+                        spaceBetween: 8
+                    },
+                    768: {
+                        slidesPerView: 5,
+                        spaceBetween: 10
+                    },
+                    1024: {
+                        slidesPerView: 6,
+                        spaceBetween: 10
+                    }
+                }
+            });
 
-            // if (variantSelect) {
-            //     variantSelect.addEventListener('change', function () {
-            //         const selectedOption = variantSelect.options[variantSelect.selectedIndex];
-            //         const price = selectedOption.getAttribute('data-price');
-            //         const discountPrice = selectedOption.getAttribute('data-discount-price');
-            //         const variantId = selectedOption.value;
-            //
-            //         // Update price display
-            //         if (discountPrice && discountPrice !== 'null') {
-            //             regularPrice.innerHTML = `<del>${price} KWD</del>`;
-            //             finalPrice.innerHTML = `${discountPrice} KWD`;
-            //         } else {
-            //             regularPrice.innerHTML = '';
-            //             finalPrice.innerHTML = `${price} KWD`;
-            //         }
-            //
-            //         // Update Add to Cart button's data-variant-id
-            //         if (addToCartBtn) {
-            //             addToCartBtn.setAttribute('data-variant-id', variantId);
-            //         }
-            //     });
-            // }
+            // Main Image Swiper
+            const mainSwiper = new Swiper('.main-image-swiper', {
+                spaceBetween: 10,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+                thumbs: {
+                    swiper: thumbnailSwiper,
+                },
+                autoplay: {
+                    delay: 3000,
+                    disableOnInteraction: false,
+                },
+                loop: true,
+                effect: 'fade',
+                fadeEffect: {
+                    crossFade: true
+                }
+            });
+
+            // Pause autoplay on hover
+            const gallery = document.querySelector('.product-gallery');
+            gallery.addEventListener('mouseenter', function() {
+                mainSwiper.autoplay.stop();
+            });
+
+            gallery.addEventListener('mouseleave', function() {
+                mainSwiper.autoplay.start();
+            });
         });
+
+        // Variant Selection Function
         function selectVariant(element) {
-            // 1. First deselect ALL variant boxes in the entire document
+            // Deselect all variants
             document.querySelectorAll('.variant-box.selected').forEach(selectedBox => {
                 selectedBox.classList.remove('selected', 'bg-primary', 'text-white');
             });
 
-            // 2. Now select the clicked variant
+            // Select clicked variant
             element.classList.add('selected', 'bg-primary', 'text-white');
 
-            // 3. Get price data from the selected variant
+            // Get price data
             const price = parseFloat(element.dataset.price) || 0;
             const discountPrice = parseFloat(element.dataset.discountPrice) || 0;
             const Quantity = parseFloat(element.dataset.quantity) || 0;
-            console.log(Quantity);
 
             const hasDiscount = discountPrice > 0 && discountPrice < price;
 
-            // 4. Update price display
+            // Update price display
             const regularPriceEl = document.getElementById('regularPrice');
             const finalPriceEl = document.getElementById('finalPrice');
 
@@ -496,37 +638,24 @@
                 finalPriceEl.textContent = `${price.toFixed(3)} KWD`;
             }
 
-
-
-            // 5. Update Add to Cart button
+            // Update Add to Cart button
             const addToCartBtn = document.getElementById('addToCartButton');
             const soldOutBtn = document.getElementById('soldOutId');
-            if(Quantity==0){
+
+            if(Quantity == 0) {
                 addToCartBtn.style.display = 'none';
                 soldOutBtn.style.display = 'block';
-
-
-
-                return;
-            }else {
+            } else {
                 addToCartBtn.style.display = 'block';
                 soldOutBtn.style.display = 'none';
-
-
             }
+
             if (addToCartBtn) {
                 addToCartBtn.dataset.variantId = element.dataset.variantId;
                 addToCartBtn.disabled = false;
             }
-
-            // Debug logs (can be removed in production)
-            console.log('Selected variant:', {
-                id: element.dataset.variantId,
-                name: element.textContent.trim(),
-                price: price,
-                discountPrice: discountPrice
-            });
         }
+
         // Automatically select the first variant on page load
         window.addEventListener('DOMContentLoaded', () => {
             const firstVariant = document.querySelector('.variant-box');
@@ -534,137 +663,5 @@
                 selectVariant(firstVariant);
             }
         });
-
-
     </script>
-
-
-    <script>
-        tinymce.init({
-            selector: 'textarea[id^="description_"]',
-            plugins: 'lists link image table code',
-            toolbar: 'undo redo | formatselect | bold italic underline | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
-            height: 300,
-            menubar: false,
-        });
-
-
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const mainImage = document.getElementById('mainImage');
-            const container = document.getElementById('thumbnailContainer');
-            let autoPlayInterval;
-            let currentIndex = 0;
-            let allThumbnails = [];
-
-            // Function to update thumbnails array
-            function updateThumbnailsArray() {
-                allThumbnails = Array.from(document.querySelectorAll('.product-thumbnail'));
-            }
-
-            // Function to add click event to thumbnails
-            function addThumbnailClickEvent(thumbnail) {
-                thumbnail.addEventListener('click', function() {
-                    // Stop auto-play when user clicks
-                    clearInterval(autoPlayInterval);
-
-                    const newImageSrc = this.getAttribute('data-image');
-                    mainImage.src = newImageSrc;
-
-                    // Remove active class from all thumbnails
-                    allThumbnails.forEach(t => t.classList.remove('active'));
-
-                    // Add active class to clicked thumbnail
-                    this.classList.add('active');
-
-                    // Update current index
-                    currentIndex = allThumbnails.indexOf(this);
-
-                    // Restart auto-play after 3 seconds
-                    setTimeout(startAutoPlay, 3000);
-                });
-            }
-
-            // Function to change to next image
-            function nextImage() {
-                // Get only the original thumbnails (not duplicates)
-                const originalThumbnails = Array.from(container.querySelectorAll('.product-thumbnail')).slice(0, allThumbnails.length);
-
-                currentIndex++;
-
-                // Reset to beginning when reaching the end
-                if (currentIndex >= originalThumbnails.length) {
-                    currentIndex = 0;
-                }
-
-                const currentThumbnail = originalThumbnails[currentIndex];
-                const newImageSrc = currentThumbnail.getAttribute('data-image');
-                mainImage.src = newImageSrc;
-
-                // Update active state on all thumbnails
-                document.querySelectorAll('.product-thumbnail').forEach(t => t.classList.remove('active'));
-                currentThumbnail.classList.add('active');
-
-                // Scroll thumbnail into view
-                currentThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
-
-            // Function to start auto-play
-            function startAutoPlay() {
-                clearInterval(autoPlayInterval);
-                autoPlayInterval = setInterval(nextImage, 1000); // Change every 1 second
-            }
-
-            // Initialize
-            updateThumbnailsArray();
-            allThumbnails.forEach(thumbnail => {
-                addThumbnailClickEvent(thumbnail);
-            });
-
-            // Start auto-play
-            startAutoPlay();
-
-            // Auto-scroll thumbnails with carousel loop behavior
-            let scrollInterval;
-            function startThumbnailScroll() {
-                scrollInterval = setInterval(() => {
-                    const maxScroll = container.scrollWidth - container.clientWidth;
-
-                    // Smooth scroll
-                    container.scrollLeft += 1;
-
-                    // When reaching the end, smoothly loop back to start
-                    if (container.scrollLeft >= maxScroll) {
-                        setTimeout(() => {
-                            container.scrollTo({ left: 0, behavior: 'smooth' });
-                        }, 500);
-                    }
-                }, 30); // Scroll speed
-            }
-
-            // Start thumbnail auto-scroll
-            startThumbnailScroll();
-
-            // Pause both auto-play and scroll when user hovers over gallery
-            const gallery = document.querySelector('.product-gallery');
-            gallery.addEventListener('mouseenter', function() {
-                clearInterval(autoPlayInterval);
-                clearInterval(scrollInterval);
-            });
-
-            gallery.addEventListener('mouseleave', function() {
-                startAutoPlay();
-                startThumbnailScroll();
-            });
-
-            // Pause scroll when user manually scrolls
-            container.addEventListener('wheel', function() {
-                clearInterval(scrollInterval);
-                setTimeout(startThumbnailScroll, 2000);
-            });
-        });
-    </script>
-
 @endsection
