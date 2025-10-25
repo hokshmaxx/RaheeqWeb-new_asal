@@ -3,7 +3,7 @@
 @endsection
 @section('css')
 
-  
+
 @section('content')
 <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
   <!--begin::Subheader-->
@@ -67,7 +67,7 @@
                                         <label class="control-label">{{__('cp.area')}}</label>
                                             <select id="multiple2" class="form-control"
                                                     name="area_id">
-                                        
+
                                                 <option value="">{{__('cp.all')}}</option>
                                                 @foreach($areas as $area)
                                                    <option value="{{$area->id}}" {{request('area_id') == $area->id?'selected':''}}>{{$area->name}}</option>
@@ -111,7 +111,7 @@
                                             <span></span>
                                         </label>
                                     </div>
-                                </th> 
+                                </th>
                                 <th class="wd-1p">
                                 #
                                 </th>
@@ -124,7 +124,7 @@
                           </tr>
                         </thead>
                     <tbody>
-                  
+
                     </tbody>
                   </table>
                       {{-- $items->appends($_GET)->links("pagination::bootstrap-4") --}}
@@ -137,7 +137,7 @@
   </div>
   <!--end::Entry-->
 </div>
-			
+
 
 <div class="modal fade create_modal" id="basicModal" tabindex="-1" role="dialog" aria-labelledby="staticBackdrop" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
@@ -149,16 +149,16 @@
               </button>
           </div>
           {{-- <div class="modal-body">
-              
+
               <div class="add-employee-form">
                   <form class="create_form" action="index.html">
                       @csrf
-                     
+
                       <div class="row">
                           <div class="col-md-6">
                               <div class="form-group">
                                   <label>{{__('cp.name')}}</label>
-                                  <input type="text" class="form-control form-control-solid" name="name" 
+                                  <input type="text" class="form-control form-control-solid" name="name"
                                       value="{{ old('name') }}" required />
                               </div>
                           </div>
@@ -170,24 +170,24 @@
                                           <option value="">{{__('cp.select')}}</option>
                                              <option value="1">{{__('cp.male')}}</option>
                                              <option value="2">{{__('cp.female')}}</option>
-                     
+
                                       </select>
                                   </div>
                              </div>
-                      
+
                       </div>
                       <div class="row">
                           <div class="col-md-6">
                               <div class="form-group">
                                   <label>{{__('cp.email')}}</label>
-                                  <input type="email" class="form-control form-control-solid" name="email" 
+                                  <input type="email" class="form-control form-control-solid" name="email"
                                       value="{{ old('email') }}" required />
                               </div>
                           </div>
                           <div class="col-md-6">
                               <div class="form-group">
                                   <label>{{__('cp.mobile')}}</label>
-                                  <input type="mobile" onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" class="form-control form-control-solid" name="mobile" 
+                                  <input type="mobile" onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')" class="form-control form-control-solid" name="mobile"
                                       value="{{ old('mobile') }}" required />
                               </div>
                           </div>
@@ -197,14 +197,14 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>{{__('cp.password')}}</label>
-                                <input type="password" class="form-control form-control-solid" name="password" 
+                                <input type="password" class="form-control form-control-solid" name="password"
                                     value="{{ old('password') }}" required />
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>{{__('cp.confirm_password')}}</label>
-                                <input type="password" class="form-control form-control-solid" name="confirm_password" 
+                                <input type="password" class="form-control form-control-solid" name="confirm_password"
                                     value="{{ old('confirm_password') }}" required />
                             </div>
                         </div>
@@ -212,7 +212,7 @@
 
                   </form>
               </div>
-          </div> 
+          </div>
           <div class="modal-footer">
               <button type="button" class="btn btn-light-primary font-weight-bold" data-dismiss="modal">{{__('cp.cancel')}}</button>
               <button type="button" class="btn btn-primary font-weight-bold create_send_form">{{__('cp.add')}}</button>
@@ -226,7 +226,7 @@
 @section('js')
 <script>
     $(document).ready(function() {
-        
+
         var dataTable = $('#kt_datatable1').DataTable({
             destroy: true,
             processing: true,
@@ -237,7 +237,7 @@
             dom: '<"dt-top-container"<B><"dt-center-in-div"l><f>r>t<"dt-filter-spacer"><ip>',
             buttons: table_btns,
             language: table_language ,
-            
+
             "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
             searching: true,
             "oLanguage": {
@@ -251,11 +251,11 @@
                 type: 'GET',
                 data : {@foreach (request()->all() as $key => $one) '{{$key}}' : '{{$one}}' , @endforeach }
             },
-        
+
             columns: [
 
                     { data: 'index', name: 'index', orderable: false},
-                    
+
                     { data: 'id', name: 'id'},
                     { data: 'name', name: 'name'},
                     { data: 'email', name: 'email'},
@@ -267,7 +267,7 @@
                 ],
         order: [[0, 'desc']]
         });
-    
+
     });
 
     function delete_adv(id, iss_id, e) {
@@ -307,4 +307,3 @@
 
 @endsection
 
- 
