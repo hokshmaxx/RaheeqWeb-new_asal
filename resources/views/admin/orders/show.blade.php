@@ -410,12 +410,40 @@
 												     </span>
 												</div>
 											</div>
+                                                <div class="d-flex align-items-center flex-lg-fill mr-5 my-1">
+    <span class="mr-4">
+        <i class="flaticon2-phone icon-2x text-muted font-weight-bold"></i>
+    </span>
+                                                    <div class="d-flex flex-column text-dark-75">
+                                                        <span class="font-weight-bolder font-size-sm">{{ __('cp.phone') }}</span>
+                                                        <span class="font-weight-bolder font-size-h5">
+            {{ @$order->address->mobile }}
+        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="d-flex align-items-center flex-lg-fill mr-5 my-1">
+    <span class="mr-4">
+        <i class="flaticon2-map icon-2x text-muted font-weight-bold"></i>
+    </span>
+                                                    <div class="d-flex flex-column text-dark-75">
+                                                        <span class="font-weight-bolder font-size-sm">{{ __('cp.locationonmap') }}</span>
+                                                        <span class="font-weight-bolder font-size-h5">
+            @if(!empty( @$order->address->latitude) && !empty( @$order->address->longitude))
+                                                                <a href="https://www.google.com/maps?q={{  @$order->address->latitude }},{{  @$order->address->longitude }}" target="_blank">
+                    {{  @$order->address->latitude }}, {{  @$order->address->longitude }}
+                </a>
+                                                            @else
+                                                                {{ __('cp.no_location_available') }}
+                                                            @endif
+        </span>
+                                                    </div>
+                                                </div>
 
 
 
 
-
-										</div>
+                                            </div>
 
                                         </span>
                                         <div class="d-flex flex-column text-dark-75">

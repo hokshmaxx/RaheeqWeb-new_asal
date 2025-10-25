@@ -8,6 +8,8 @@ return [
     'excellent' => 'ممتاز ',
     'rate' => 'التقييم ',
     'rates' => 'التقيمات ',
+    'locationonmap'=>'العنوان علي الخريطه',
+    'no_location_available'=>'لا يوجد موقع',
     'book' => 'شكرا لك ، تم الطلب بنجاح ',
     'store_data' => 'بيانات متجر',
     "giftChoose"=> "خيارات التغليف كهدية",

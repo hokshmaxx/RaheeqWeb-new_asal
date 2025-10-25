@@ -9,6 +9,8 @@ return [
     'store_data' => 'Store Data',
     'bad' => 'BAD ',
     'good' => 'GOOD ',
+    'locationonmap'=>'Location on map',
+    'no_location_available'=>'No location available',
     'excellent' => 'EXCELLENT ',
     'rates' => 'Rates ',
     "giftChoose"=> "Gift wrapping options",
