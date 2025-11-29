@@ -1,7 +1,12 @@
 <?php
 
+use App\Http\Controllers\API\OmnifulWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+
+
+Route::post('/webhooks/omniful', [OmnifulWebhookController::class, 'handle']);
 
 
 Route::group(['middleware' => 'auth:api'], function () {
