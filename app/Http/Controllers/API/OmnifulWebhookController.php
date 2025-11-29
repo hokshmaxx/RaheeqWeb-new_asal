@@ -11,117 +11,119 @@ class OmnifulWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        // ====== START DEBUG LOGGING ======
         Log::info('====== OMNIFUL WEBHOOK RECEIVED ======');
         Log::info('Request URL', ['url' => $request->fullUrl()]);
-        Log::info('Request Method', ['method' => $request->method()]);
-        Log::info('Request IP', ['ip' => $request->ip()]);
-
-        // Log ALL headers
         Log::info('All Headers', ['headers' => $request->headers->all()]);
 
-        // Get signature from different possible header names
-        $signatureHeaders = [
-            'X-Omniful-Signature' => $request->header('X-Omniful-Signature'),
-            'x-omniful-signature' => $request->header('x-omniful-signature'),
-            'Omniful-Signature' => $request->header('Omniful-Signature'),
-            'X-Signature' => $request->header('X-Signature'),
-        ];
-
-        Log::info('Signature Header Checks', $signatureHeaders);
-
-        $signature = $request->header('X-Omniful-Signature');
-
-        Log::info('Signature Value', [
-            'signature' => $signature,
-            'is_null' => is_null($signature),
-            'is_empty' => empty($signature),
-            'type' => gettype($signature),
-        ]);
-
-        // Get raw payload
-        $payload = $request->getContent();
-
-        Log::info('Raw Payload', [
-            'payload' => $payload,
-            'length' => strlen($payload),
-        ]);
-
-        // Check webhook secret
-        $webhookSecret = config('services.omniful.webhook_secret');
-
-        Log::info('Webhook Secret Config', [
-            'configured' => !empty($webhookSecret),
-            'secret_preview' => $webhookSecret ? substr($webhookSecret, 0, 8) . '...' : 'NOT SET',
-        ]);
-
-        // ====== END DEBUG LOGGING ======
-
         try {
-            $omnifulService = app(OmnifulService::class);
+            $payload = $request->getContent();
 
-            // Verify signature ONLY if webhook secret is configured AND signature is present
-            if ($webhookSecret && $signature) {
-                Log::info('Attempting signature verification');
+            // Omniful sends webhook secret in header "webhook-secret-key" NOT "X-Omniful-Signature"
+            $webhookSecretFromHeader = $request->header('webhook-secret-key');
+            $configuredSecret = config('services.omniful.webhook_secret');
 
-                if (!$omnifulService->verifyWebhookSignature($payload, $signature)) {
-                    Log::warning('Invalid Omniful webhook signature', [
-                        'received_signature' => $signature,
-                    ]);
-                    return response()->json(['error' => 'Invalid signature'], 401);
+            Log::info('Webhook Secret Verification', [
+                'secret_from_header' => $webhookSecretFromHeader ? substr($webhookSecretFromHeader, 0, 8) . '...' : 'NOT SENT',
+                'configured_secret' => $configuredSecret ? substr($configuredSecret, 0, 8) . '...' : 'NOT SET',
+            ]);
+
+            // Verify webhook secret if configured
+            if ($configuredSecret && $webhookSecretFromHeader) {
+                if ($webhookSecretFromHeader !== $configuredSecret) {
+                    Log::warning('❌ Invalid webhook secret');
+                    return response()->json(['error' => 'Invalid webhook secret'], 401);
                 }
-
-                Log::info('✅ Webhook signature verified successfully');
+                Log::info('✅ Webhook secret verified');
             } else {
-                Log::info('⚠️ Webhook signature verification skipped', [
-                    'reason' => !$webhookSecret ? 'No webhook secret configured' : 'No signature header present',
-                    'has_secret' => !empty($webhookSecret),
-                    'has_signature' => !empty($signature),
+                Log::info('⚠️ Webhook secret verification skipped', [
+                    'has_config' => !empty($configuredSecret),
+                    'has_header' => !empty($webhookSecretFromHeader),
                 ]);
             }
 
-            // Get event data
+            // Parse webhook data
             $data = $request->all();
 
             Log::info('Parsed Request Data', ['data' => $data]);
 
-            // Get event type from multiple sources
-            $eventType = $data['event_type'] ?? $data['event'] ?? $request->header('X-Omniful-Event');
+            // Omniful uses "event_name" in body OR "webhook-event" in header
+            $eventName = $data['event_name'] ?? $request->header('webhook-event');
 
-            Log::info('Event Type Detection', [
-                'from_data_event_type' => $data['event_type'] ?? null,
-                'from_data_event' => $data['event'] ?? null,
-                'from_header' => $request->header('X-Omniful-Event'),
-                'final_event_type' => $eventType,
+            Log::info('Event Detection', [
+                'event_name_from_body' => $data['event_name'] ?? null,
+                'event_from_header' => $request->header('webhook-event'),
+                'final_event_name' => $eventName,
             ]);
 
-            if (!$eventType) {
-                Log::error('❌ Missing event type in webhook', ['data' => $data]);
-                return response()->json(['error' => 'Missing event type'], 400);
+            if (!$eventName) {
+                Log::error('❌ Missing event name in webhook', ['data' => $data]);
+                return response()->json(['error' => 'Missing event name'], 400);
             }
 
-            Log::info('Processing webhook event', [
-                'event_type' => $eventType,
-                'data' => $data,
+            // Map Omniful event names to our internal event types
+            $eventTypeMap = [
+                'inventory.update.event' => 'inventory.updated',
+                'order.created.event' => 'order.created',
+                'order.updated.event' => 'order.updated',
+                'order.cancelled.event' => 'order.cancelled',
+                'order.shipped.event' => 'order.shipped',
+                'order.delivered.event' => 'order.delivered',
+            ];
+
+            $eventType = $eventTypeMap[$eventName] ?? $eventName;
+
+            Log::info('Event Mapping', [
+                'omniful_event' => $eventName,
+                'mapped_event' => $eventType,
             ]);
 
-            // Process webhook
-            $result = $omnifulService->handleWebhook($eventType, $data);
+            // Process the webhook
+            $omnifulService = app(OmnifulService::class);
 
-            if ($result) {
-                Log::info('✅ Webhook processed successfully', [
-                    'event_type' => $eventType,
-                    'result' => $result,
+            // For inventory events, extract the inventory data from the nested structure
+            if ($eventType === 'inventory.updated') {
+                $inventoryData = $data['data'] ?? [];
+
+                Log::info('Processing inventory update', [
+                    'items_count' => count($inventoryData),
+                    'items' => $inventoryData,
                 ]);
 
-                return response()->json(['status' => 'success'], 200);
+                // Process each inventory item
+                $results = [];
+                foreach ($inventoryData as $item) {
+                    $itemData = [
+                        'sku_code' => $item['sku_code'] ?? null,
+                        'quantity' => $item['quantity'] ?? $item['quantity_on_hand'] ?? null,
+                        'hub_code' => $item['hub_code'] ?? null,
+                        'action' => $data['action'] ?? null,
+                    ];
+
+                    $results[] = $omnifulService->handleWebhook($eventType, $itemData);
+                }
+
+                $allSuccess = !in_array(false, $results, true);
+
+                Log::info('Inventory update results', [
+                    'total_items' => count($results),
+                    'all_success' => $allSuccess,
+                ]);
+
+                if ($allSuccess) {
+                    Log::info('✅ Webhook processed successfully');
+                    return response()->json(['status' => 'success'], 200);
+                }
+            } else {
+                // For other events (order events), process normally
+                $result = $omnifulService->handleWebhook($eventType, $data);
+
+                if ($result) {
+                    Log::info('✅ Webhook processed successfully', ['event_type' => $eventType]);
+                    return response()->json(['status' => 'success'], 200);
+                }
             }
 
-            Log::warning('⚠️ Webhook processing failed', [
-                'event_type' => $eventType,
-                'result' => $result,
-            ]);
-
+            Log::warning('⚠️ Webhook processing failed');
             return response()->json(['status' => 'failed'], 422);
 
         } catch (\Exception $e) {
