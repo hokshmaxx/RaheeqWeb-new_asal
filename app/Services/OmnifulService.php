@@ -106,17 +106,14 @@ class OmnifulService
             $variant = $orderProduct->variant;
             $product = $orderProduct->product;
 
-            // Calculate item-level pricing
             $unitPrice = (float) $orderProduct->price;
             $quantity = (int) $orderProduct->quantity;
             $discount = $orderProduct->offer_price > 0 ? (float) ($orderProduct->price - $orderProduct->offer_price) : 0.0;
             $sellingPrice = $unitPrice - $discount;
             $subtotal = $sellingPrice * $quantity;
 
-            // Calculate tax (assuming tax is included in price)
-            $taxPercent = 10;
-            $tax = $subtotal * ($taxPercent / (100 + $taxPercent));
-            $total = $subtotal;
+            $taxPercent = 10; // ثابت أو حسب منتجك
+            $tax = $sellingPrice * ($taxPercent / 100);
 
             $items[] = [
                 'sku_code' => $variant->sku ?? $product->sku ?? 'SKU-' . $product->id,
@@ -129,19 +126,17 @@ class OmnifulService
                 'tax' => round($tax, 2),
                 'unit_price' => $sellingPrice,
                 'subtotal' => round($subtotal, 2),
-                'total' => round($total, 2),
+                'total' => round($subtotal, 2),
                 'discount' => round($discount * $quantity, 2),
                 'tax_inclusive' => true,
             ];
         }
 
-        // Get country-specific settings
         $countryCode = config('services.omniful.country_code', 'KW');
         $mobileCode = $this->getMobileCode($countryCode);
 
         return [
             'shipment_type' => 'omniful_generated',
-//            'order_id' => (string) $order->id,
             'order_alias' => '#' . $order->id,
             'hub_code' => config('services.omniful.hub_code', 'A1'),
             'order_items' => $items,
@@ -150,7 +145,6 @@ class OmnifulService
                 'address1' => $order->street ?? 'N/A',
                 'address2' => $order->address_name ?? '',
                 'city' => optional($order->area)->name ?? 'N/A',
-                'country' => config('services.omniful.country', 'Kuwait'),
                 'first_name' => $this->getFirstName($order->name),
                 'last_name' => $this->getLastName($order->name),
                 'phone' => $order->mobile ?? '',
@@ -166,7 +160,6 @@ class OmnifulService
                 'address1' => $order->street ?? 'N/A',
                 'address2' => $order->address_name ?? '',
                 'city' => optional($order->area)->name ?? 'N/A',
-                'country' => config('services.omniful.country', 'Kuwait'),
                 'first_name' => $this->getFirstName($order->name),
                 'last_name' => $this->getLastName($order->name),
                 'phone' => $order->mobile ?? '',
@@ -183,14 +176,14 @@ class OmnifulService
                 'subtotal' => (float) $order->sub_total,
                 'shipping_price' => (float) $order->delivery_cost,
                 'shipping_refund' => 0.0,
-                'tax' => (float) $order->vat_amount,
+                'tax' => round((float) $order->sub_total * ($taxPercent / 100), 2),
                 'discount' => (float) $order->discount,
                 'total' => (float) $order->total,
                 'total_paid' => $order->payment_status == 'paid' ? (float) $order->total : 0.0,
                 'total_due' => $order->payment_status != 'paid' ? (float) $order->total : 0.0,
                 'total_refunded' => 0.0,
                 'payment_mode' => $order->payment_method == 1 ? 'Cash' : 'Credit Card',
-                'tax_percent' => 10,
+                'tax_percent' => $taxPercent,
                 'shipping_tax' => 0.0,
                 'sub_total_tax_inclusive' => true,
                 'sub_total_discount_inclusive' => true,
@@ -213,12 +206,12 @@ class OmnifulService
             'labels' => [],
 
             'slot' => [
-                'delivery_date' => $order->delivery_date ? date('dmY', strtotime($order->delivery_date)) : date('dmY', strtotime('+2 days')),
-                'start_time' => 1000,
-                'end_time' => 1800,
+                'delivery_date' => $order->delivery_date ? date('Y-m-d', strtotime($order->delivery_date)) : date('Y-m-d', strtotime('+2 days')),
+                'start_time' => '10:00',
+                'end_time' => '18:00',
             ],
 
-            'payment_method' => $order->payment_method == 1 ? 'postpaid' : 'prepaid', // ✅ FIXED
+            'payment_method' => $order->payment_method == 1 ? 'postpaid' : 'prepaid',
             'is_cash_on_delivery' => $order->payment_method == 1,
             'require_shipping' => true,
             'note' => optional($order->deliveryNote)->delivery_note ?? '',
@@ -234,7 +227,7 @@ class OmnifulService
                 ],
                 [
                     'key' => 'status',
-                    'value' => (string) ($order->status ?? 'pending'), // FIXED: Cast to string
+                    'value' => (string) ($order->status ?? 'pending'),
                 ],
             ],
             'cancel_order_after_seconds' => 3600,
