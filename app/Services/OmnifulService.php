@@ -17,22 +17,42 @@ class OmnifulService
     }
 
     /**
-     * Create order in Omniful
+     * Get mobile code based on country code
      */
-
     protected function getMobileCode(string $countryCode): string
     {
         $mobileCodes = [
-            'KW' => '+965', // Kuwait ✓
-            'SA' => '+966', // Saudi Arabia
-            'AE' => '+971', // UAE
-            'BH' => '+973', // Bahrain
-            'OM' => '+968', // Oman
-            'QA' => '+974', // Qatar
+            'KW' => '+965',
+            'SA' => '+966',
+            'AE' => '+971',
+            'BH' => '+973',
+            'OM' => '+968',
+            'QA' => '+974',
         ];
 
         return $mobileCodes[$countryCode] ?? '+965';
     }
+
+    /**
+     * Format phone number with country code and hyphens
+     */
+    protected function formatPhoneNumber(string $phone, string $countryCode): string
+    {
+        // Remove all non-numeric characters
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+
+        // Get mobile code
+        $mobileCode = $this->getMobileCode($countryCode);
+
+        // Format: +XXX-XX-XXX-XXXX (basic format, adjust per country if needed)
+        if (strlen($cleanPhone) >= 8) {
+            // Simple hyphen insertion every 2-3 digits
+            return $mobileCode . '-' . chunk_split($cleanPhone, 2, '-');
+        }
+
+        return $mobileCode . '-' . $cleanPhone;
+    }
+
     public function createOrder(\App\Models\Order $order)
     {
         try {
@@ -93,50 +113,78 @@ class OmnifulService
         }
     }
 
-
     /**
      * Format order data for Omniful API
-     * FIXED: Uses 'variant' relationship instead of 'productVariant'
+     * FIXED: Matches Omniful's exact JSON structure
      */
     protected function formatOrder(\App\Models\Order $order): array
     {
         $items = [];
+        $totalItemTax = 0;
+        $totalDiscount = 0;
 
         foreach ($order->products as $orderProduct) {
             $variant = $orderProduct->variant;
             $product = $orderProduct->product;
 
-            $unitPrice = (float) $orderProduct->price;
+            // Prices
+            $displayPrice = (float) $orderProduct->price; // Original price
             $quantity = (int) $orderProduct->quantity;
-            $discount = $orderProduct->offer_price > 0 ? (float) ($orderProduct->price - $orderProduct->offer_price) : 0.0;
-            $sellingPrice = $unitPrice - $discount;
+            $discount = $orderProduct->offer_price > 0
+                ? (float) ($orderProduct->price - $orderProduct->offer_price)
+                : 0.0;
+            $sellingPrice = $displayPrice - $discount; // Price after discount
             $subtotal = $sellingPrice * $quantity;
 
-            $taxPercent = 10; // ثابت أو حسب منتجك
-            $tax = $sellingPrice * ($taxPercent / 100);
+            // Tax calculation (10% on selling price, tax inclusive)
+            $taxPercent = 10;
+            $taxAmount = $subtotal * ($taxPercent / (100 + $taxPercent));
+
+            // IMPORTANT: total = subtotal + tax (even though tax_inclusive is true)
+            // This matches Omniful's example: subtotal=699, tax=69.9, total=768.9
+            $itemTotal = $subtotal + $taxAmount;
+
+            $totalItemTax += $taxAmount;
+            $totalDiscount += ($discount * $quantity);
 
             $items[] = [
                 'sku_code' => $variant->sku ?? $product->sku ?? 'SKU-' . $product->id,
                 'name' => $product->name ?? 'Product',
-                'display_price' => $unitPrice,
-                'selling_price' => $sellingPrice,
+                'display_price' => round($displayPrice, 2),
+                'selling_price' => round($sellingPrice, 2),
                 'is_substituted' => false,
                 'quantity' => $quantity,
                 'tax_percent' => $taxPercent,
-                'tax' => round($tax, 2),
-                'unit_price' => $sellingPrice,
+                'tax' => round($taxAmount, 2),
+                'unit_price' => round($sellingPrice, 2),
                 'subtotal' => round($subtotal, 2),
-                'total' => round($subtotal, 2),
+                'total' => round($itemTotal, 2), // ✅ FIX: subtotal + tax
                 'discount' => round($discount * $quantity, 2),
                 'tax_inclusive' => true,
             ];
         }
 
+        // Get country-specific settings
         $countryCode = config('services.omniful.country_code', 'KW');
         $mobileCode = $this->getMobileCode($countryCode);
 
+        // Format delivery date
+        $deliveryDate = $order->delivery_date
+            ? \Carbon\Carbon::parse($order->delivery_date)->format('dmY')
+            : \Carbon\Carbon::now()->addDays(2)->format('dmY');
+
+        // Calculate invoice totals
+        $subtotal = (float) $order->sub_total;
+        $shippingPrice = (float) $order->delivery_cost;
+        $tax = round($totalItemTax, 2);
+        $discount = round($totalDiscount, 2);
+
+        // IMPORTANT: Total calculation must be accurate
+        $invoiceTotal = $subtotal - $discount + $tax + $shippingPrice;
+
         return [
             'shipment_type' => 'omniful_generated',
+            'order_id' => 'order_' . $order->id, // ✅ FIX: REQUIRED field (was missing!)
             'order_alias' => '#' . $order->id,
             'hub_code' => config('services.omniful.hub_code', 'A1'),
             'order_items' => $items,
@@ -145,45 +193,47 @@ class OmnifulService
                 'address1' => $order->street ?? 'N/A',
                 'address2' => $order->address_name ?? '',
                 'city' => optional($order->area)->name ?? 'N/A',
+                'country' => config('services.omniful.country', 'Kuwait'),
                 'first_name' => $this->getFirstName($order->name),
                 'last_name' => $this->getLastName($order->name),
-                'phone' => $order->mobile ?? '',
+                'phone' => $this->formatPhoneNumber($order->mobile ?? '', $countryCode), // ✅ FIX: Formatted phone
                 'state' => optional($order->governorate)->name ?? optional($order->area)->name ?? 'N/A',
                 'zip' => $order->block ?: '00000',
                 'state_code' => $this->getStateCode($order),
                 'country_code' => $countryCode,
-                'latitude' => $order->latitude,
-                'longitude' => $order->longitude,
+                'latitude' => $order->latitude ? (float) $order->latitude : null,
+                'longitude' => $order->longitude ? (float) $order->longitude : null,
             ],
 
             'shipping_address' => [
                 'address1' => $order->street ?? 'N/A',
                 'address2' => $order->address_name ?? '',
                 'city' => optional($order->area)->name ?? 'N/A',
+                'country' => config('services.omniful.country', 'Kuwait'),
                 'first_name' => $this->getFirstName($order->name),
                 'last_name' => $this->getLastName($order->name),
-                'phone' => $order->mobile ?? '',
+                'phone' => $this->formatPhoneNumber($order->mobile ?? '', $countryCode), // ✅ FIX: Formatted phone
                 'state' => optional($order->governorate)->name ?? optional($order->area)->name ?? 'N/A',
                 'zip' => $order->block ?: '00000',
                 'state_code' => $this->getStateCode($order),
                 'country_code' => $countryCode,
-                'latitude' => $order->latitude,
-                'longitude' => $order->longitude,
+                'latitude' => $order->latitude ? (float) $order->latitude : null,
+                'longitude' => $order->longitude ? (float) $order->longitude : null,
             ],
 
             'invoice' => [
                 'currency' => config('services.omniful.currency', 'KWD'),
-                'subtotal' => (float) $order->sub_total,
-                'shipping_price' => (float) $order->delivery_cost,
+                'subtotal' => round($subtotal, 2),
+                'shipping_price' => round($shippingPrice, 2),
                 'shipping_refund' => 0.0,
-                'tax' => round((float) $order->sub_total * ($taxPercent / 100), 2),
-                'discount' => (float) $order->discount,
-                'total' => (float) $order->total,
-                'total_paid' => $order->payment_status == 'paid' ? (float) $order->total : 0.0,
-                'total_due' => $order->payment_status != 'paid' ? (float) $order->total : 0.0,
+                'tax' => $tax, // ✅ FIX: Sum of item taxes
+                'discount' => $discount, // ✅ FIX: Sum of item discounts
+                'total' => round($invoiceTotal, 2), // ✅ FIX: subtotal - discount + tax + shipping
+                'total_paid' => $order->payment_status == 'paid' ? round($invoiceTotal, 2) : 0.0,
+                'total_due' => $order->payment_status != 'paid' ? round($invoiceTotal, 2) : 0.0,
                 'total_refunded' => 0.0,
                 'payment_mode' => $order->payment_method == 1 ? 'Cash' : 'Credit Card',
-                'tax_percent' => $taxPercent,
+                'tax_percent' => 10,
                 'shipping_tax' => 0.0,
                 'sub_total_tax_inclusive' => true,
                 'sub_total_discount_inclusive' => true,
@@ -196,7 +246,7 @@ class OmnifulService
                 'id' => (string) $order->user_id,
                 'first_name' => $this->getFirstName($order->name),
                 'last_name' => $this->getLastName($order->name),
-                'mobile' => preg_replace('/[^0-9]/', '', $order->mobile ?? ''),
+                'mobile' => preg_replace('/[^0-9]/', '', $order->mobile ?? ''), // ✅ FIX: Just digits, no code
                 'mobile_code' => $mobileCode,
                 'email' => $order->email ?? 'noemail@example.com',
                 'avatar' => optional($order->user)->avatar ?? '',
@@ -206,9 +256,9 @@ class OmnifulService
             'labels' => [],
 
             'slot' => [
-                'delivery_date' => $order->delivery_date ? date('Y-m-d', strtotime($order->delivery_date)) : date('Y-m-d', strtotime('+2 days')),
-                'start_time' => '10:00',
-                'end_time' => '18:00',
+                'delivery_date' => $deliveryDate,
+                'start_time' => 1000,
+                'end_time' => 1800,
             ],
 
             'payment_method' => $order->payment_method == 1 ? 'postpaid' : 'prepaid',
@@ -227,7 +277,7 @@ class OmnifulService
                 ],
                 [
                     'key' => 'status',
-                    'value' => (string) ($order->status ?? 'pending'),
+                    'value' => (string) $order->status,
                 ],
             ],
             'cancel_order_after_seconds' => 3600,
@@ -235,15 +285,10 @@ class OmnifulService
     }
 
     /**
-     * Get mobile code based on country code
-     */
-
-    /**
      * Get state code
      */
     protected function getStateCode(\App\Models\Order $order): string
     {
-        // You can map governorate/area to state codes here
         $governorate = optional($order->governorate)->name;
 
         $stateCodes = [
@@ -277,6 +322,7 @@ class OmnifulService
         $parts = explode(' ', trim($fullName));
         return count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : '';
     }
+
     /**
      * Verify webhook signature
      */
@@ -288,9 +334,6 @@ class OmnifulService
         return hash_equals($expectedSignature, $signature);
     }
 
-    /**
-     * Handle webhook events
-     */
     /**
      * Handle webhook events
      */
@@ -313,7 +356,6 @@ class OmnifulService
                 case 'order.cancelled':
                     return $this->cancelOrder($data);
 
-                // ========== INVENTORY EVENTS ==========
                 case 'inventory.updated':
                 case 'stock.updated':
                     return $this->updateInventory($data);
@@ -350,16 +392,13 @@ class OmnifulService
             return false;
         }
 
-        // Find product variant by SKU
         $variant = \App\Models\ProductVariant::where('sku', $sku)->first();
 
         if ($variant) {
             $oldQuantity = $variant->quantity;
             $variant->update(['quantity' => $quantity]);
 
-            // Also update main product quantity
             if ($variant->product) {
-                // Calculate total quantity from all variants
                 $totalQuantity = \App\Models\ProductVariant::where('product_id', $variant->product_id)
                     ->sum('quantity');
                 $variant->product->update(['quantity' => $totalQuantity]);
@@ -375,7 +414,6 @@ class OmnifulService
             return true;
         }
 
-        // If not found in variants, try to find in products
         $product = \App\Models\Product::where('sku', $sku)->first();
 
         if ($product) {
@@ -397,13 +435,13 @@ class OmnifulService
     }
 
     /**
-     * Handle inventory adjustment (additions/subtractions)
+     * Handle inventory adjustment
      */
     protected function handleInventoryAdjustment(array $data): bool
     {
         $sku = $data['sku'] ?? $data['sku_code'] ?? null;
         $adjustment = $data['adjustment'] ?? null;
-        $adjustmentType = $data['adjustment_type'] ?? 'set'; // 'set', 'add', 'subtract'
+        $adjustmentType = $data['adjustment_type'] ?? 'set';
         $reason = $data['reason'] ?? 'omniful_adjustment';
 
         if (!$sku || $adjustment === null) {
@@ -411,7 +449,6 @@ class OmnifulService
             return false;
         }
 
-        // Find product variant by SKU
         $variant = \App\Models\ProductVariant::where('sku', $sku)->first();
 
         if ($variant) {
@@ -433,7 +470,6 @@ class OmnifulService
 
             $variant->refresh();
 
-            // Update main product quantity
             if ($variant->product) {
                 $totalQuantity = \App\Models\ProductVariant::where('product_id', $variant->product_id)
                     ->sum('quantity');
@@ -453,7 +489,6 @@ class OmnifulService
             return true;
         }
 
-        // Try products table
         $product = \App\Models\Product::where('sku', $sku)->first();
 
         if ($product) {
@@ -493,7 +528,7 @@ class OmnifulService
     }
 
     /**
-     * Sync product stock (bulk update)
+     * Sync product stock
      */
     protected function syncProductStock(array $data): bool
     {
@@ -516,13 +551,11 @@ class OmnifulService
                 continue;
             }
 
-            // Update variant or product
             $variant = \App\Models\ProductVariant::where('sku', $sku)->first();
 
             if ($variant) {
                 $variant->update(['quantity' => $quantity]);
 
-                // Update main product
                 if ($variant->product) {
                     $totalQuantity = \App\Models\ProductVariant::where('product_id', $variant->product_id)
                         ->sum('quantity');
@@ -552,6 +585,7 @@ class OmnifulService
 
         return $failCount === 0;
     }
+
     protected function updateOrderStatus(array $data): bool
     {
         $omnifulOrderId = $data['order_id'] ?? null;
@@ -628,7 +662,6 @@ class OmnifulService
                 'omniful_status' => 'cancelled',
             ]);
 
-            // Restore inventory - using 'variant' relationship
             foreach ($order->products as $orderProduct) {
                 if ($orderProduct->variant) {
                     $orderProduct->variant->increment('quantity', $orderProduct->quantity);
