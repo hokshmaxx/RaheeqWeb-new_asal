@@ -2597,7 +2597,7 @@ class CartController extends Controller
                 try {
                     // Refresh order and load relationships
                     $order->refresh();
-                    $order->load(['products.product', 'products.variant', 'area', 'governorate']);
+                    $order->load(['products.product', 'products.variant', 'area']);
 
                     $omnifulService = app(\App\Services\OmnifulService::class);
                     $response = $omnifulService->createOrder($order);
