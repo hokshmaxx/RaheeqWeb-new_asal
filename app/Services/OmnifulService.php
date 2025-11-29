@@ -184,7 +184,7 @@ class OmnifulService
 
         return [
             'shipment_type' => 'omniful_generated',
-            'order_id' => 'order_' . $order->id, // ✅ FIX: REQUIRED field (was missing!)
+//            'order_id' => 'order_' . $order->id, // ✅ FIX: REQUIRED field (was missing!)
             'order_alias' => '#' . $order->id,
             'hub_code' => config('services.omniful.hub_code', 'A1'),
             'order_items' => $items,
