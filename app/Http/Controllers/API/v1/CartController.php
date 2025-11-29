@@ -1923,6 +1923,394 @@ class CartController extends Controller
 //        }
 //    }
 
+//    public function checkOut(Request $request)
+//    {
+//        $settings = Setting::first();
+//
+//        // Check if purchasing is suspended
+//        if ($settings->is_alowed_buying == 1) {
+//            $message = __('api.Purchase_is_suspended');
+//            return response()->json(['status' => false, 'message' => $message, 'code' => 600]);
+//        }
+//
+//        // Validation based on authentication status
+//        if (Auth::guard('api')->check()) {
+//            $user_id = auth('api')->user()->id;
+//            $validator = Validator::make($request->all(), [
+//                'address_id' => 'required|exists:user_addresses,id',
+//                'payment_method' => 'required|in:1,2', // 1 = Cash, 2 = Online
+//            ]);
+//
+//            if ($validator->fails()) {
+//                return response()->json([
+//                    'status' => false,
+//                    'code' => 400,
+//                    'message' => implode("\n", $validator->messages()->all())
+//                ]);
+//            }
+//        } else {
+//            $validator = Validator::make($request->all(), [
+//                'area_id' => 'required|exists:areas,id',
+//                'name' => 'required|string|max:255',
+//                'email' => 'required|email|unique:users,email',
+//                'mobile' => 'required|string|max:20',
+//                'street' => 'required|string|max:255',
+//                'address_name' => 'required|string|max:255',
+//                'block' => 'nullable|string|max:100',
+//                'house_number' => 'nullable|string|max:100',
+//                'avenue' => 'nullable|string|max:255',
+//                'address_type' => 'nullable|string|max:50',
+//                'fcm_token' => 'required|string',
+//                'payment_method' => 'required|in:1,2', // 1 = Cash, 2 = Online
+//            ]);
+//
+//            if ($validator->fails()) {
+//                return response()->json([
+//                    'status' => false,
+//                    'code' => 400,
+//                    'message' => implode("\n", $validator->messages()->all())
+//                ]);
+//            }
+//        }
+//
+//        // Get cart items with relationships
+//        if (Auth::guard('api')->check()) {
+//            $carts = Cart::where('user_id', $user_id)
+//                ->with(['product', 'variant', 'giftPackaging'])
+//                ->get();
+//        } else {
+//            $carts = Cart::where('fcm_token', $request->fcm_token)
+//                ->with(['product', 'variant', 'giftPackaging'])
+//                ->get();
+//        }
+//
+//        // Check if cart is empty
+//        if ($carts->isEmpty()) {
+//            $message = __('api.cartEmpty');
+//            return response()->json(['status' => false, 'code' => 600, 'message' => $message]);
+//        }
+//
+//        // Validate stock availability before processing
+//        foreach ($carts as $cart) {
+//            if ($cart->variant) {
+//                // Check variant stock
+//                if ($cart->variant->quantity < $cart->quantity) {
+//                    return response()->json([
+//                        'status' => false,
+//                        'code' => 400,
+//                        'message' => "Insufficient stock for variant. Available: {$cart->variant->quantity}, Requested: {$cart->quantity}"
+//                    ]);
+//                }
+//            } else {
+//                // Check product stock
+//                if ($cart->product->quantity < $cart->quantity) {
+//                    return response()->json([
+//                        'status' => false,
+//                        'code' => 400,
+//                        'message' => "Insufficient stock for product. Available: {$cart->product->quantity}, Requested: {$cart->quantity}"
+//                    ]);
+//                }
+//            }
+//        }
+//
+//        // Initialize calculation variables
+//        $count_products = $carts->count();
+//        $total_cart = 0;
+//        $vat = $settings->tax_amount;
+//        $vat_amount = 0;
+//        $discount = 0;
+//        $delivery_charge = 0;
+//
+//        // Calculate cart total with variants and gift packaging
+//        foreach ($carts as $cart) {
+//            $basePrice = 0;
+//
+//            // Calculate base price considering variants and discounts
+//            if ($cart->variant) {
+//                $basePrice = ($cart->variant->discount_price > 0 && $cart->variant->discount_price < $cart->variant->price)
+//                    ? $cart->variant->discount_price
+//                    : $cart->variant->price;
+//            } else {
+//                $basePrice = ($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString())
+//                    ? $cart->product->discount_price
+//                    : $cart->product->price;
+//            }
+//
+//            // Add gift packaging cost if selected
+//            $packagingPrice = $cart->giftPackaging ? $cart->giftPackaging->price : 0;
+//
+//            $total_cart += ($basePrice + $packagingPrice) * $cart->quantity;
+//        }
+//
+//        // Calculate delivery charges
+//        if ($request->has('address_id') && is_numeric($request->address_id)) {
+//            $address = UserAddress::find($request->address_id);
+//
+//            if (!$address) {
+//                $message = __('api.address_not_found');
+//                return response()->json(['status' => false, 'code' => 400, 'message' => $message]);
+//            }
+//
+//            $area_cost = Area::query()->findOrFail($address->area_id);
+//            $delivery_charge = $area_cost->delivery_charges ?? 0;
+//        }
+//        elseif ($request->has('area_id') && $request->area_id != '') {
+//            $area_cost = Area::query()->findOrFail($request->area_id);
+//            $delivery_charge = $area_cost->delivery_charges ?? 0;
+//        }
+//
+//        // Apply promo code if provided
+//        if ($request->has('code') && !empty($request->code)) {
+//            $promo = Coupon::where('code', $request->code)
+//                ->whereDate('end_date', '>=', now()->toDateString())
+//                ->whereDate('start_date', '<=', now()->toDateString())
+//                ->where('status', 'active')
+//                ->first();
+//
+//            if ($promo && $promo->percent > 0) {
+//                $discount = ($total_cart * $promo->percent) / 100;
+//                $total_cart = round($total_cart - $discount, 3);
+//            }
+//        }
+//
+//        // Calculate VAT
+//        $vat_amount = $total_cart * $vat / 100;
+//
+//        // Calculate final total
+//        $final_total = $total_cart + $vat_amount + $delivery_charge;
+//
+//        // Create guest user if not authenticated
+//        $newUser = null;
+//        if (!Auth::guard('api')->check()) {
+//            try {
+//                $newUser = new User();
+//                $newUser->password = bcrypt($request->get('password', 'defaultpassword123'));
+//                $newUser->email = $request->email;
+//                $newUser->name = $request->name;
+//                $newUser->mobile = $request->mobile;
+//                $newUser->type_mobile = $request->type_mobile ?? 'android';
+//                $newUser->save();
+//
+//                // Create address for guest user
+//                $address = UserAddress::create([
+//                    'address_name' => $request->address_name,
+//                    'area_id' => $request->area_id,
+//                    'street' => $request->street,
+//                    'block' => $request->block ?? '',
+//                    'house_building' => $request->house_number ?? '',
+//                    'avenue' => $request->avenue ?? '',
+//                    'address_type' => $request->address_type ?? 'home',
+//                    'latitude' => $request->latitude ?? null,
+//                    'longitude' => $request->longitude ?? null,
+//                    'user_id' => $newUser->id,
+//                ]);
+//
+//                $user_id = $newUser->id;
+//            } catch (\Exception $e) {
+//                return response()->json([
+//                    'status' => false,
+//                    'code' => 500,
+//                    'message' => 'Failed to create user account'
+//                ]);
+//            }
+//        } else {
+//            $address = UserAddress::findOrFail($request->address_id);
+//        }
+//
+//        // Start database transaction
+//        DB::beginTransaction();
+//
+//        try {
+//            // Create order
+//            $order = new Order();
+//            $order->total = $final_total;
+//            $order->sub_total = $total_cart;
+//            $order->count_items = $count_products;
+//            $order->vat_percent = $vat;
+//            $order->vat_amount = $vat_amount;
+//            $order->delivery_cost = $delivery_charge;
+//            $order->discount = $discount;
+//            $order->discount_code = isset($promo) ? $promo->code : '';
+//            $order->user_id = $user_id ?? auth('api')->user()->id;
+//            $order->payment_method = $request->payment_method; // 1 = Cash, 2 = Online
+//            $order->payment_status = $request->payment_method == 1 ? 'pending' : 'pending_payment';
+//
+//            // Address information
+//            $order->address_id = $address->id;
+//            $order->fcm_token = $request->fcm_token ?? null;
+//            $order->name = $newUser ? $newUser->name : auth('api')->user()->name;
+//            $order->email = $newUser ? $newUser->email : auth('api')->user()->email;
+//            $order->mobile = $newUser ? $newUser->mobile : auth('api')->user()->mobile;
+//            $order->area_id = $address->area_id;
+//            $order->address_type = $address->address_type ?? '';
+//            $order->street = $address->street ?? '';
+//            $order->address_name = $address->address_name ?? '';
+//            $order->block = $address->block ?? '';
+//            $order->house_number = $address->house_building ?? '';
+//
+//            // Handle delivery notes
+//            if ($request->has('delivery_note') && !empty($request->delivery_note)) {
+//                $note = Deleverynote::create([
+//                    'delivery_note' => $request->delivery_note
+//                ]);
+//                $order->delivery_note_id = $note->id;
+//            } elseif ($request->has('selected_delivery_note_id') && is_numeric($request->selected_delivery_note_id)) {
+//                $order->delivery_note_id = $request->selected_delivery_note_id;
+//            }
+//
+//            $order->save();
+//
+//            // Create order products and update quantities
+//            if ($order) {
+//                foreach ($carts as $cart) {
+//                    // Calculate individual product price
+//                    $price = 0;
+//                    if ($cart->variant) {
+//                        $price = ($cart->variant->discount_price > 0 && $cart->variant->discount_price < $cart->variant->price)
+//                            ? $cart->variant->discount_price
+//                            : $cart->variant->price;
+//                    } else {
+//                        $price = ($cart->product->discount_price > 0 && $cart->product->offer_end_date >= now()->toDateString())
+//                            ? $cart->product->discount_price
+//                            : $cart->product->price;
+//                    }
+//
+//                    $productOrder = new OrderProduct();
+//                    $productOrder->order_id = $order->id;
+//                    $productOrder->product_id = $cart->product_id;
+//                    $productOrder->product_variant_id = $cart->variant ? $cart->variant->id : null;
+//                    $productOrder->quantity = $cart->quantity;
+//                    $productOrder->gift_packaging_id = $cart->gift_packaging_id ?? null;
+//
+//                    // Set offer price only if there's actually a discount
+//                    $originalPrice = $cart->variant ? $cart->variant->price : $cart->product->price;
+//                    $productOrder->offer_price = ($price < $originalPrice) ? $price : 0;
+//                    $productOrder->price = $originalPrice;
+//                    $productOrder->save();
+//
+//                    // Update variant or product quantity
+//                    if ($cart->variant) {
+//                        // Update variant quantity
+//                        $cart->variant->decrement('quantity', $cart->quantity);
+//
+//                        // Optionally update the main product quantity as well
+//                        $cart->product->decrement('quantity', $cart->quantity);
+//                    } else {
+//                        // Update product quantity only
+//                        $cart->product->decrement('quantity', $cart->quantity);
+//                    }
+//
+//                    // Send notification to vendor
+//                    $this->notifyVendor($cart->product_id, $order);
+//                }
+//
+//                // Clear cart after successful order
+//                if (Auth::guard('api')->check()) {
+//                    Cart::where('user_id', $user_id)->delete();
+//                } else {
+//                    Cart::where('fcm_token', $request->fcm_token)->delete();
+//                }
+//
+//                // Handle payment method
+//                if ($request->payment_method == 1) {
+//                    // Cash payment - order is complete, commit transaction
+//                    DB::commit();
+//
+//                    $message = __('api.order_placed_successfully');
+//
+//                    // Handle FCM token for new users
+//                    $user = null;
+//                    if ($newUser) {
+//                        if ($request->has('fcm_token')) {
+//                            Token::updateOrCreate([
+//                                'device_type' => $request->get('type_mobile', 'android'),
+//                                'fcm_token' => $request->get('fcm_token'),
+//                                'lang' => app()->getLocale()
+//                            ], [
+//                                'user_id' => $newUser->id
+//                            ]);
+//                        }
+//
+//                        $user = User::findOrFail($newUser->id);
+//                        $user['access_token'] = $newUser->createToken('mobile')->accessToken;
+//                    }
+//
+//                    return response()->json([
+//                        'status' => true,
+//                        'code' => 200,
+//                        'message' => $message,
+//                        'payment_type' => 'cash',
+//                        'data' => $order,
+//                        'user' => $user
+//                    ]);
+//                } else {
+//                    // Online payment - create Tap payment
+//                    $paymentData = $this->createMobileTapPayment($order, $request);
+//                    if ($paymentData && isset($paymentData['payment_url'])) {
+//                        // Commit transaction for successful payment URL generation
+//                        DB::commit();
+//
+//                        // Handle FCM token for new users
+//                        $user = null;
+//                        if ($newUser) {
+//                            if ($request->has('fcm_token')) {
+//                                Token::updateOrCreate([
+//                                    'device_type' => $request->get('type_mobile', 'android'),
+//                                    'fcm_token' => $request->get('fcm_token'),
+//                                    'lang' => app()->getLocale()
+//                                ], [
+//                                    'user_id' => $newUser->id
+//                                ]);
+//                            }
+//
+//                            $user = User::findOrFail($newUser->id);
+//                            $user['access_token'] = $newUser->createToken('mobile')->accessToken;
+//                        }
+//
+//                        return response()->json([
+//                            'status' => true,
+//                            'code' => 200,
+//                            'message' => 'Payment URL generated successfully',
+//                            'payment_type' => 'online',
+//                            'payment_url' => $paymentData['payment_url'],
+//                            'tap_payment_id' => $paymentData['tap_payment_id'],
+//                            'data' => $order,
+//                            'user' => $user
+//                        ]);
+//                    } else {
+//                        // Payment creation failed, rollback transaction
+//                        DB::rollBack();
+//
+//                        return response()->json([
+//                            'status' => false,
+//                            'code' => 500,
+//                            'message' => 'Payment gateway error. Please try again.'
+//                        ]);
+//                    }
+//                }
+//            } else {
+//                DB::rollBack();
+//                $message = __('api.order_creation_failed');
+//                return response()->json(['status' => false, 'code' => 500, 'message' => $message]);
+//            }
+//        } catch (\Exception $e) {
+//            // Rollback transaction on any error
+//            DB::rollBack();
+//
+//            \Log::error('Checkout Error: ' . $e->getMessage(), [
+//                'user_id' => $user_id ?? null,
+//                'request_data' => $request->all(),
+//                'stack_trace' => $e->getTraceAsString()
+//            ]);
+//
+//            return response()->json([
+//                'status' => false,
+//                'code' => 500,
+//                'message' => 'An error occurred while processing your order'
+//            ]);
+//        }
+//    }
+
     public function checkOut(Request $request)
     {
         $settings = Setting::first();
@@ -2204,6 +2592,43 @@ class CartController extends Controller
                     $this->notifyVendor($cart->product_id, $order);
                 }
 
+                // ========== SEND ORDER TO OMNIFUL ==========
+                // This happens AFTER all order products are created
+                try {
+                    // Refresh order and load relationships
+                    $order->refresh();
+                    $order->load(['products.product', 'products.variant', 'area', 'governorate']);
+
+                    $omnifulService = app(\App\Services\OmnifulService::class);
+                    $response = $omnifulService->createOrder($order);
+
+                    if ($response['success']) {
+                        $order->update([
+                            'omniful_order_id' => $response['data']['order_id'] ?? null,
+                            'omniful_status' => $response['data']['status'] ?? 'pending',
+                        ]);
+
+                        \Log::info('Order sent to Omniful successfully', [
+                            'order_id' => $order->id,
+                            'omniful_order_id' => $response['data']['order_id'] ?? null,
+                        ]);
+                    } else {
+                        // Log error but don't fail the checkout
+                        \Log::error('Omniful sync failed', [
+                            'order_id' => $order->id,
+                            'error' => $response['error'],
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    // Log exception but don't break checkout
+                    \Log::error('Omniful sync exception', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                }
+                // ========== END OMNIFUL INTEGRATION ==========
+
                 // Clear cart after successful order
                 if (Auth::guard('api')->check()) {
                     Cart::where('user_id', $user_id)->delete();
@@ -2310,6 +2735,7 @@ class CartController extends Controller
             ]);
         }
     }
+
     /**
      * Create Tap payment for mobile app
      *

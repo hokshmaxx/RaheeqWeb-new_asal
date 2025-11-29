@@ -37,4 +37,15 @@ return [
         'mode' => env('TAP_MODE', 'test'), // test or live
     ],
 
+    'omniful' => [
+        'base_url' => env('OMNIFUL_BASE_URL', 'https://prodapi.omniful.com'),
+        'access_token' => env('OMNIFUL_ACCESS_TOKEN'),
+        'webhook_secret' => env('OMNIFUL_WEBHOOK_SECRET'),
+        'hub_code' => env('OMNIFUL_HUB_CODE', 'A1'),
+        'country' => env('OMNIFUL_COUNTRY', 'Saudi Arabia'),
+        'country_code' => env('OMNIFUL_COUNTRY_CODE', 'KW'),
+        'currency' => env('OMNIFUL_CURRENCY', 'SAR'),
+    ],
+
+
 ];

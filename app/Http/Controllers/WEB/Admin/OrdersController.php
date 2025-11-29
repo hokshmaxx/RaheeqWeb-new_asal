@@ -117,7 +117,17 @@ class OrdersController extends Controller
             ->editColumn('status',function($row){
                 $btn =view('admin.orders.order_status_lable')->with(['row'=>$row])->render();
                 return $btn;
-             })->editColumn('created_at',function($row){
+             })
+                ->editColumn('payment_method',function($row){
+                                   if($row->payment_method == 1) { return __('cp.cache');}
+                                   return  __('cp.online') ;
+             })
+                ->editColumn('payment_status',function($row){
+
+                                   return  __('cp.'.$row->payment_status) ;
+             })->
+
+                editColumn('created_at',function($row){
                 return $row->created_at->format('d-m-y H:i:s') ;
              })->editColumn('type',function($row){
                   if($row->type == 1) { return __('cp.material');} elseif($row->type == 2) {return  __('cp.tailor') ;} elseif($row->type == 3) {return __('cp.take_mesurment') ;} elseif($row->type == 4) {return __('cp.ask_forsale');}

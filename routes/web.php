@@ -15,6 +15,8 @@
 
 
 use App\Http\Controllers\WEB\Site\HomeController;
+use App\Http\Controllers\Api\OmnifulWebhookController;
+
 
 Route::group([
     'prefix' => LaravelLocalization::setLocale(),
@@ -28,6 +30,7 @@ Route::group([
     // Route::get('/successPayment', function () { return view('website.success');})->name('successPayment');
     // Route::get('/payment', function () { return view('website.payment');})->name('payment');
 
+    Route::post('/webhooks/omniful', [OmnifulWebhookController::class, 'handle']);
 
         Route::group(['middleware' => ['auth']], function () {
         Route::get('myProfile', 'WEB\Site\UsersController@myProfile')->name('myProfile');

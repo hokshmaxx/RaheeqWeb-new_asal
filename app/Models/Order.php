@@ -12,7 +12,9 @@ class Order extends Model
     use SoftDeletes ;
     protected $table = 'orders';
     protected $hidden = ['updated_at', 'deleted_at','created_at'];
-    protected $fillable =['user_id','total','vat_percent','vat_amount','app_percent','address_id','app_total','discount','delivery_cost','discount_code','sub_total ','count_items','fcm_token ','name','email ','area_id ','address_type','block','street','avenue','house_number','mobile','landmark','address_name','availabile_date','payment_method','payment_json','payment_status','status','ordered_date','delivery_note_id'];
+    protected $fillable =['user_id','total','vat_percent','vat_amount','app_percent','address_id','app_total','discount','delivery_cost','discount_code','sub_total ','count_items','fcm_token ','name','email ','area_id ','address_type','block','street','avenue','house_number','mobile','landmark','address_name','availabile_date','payment_method','payment_json','payment_status','status','ordered_date','delivery_note_id', 'omniful_order_id',
+        'omniful_status',
+        'tracking_number'];
 
     protected $guarded = [];
     protected $appends = ['status_name'];

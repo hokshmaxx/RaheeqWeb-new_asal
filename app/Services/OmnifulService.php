@@ -1,0 +1,655 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class OmnifulService
+{
+    protected string $baseUrl;
+    protected string $accessToken;
+
+    public function __construct()
+    {
+        $this->baseUrl = rtrim(config('services.omniful.base_url'), '/');
+        $this->accessToken = config('services.omniful.access_token');
+    }
+
+    /**
+     * Create order in Omniful
+     */
+
+    protected function getMobileCode(string $countryCode): string
+    {
+        $mobileCodes = [
+            'KW' => '+965', // Kuwait ✓
+            'SA' => '+966', // Saudi Arabia
+            'AE' => '+971', // UAE
+            'BH' => '+973', // Bahrain
+            'OM' => '+968', // Oman
+            'QA' => '+974', // Qatar
+        ];
+
+        return $mobileCodes[$countryCode] ?? '+965';
+    }
+    public function createOrder(\App\Models\Order $order)
+    {
+        try {
+            $orderData = $this->formatOrder($order);
+
+            $url = $this->baseUrl . '/sales-channel/public/v1/orders';
+
+            Log::info('Sending order to Omniful', [
+                'order_id' => $order->id,
+                'url' => $url,
+                'data' => $orderData,
+            ]);
+
+            $response = Http::timeout(30)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $this->accessToken,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])
+                ->post($url, $orderData);
+
+            Log::info('Omniful API Response', [
+                'order_id' => $order->id,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json(),
+                ];
+            }
+
+            Log::error('Omniful order creation failed', [
+                'order_id' => $order->id,
+                'status' => $response->status(),
+                'response' => $response->body(),
+                'sent_data' => $orderData,
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $response->json()['message'] ?? $response->body() ?? 'Failed to create order',
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Omniful API exception', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+
+    /**
+     * Format order data for Omniful API
+     * FIXED: Uses 'variant' relationship instead of 'productVariant'
+     */
+    protected function formatOrder(\App\Models\Order $order): array
+    {
+        $items = [];
+
+        foreach ($order->products as $orderProduct) {
+            $variant = $orderProduct->variant;
+            $product = $orderProduct->product;
+
+            // Calculate item-level pricing
+            $unitPrice = (float) $orderProduct->price;
+            $quantity = (int) $orderProduct->quantity;
+            $discount = $orderProduct->offer_price > 0 ? (float) ($orderProduct->price - $orderProduct->offer_price) : 0.0;
+            $sellingPrice = $unitPrice - $discount;
+            $subtotal = $sellingPrice * $quantity;
+
+            // Calculate tax (assuming tax is included in price)
+            $taxPercent = 10;
+            $tax = $subtotal * ($taxPercent / (100 + $taxPercent));
+            $total = $subtotal;
+
+            $items[] = [
+                'sku_code' => $variant->sku ?? $product->sku ?? 'SKU-' . $product->id,
+                'name' => $product->name ?? 'Product',
+                'display_price' => $unitPrice,
+                'selling_price' => $sellingPrice,
+                'is_substituted' => false,
+                'quantity' => $quantity,
+                'tax_percent' => $taxPercent,
+                'tax' => round($tax, 2),
+                'unit_price' => $sellingPrice,
+                'subtotal' => round($subtotal, 2),
+                'total' => round($total, 2),
+                'discount' => round($discount * $quantity, 2),
+                'tax_inclusive' => true,
+            ];
+        }
+
+        // Get country-specific settings
+        $countryCode = config('services.omniful.country_code', 'KW');
+        $mobileCode = $this->getMobileCode($countryCode);
+
+        return [
+            'shipment_type' => 'omniful_generated',
+//            'order_id' => (string) $order->id,
+            'order_alias' => '#' . $order->id,
+            'hub_code' => config('services.omniful.hub_code', 'A1'),
+            'order_items' => $items,
+
+            'billing_address' => [
+                'address1' => $order->street ?? 'N/A',
+                'address2' => $order->address_name ?? '',
+                'city' => optional($order->area)->name ?? 'N/A',
+                'country' => config('services.omniful.country', 'Kuwait'),
+                'first_name' => $this->getFirstName($order->name),
+                'last_name' => $this->getLastName($order->name),
+                'phone' => $order->mobile ?? '',
+                'state' => optional($order->governorate)->name ?? optional($order->area)->name ?? 'N/A',
+                'zip' => $order->block ?: '00000',
+                'state_code' => $this->getStateCode($order),
+                'country_code' => $countryCode,
+                'latitude' => $order->latitude,
+                'longitude' => $order->longitude,
+            ],
+
+            'shipping_address' => [
+                'address1' => $order->street ?? 'N/A',
+                'address2' => $order->address_name ?? '',
+                'city' => optional($order->area)->name ?? 'N/A',
+                'country' => config('services.omniful.country', 'Kuwait'),
+                'first_name' => $this->getFirstName($order->name),
+                'last_name' => $this->getLastName($order->name),
+                'phone' => $order->mobile ?? '',
+                'state' => optional($order->governorate)->name ?? optional($order->area)->name ?? 'N/A',
+                'zip' => $order->block ?: '00000',
+                'state_code' => $this->getStateCode($order),
+                'country_code' => $countryCode,
+                'latitude' => $order->latitude,
+                'longitude' => $order->longitude,
+            ],
+
+            'invoice' => [
+                'currency' => config('services.omniful.currency', 'KWD'),
+                'subtotal' => (float) $order->sub_total,
+                'shipping_price' => (float) $order->delivery_cost,
+                'shipping_refund' => 0.0,
+                'tax' => (float) $order->vat_amount,
+                'discount' => (float) $order->discount,
+                'total' => (float) $order->total,
+                'total_paid' => $order->payment_status == 'paid' ? (float) $order->total : 0.0,
+                'total_due' => $order->payment_status != 'paid' ? (float) $order->total : 0.0,
+                'total_refunded' => 0.0,
+                'payment_mode' => $order->payment_method == 1 ? 'Cash' : 'Credit Card',
+                'tax_percent' => 10,
+                'shipping_tax' => 0.0,
+                'sub_total_tax_inclusive' => true,
+                'sub_total_discount_inclusive' => true,
+                'shipping_tax_inclusive' => false,
+                'shipping_discount_inclusive' => false,
+                'attachments' => [],
+            ],
+
+            'customer' => [
+                'id' => (string) $order->user_id,
+                'first_name' => $this->getFirstName($order->name),
+                'last_name' => $this->getLastName($order->name),
+                'mobile' => preg_replace('/[^0-9]/', '', $order->mobile ?? ''),
+                'mobile_code' => $mobileCode,
+                'email' => $order->email ?? 'noemail@example.com',
+                'avatar' => optional($order->user)->avatar ?? '',
+                'gender' => optional($order->user)->gender ?? 'male',
+            ],
+
+            'labels' => [],
+
+            'slot' => [
+                'delivery_date' => $order->delivery_date ? date('dmY', strtotime($order->delivery_date)) : date('dmY', strtotime('+2 days')),
+                'start_time' => 1000,
+                'end_time' => 1800,
+            ],
+
+            'payment_method' => $order->payment_method == 1 ? 'postpaid' : 'prepaid', // ✅ FIXED
+            'is_cash_on_delivery' => $order->payment_method == 1,
+            'require_shipping' => true,
+            'note' => optional($order->deliveryNote)->delivery_note ?? '',
+            'type' => 'b2c',
+            'external_fields' => [
+                [
+                    'key' => 'order_id',
+                    'value' => (string) $order->id,
+                ],
+                [
+                    'key' => 'customer_name',
+                    'value' => $order->name ?? 'Customer',
+                ],
+                [
+                    'key' => 'status',
+                    'value' => (string) ($order->status ?? 'pending'), // FIXED: Cast to string
+                ],
+            ],
+            'cancel_order_after_seconds' => 3600,
+        ];
+    }
+
+    /**
+     * Get mobile code based on country code
+     */
+
+    /**
+     * Get state code
+     */
+    protected function getStateCode(\App\Models\Order $order): string
+    {
+        // You can map governorate/area to state codes here
+        $governorate = optional($order->governorate)->name;
+
+        $stateCodes = [
+            'Hawally' => 'HAW',
+            'Capital' => 'CAP',
+            'Ahmadi' => 'AHM',
+            'Farwaniya' => 'FAR',
+            'Jahra' => 'JAH',
+            'Mubarak Al-Kabeer' => 'MUB',
+        ];
+
+        return $stateCodes[$governorate] ?? 'N/A';
+    }
+
+    /**
+     * Get first name from full name
+     */
+    protected function getFirstName(?string $fullName): string
+    {
+        if (!$fullName) return 'Customer';
+        $parts = explode(' ', trim($fullName));
+        return $parts[0];
+    }
+
+    /**
+     * Get last name from full name
+     */
+    protected function getLastName(?string $fullName): string
+    {
+        if (!$fullName) return '';
+        $parts = explode(' ', trim($fullName));
+        return count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : '';
+    }
+    /**
+     * Verify webhook signature
+     */
+    public function verifyWebhookSignature(string $payload, string $signature): bool
+    {
+        $secret = config('services.omniful.webhook_secret');
+        $expectedSignature = hash_hmac('sha256', $payload, $secret);
+
+        return hash_equals($expectedSignature, $signature);
+    }
+
+    /**
+     * Handle webhook events
+     */
+    /**
+     * Handle webhook events
+     */
+    public function handleWebhook(string $eventType, array $data): bool
+    {
+        Log::info('Omniful webhook received', [
+            'event_type' => $eventType,
+            'data' => $data,
+        ]);
+
+        try {
+            switch ($eventType) {
+                case 'order.updated':
+                case 'order.shipped':
+                    return $this->updateOrderStatus($data);
+
+                case 'order.delivered':
+                    return $this->markOrderDelivered($data);
+
+                case 'order.cancelled':
+                    return $this->cancelOrder($data);
+
+                // ========== INVENTORY EVENTS ==========
+                case 'inventory.updated':
+                case 'stock.updated':
+                    return $this->updateInventory($data);
+
+                case 'inventory.adjustment':
+                    return $this->handleInventoryAdjustment($data);
+
+                case 'product.stock_sync':
+                    return $this->syncProductStock($data);
+
+                default:
+                    Log::info('Unhandled webhook event', ['event_type' => $eventType]);
+                    return true;
+            }
+        } catch (\Exception $e) {
+            Log::error('Webhook processing failed', [
+                'event_type' => $eventType,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Update inventory from Omniful webhook
+     */
+    protected function updateInventory(array $data): bool
+    {
+        $sku = $data['sku'] ?? $data['sku_code'] ?? null;
+        $quantity = $data['quantity'] ?? $data['available_quantity'] ?? null;
+
+        if (!$sku || $quantity === null) {
+            Log::warning('Invalid inventory update data', ['data' => $data]);
+            return false;
+        }
+
+        // Find product variant by SKU
+        $variant = \App\Models\ProductVariant::where('sku', $sku)->first();
+
+        if ($variant) {
+            $oldQuantity = $variant->quantity;
+            $variant->update(['quantity' => $quantity]);
+
+            // Also update main product quantity
+            if ($variant->product) {
+                // Calculate total quantity from all variants
+                $totalQuantity = \App\Models\ProductVariant::where('product_id', $variant->product_id)
+                    ->sum('quantity');
+                $variant->product->update(['quantity' => $totalQuantity]);
+            }
+
+            Log::info('Variant inventory updated from Omniful', [
+                'sku' => $sku,
+                'variant_id' => $variant->id,
+                'old_quantity' => $oldQuantity,
+                'new_quantity' => $quantity,
+            ]);
+
+            return true;
+        }
+
+        // If not found in variants, try to find in products
+        $product = \App\Models\Product::where('sku', $sku)->first();
+
+        if ($product) {
+            $oldQuantity = $product->quantity;
+            $product->update(['quantity' => $quantity]);
+
+            Log::info('Product inventory updated from Omniful', [
+                'sku' => $sku,
+                'product_id' => $product->id,
+                'old_quantity' => $oldQuantity,
+                'new_quantity' => $quantity,
+            ]);
+
+            return true;
+        }
+
+        Log::warning('Product/Variant not found for SKU', ['sku' => $sku]);
+        return false;
+    }
+
+    /**
+     * Handle inventory adjustment (additions/subtractions)
+     */
+    protected function handleInventoryAdjustment(array $data): bool
+    {
+        $sku = $data['sku'] ?? $data['sku_code'] ?? null;
+        $adjustment = $data['adjustment'] ?? null;
+        $adjustmentType = $data['adjustment_type'] ?? 'set'; // 'set', 'add', 'subtract'
+        $reason = $data['reason'] ?? 'omniful_adjustment';
+
+        if (!$sku || $adjustment === null) {
+            Log::warning('Invalid inventory adjustment data', ['data' => $data]);
+            return false;
+        }
+
+        // Find product variant by SKU
+        $variant = \App\Models\ProductVariant::where('sku', $sku)->first();
+
+        if ($variant) {
+            $oldQuantity = $variant->quantity;
+
+            switch ($adjustmentType) {
+                case 'set':
+                    $variant->update(['quantity' => $adjustment]);
+                    break;
+                case 'add':
+                case 'increment':
+                    $variant->increment('quantity', $adjustment);
+                    break;
+                case 'subtract':
+                case 'decrement':
+                    $variant->decrement('quantity', abs($adjustment));
+                    break;
+            }
+
+            $variant->refresh();
+
+            // Update main product quantity
+            if ($variant->product) {
+                $totalQuantity = \App\Models\ProductVariant::where('product_id', $variant->product_id)
+                    ->sum('quantity');
+                $variant->product->update(['quantity' => $totalQuantity]);
+            }
+
+            Log::info('Variant inventory adjusted from Omniful', [
+                'sku' => $sku,
+                'variant_id' => $variant->id,
+                'old_quantity' => $oldQuantity,
+                'new_quantity' => $variant->quantity,
+                'adjustment' => $adjustment,
+                'type' => $adjustmentType,
+                'reason' => $reason,
+            ]);
+
+            return true;
+        }
+
+        // Try products table
+        $product = \App\Models\Product::where('sku', $sku)->first();
+
+        if ($product) {
+            $oldQuantity = $product->quantity;
+
+            switch ($adjustmentType) {
+                case 'set':
+                    $product->update(['quantity' => $adjustment]);
+                    break;
+                case 'add':
+                case 'increment':
+                    $product->increment('quantity', $adjustment);
+                    break;
+                case 'subtract':
+                case 'decrement':
+                    $product->decrement('quantity', abs($adjustment));
+                    break;
+            }
+
+            $product->refresh();
+
+            Log::info('Product inventory adjusted from Omniful', [
+                'sku' => $sku,
+                'product_id' => $product->id,
+                'old_quantity' => $oldQuantity,
+                'new_quantity' => $product->quantity,
+                'adjustment' => $adjustment,
+                'type' => $adjustmentType,
+                'reason' => $reason,
+            ]);
+
+            return true;
+        }
+
+        Log::warning('Product/Variant not found for SKU', ['sku' => $sku]);
+        return false;
+    }
+
+    /**
+     * Sync product stock (bulk update)
+     */
+    protected function syncProductStock(array $data): bool
+    {
+        $products = $data['products'] ?? $data['items'] ?? [];
+
+        if (empty($products)) {
+            Log::warning('No products in stock sync data');
+            return false;
+        }
+
+        $successCount = 0;
+        $failCount = 0;
+
+        foreach ($products as $item) {
+            $sku = $item['sku'] ?? $item['sku_code'] ?? null;
+            $quantity = $item['quantity'] ?? $item['available_quantity'] ?? null;
+
+            if (!$sku || $quantity === null) {
+                $failCount++;
+                continue;
+            }
+
+            // Update variant or product
+            $variant = \App\Models\ProductVariant::where('sku', $sku)->first();
+
+            if ($variant) {
+                $variant->update(['quantity' => $quantity]);
+
+                // Update main product
+                if ($variant->product) {
+                    $totalQuantity = \App\Models\ProductVariant::where('product_id', $variant->product_id)
+                        ->sum('quantity');
+                    $variant->product->update(['quantity' => $totalQuantity]);
+                }
+
+                $successCount++;
+                continue;
+            }
+
+            $product = \App\Models\Product::where('sku', $sku)->first();
+
+            if ($product) {
+                $product->update(['quantity' => $quantity]);
+                $successCount++;
+                continue;
+            }
+
+            $failCount++;
+        }
+
+        Log::info('Bulk stock sync completed', [
+            'total' => count($products),
+            'success' => $successCount,
+            'failed' => $failCount,
+        ]);
+
+        return $failCount === 0;
+    }
+    protected function updateOrderStatus(array $data): bool
+    {
+        $omnifulOrderId = $data['order_id'] ?? null;
+        $status = $data['status'] ?? null;
+        $trackingNumber = $data['tracking_number'] ?? null;
+
+        if (!$omnifulOrderId) {
+            return false;
+        }
+
+        $order = \App\Models\Order::where('omniful_order_id', $omnifulOrderId)->first();
+
+        if ($order) {
+            $updateData = ['omniful_status' => $status];
+
+            if ($trackingNumber) {
+                $updateData['tracking_number'] = $trackingNumber;
+            }
+
+            if ($status === 'shipped') {
+                $updateData['status'] = 'shipped';
+            }
+
+            $order->update($updateData);
+
+            Log::info('Order status updated', [
+                'order_id' => $order->id,
+                'status' => $status,
+            ]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function markOrderDelivered(array $data): bool
+    {
+        $omnifulOrderId = $data['order_id'] ?? null;
+
+        if (!$omnifulOrderId) {
+            return false;
+        }
+
+        $order = \App\Models\Order::where('omniful_order_id', $omnifulOrderId)->first();
+
+        if ($order) {
+            $order->update([
+                'status' => 'delivered',
+                'omniful_status' => 'delivered',
+            ]);
+
+            Log::info('Order marked as delivered', ['order_id' => $order->id]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function cancelOrder(array $data): bool
+    {
+        $omnifulOrderId = $data['order_id'] ?? null;
+
+        if (!$omnifulOrderId) {
+            return false;
+        }
+
+        $order = \App\Models\Order::where('omniful_order_id', $omnifulOrderId)->first();
+
+        if ($order) {
+            $order->update([
+                'status' => 'cancelled',
+                'omniful_status' => 'cancelled',
+            ]);
+
+            // Restore inventory - using 'variant' relationship
+            foreach ($order->products as $orderProduct) {
+                if ($orderProduct->variant) {
+                    $orderProduct->variant->increment('quantity', $orderProduct->quantity);
+                }
+                if ($orderProduct->product) {
+                    $orderProduct->product->increment('quantity', $orderProduct->quantity);
+                }
+            }
+
+            Log::info('Order cancelled and inventory restored', ['order_id' => $order->id]);
+
+            return true;
+        }
+
+        return false;
+    }
+}

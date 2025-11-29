@@ -119,6 +119,8 @@
                                 <th class="wd-25p"> {{ucwords(__('cp.email'))}}</th>
                                 <th class="wd-25p"> {{ucwords(__('cp.total'))}}</th>
                                 <th class="wd-10p"> {{ucwords(__('cp.status'))}}</th>
+                              <th class="wd-10p"> {{ucwords(__('cp.paymentMethod'))}}</th>
+                              <th class="wd-10p"> {{ucwords(__('cp.payment_status'))}}</th>
                                 <th class="wd-10p"> {{ucwords(__('cp.created'))}}</th>
                                 <th class="wd-15p notExport"> {{ucwords(__('cp.action'))}}</th>
                           </tr>
@@ -262,6 +264,8 @@
                     // { data: 'age.name', name: 'age.name' , orderable: false, searchable: false},
                     { data: 'total', name: 'total' },
                     { data: 'status', name: 'status' },
+                { data: 'payment_method', name: 'payment_method' },
+                { data: 'payment_status', name: 'payment_status' },
                     { data: 'created_at', name: 'created_at'},
                     { data: 'action', name: 'action', orderable: false},
                 ],
