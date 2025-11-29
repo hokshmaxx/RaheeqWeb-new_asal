@@ -15,7 +15,7 @@
 
 
 use App\Http\Controllers\WEB\Site\HomeController;
-use App\Http\Controllers\Api\OmnifulWebhookController;
+use App\Http\Controllers\API\OmnifulWebhookController;
 
 
 Route::group([
