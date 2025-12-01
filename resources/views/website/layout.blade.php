@@ -88,6 +88,54 @@
             font-family: var(--font-family-icons);
             font-weight: 900; /* required for solid icons */
         }
+
+        /* Floating WhatsApp Button */
+        .whatsapp-float {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            bottom: 30px;
+            right: 30px;
+            background-color: #25d366;
+            color: #FFF !important;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 35px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.4);
+            z-index: 99999;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .whatsapp-float i {
+            color: #FFF !important;
+            line-height: 60px;
+        }
+
+        .whatsapp-float:hover {
+            background-color: #128C7E;
+            color: #FFF !important;
+            transform: scale(1.1);
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.5);
+            text-decoration: none;
+        }
+
+        @media screen and (max-width: 768px) {
+            .whatsapp-float {
+                width: 50px;
+                height: 50px;
+                bottom: 20px;
+                right: 20px;
+                font-size: 28px;
+            }
+
+            .whatsapp-float i {
+                line-height: 50px;
+            }
+        }
     </style>
 
 
@@ -651,6 +699,8 @@
 		new WOW().init();
 	</script>
 
-
+    <a href="https://wa.me/96597795003" class="whatsapp-float" target="_blank" rel="noopener noreferrer">
+        <i class="fab fa-whatsapp whatsapp-icon"></i>
+    </a>
 </body>
 </html>

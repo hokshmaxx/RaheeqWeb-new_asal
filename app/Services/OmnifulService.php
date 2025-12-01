@@ -140,7 +140,8 @@ class OmnifulService
 
         return [
             'shipment_type' => 'omniful_generated',
-            'order_id' => 'order_' . $order->id,
+//            'order_id' => 'order_' . $order->id,
+            'order_id' =>  $order->id,
             'order_alias' => '#' . $order->id,
             'hub_code' => config('services.omniful.hub_code', 'A1'),
             'order_items' => $items,

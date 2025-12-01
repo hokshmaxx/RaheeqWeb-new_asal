@@ -232,48 +232,42 @@
 @section('js')
 <script>
     $(document).ready(function() {
-
         var dataTable = $('#kt_datatable1').DataTable({
             destroy: true,
             processing: true,
             serverSide: true,
             autoWidth: false,
             pageLength: 10,
-            "aaSorting": [[0,'desc']],
+            order: [[1, 'desc']], // Sort by id column (descending - bigger to smaller)
             dom: '<"dt-top-container"<B><"dt-center-in-div"l><f>r>t<"dt-filter-spacer"><ip>',
             buttons: table_btns,
-            language: table_language ,
-
-            "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+            language: table_language,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
             searching: true,
-            "oLanguage": {
-                "sSearch": "{{__('cp.search')}}"
+            oLanguage: {
+                sSearch: "{{__('cp.search')}}"
             },
             search: {
-            "regex": true
-        },
-        ajax: {
-            url: "{{url(app()->getLocale().'/admin/orders')}}",
-            type: 'GET',
-            data : { @foreach (request()->query() as $key => $one) '{{$key}}' : '{{$one}}' , @endforeach}
-        },
+                regex: true
+            },
+            ajax: {
+                url: "{{url(app()->getLocale().'/admin/orders')}}",
+                type: 'GET',
+                data: { @foreach (request()->query() as $key => $one) '{{$key}}' : '{{$one}}' , @endforeach}
+            },
             columns: [
-                    { data: 'index', name: 'index', orderable: false},
-                    { data: 'id', name: 'id'},
-                    { data: 'user.name', name: 'user.name'},
-                    { data: 'user.email', name: 'user.email'},
-                    // { data: 'age.name', name: 'age.name' , orderable: false, searchable: false},
-                    { data: 'total', name: 'total' },
-                    { data: 'status', name: 'status' },
-                    { data: 'payment_method', name: 'payment_method' },
-                    { data: 'payment_status', name: 'payment_status' },
-                    { data: 'created_at', name: 'created_at' },
-                    {data: 'action', name: 'action', orderable: false},
-                ],
-        order: [[0, 'desc']]
-
+                { data: 'index', name: 'index', orderable: false, searchable: false },
+                { data: 'id', name: 'id', visible: true }, // Add hidden ID column
+                { data: 'user.name', name: 'user.name'},
+                { data: 'user.email', name: 'user.email'},
+                { data: 'total', name: 'total' },
+                { data: 'status', name: 'status' },
+                { data: 'payment_method', name: 'payment_method' },
+                { data: 'payment_status', name: 'payment_status' },
+                { data: 'created_at', name: 'created_at' },
+                { data: 'action', name: 'action', orderable: false},
+            ]
         });
-
     });
 
 

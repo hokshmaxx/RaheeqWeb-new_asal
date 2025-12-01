@@ -76,6 +76,8 @@
         .notifications_list {
             font-family: 'Cairo', sans-serif !important;
         }
+
+
     </style>
 
     <script src="{{ url('js/jquery-3.3.1.min.js') }}"></script>
@@ -665,7 +667,10 @@ $(document).ready(function(){
 
 
 
-
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/96597795003" class="whatsapp-float" target="_blank" rel="noopener noreferrer">
+        <i class="fab fa-whatsapp whatsapp-icon"></i>
+    </a>
 
 </body>
 </html>
