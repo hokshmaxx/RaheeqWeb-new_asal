@@ -321,22 +321,55 @@ class AppController extends Controller
 
     public function list_vender_category(Request $request) {
 
-        $products = Product::where('category_id',$request->get('category'))
-            ->where('status','active')
-            ->where('vender_id',$request->get('vender_id'))->with(['variants','variants.variantType'])
-            ->paginate($this->paginate)->items();
+        // Validate request
+        $validated = $request->validate([
+            'vender_id' => 'required|exists:venders,id',
+            'category' => 'nullable|exists:categories,id',
+        ]);
 
-        $check = ($this->paginate > count($products)) ? false : true;
+        $venderId = $request->get('vender_id');
+        $categoryId = $request->get('category');
 
-        if ($request->has('vender_id') && $request->vender_id != null) {
-            $visitor = Venders::where('id',$request->get('vender_id'))->first();
-            $new_quantity=$visitor->visitor + 1;
-            Venders::where('id',$request->get('vender_id'))->update(['visitor' => $new_quantity]);
+        // Build query with eager loading
+        $query = Product::where('status', 'active')
+            ->where('vender_id', $venderId)
+            ->with([
+                'variants' => function($q) {
+                    $q->where('status', 'active'); // Only active variants
+                },
+                'variants.variantType'
+            ]);
+
+        // Apply category filter if provided
+        if (!empty($categoryId)) {
+            $query->where('category_id', $categoryId);
         }
 
+        // Add ordering for consistency
+        $query->orderBy('created_at', 'desc');
+
+        // Get paginated results
+        $paginatedProducts = $query->paginate($this->paginate);
+        $products = $paginatedProducts->items();
+
+        // Check for more pages
+        $hasMorePages = $paginatedProducts->hasMorePages();
+
+        // Update vendor visitor count (using increment for better performance)
+        if (!empty($venderId)) {
+            Venders::where('id', $venderId)->increment('visitor');
+        }
 
         $message = __('api.ok');
-        return response()->json(['status' => true, 'code' => 200, 'message' => $message, 'products' => $products, 'is_more' => $check]);
+        return response()->json([
+            'status' => true,
+            'code' => 200,
+            'message' => $message,
+            'products' => $products,
+            'is_more' => $hasMorePages,
+            'total' => $paginatedProducts->total(), // Optional: total product count
+            'current_page' => $paginatedProducts->currentPage(), // Optional: current page
+        ]);
     }
 
     public function vender_information(Request $request) {
