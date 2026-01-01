@@ -322,9 +322,9 @@ class AppController extends Controller
     public function list_vender_category(Request $request) {
 
         $products = Product::where('category_id',$request->get('category'))
-                    ->where('status','active')
-                    ->where('vender_id',$request->get('vender_id'))->with(['variants','variants.variantType'])
-                    ->paginate($this->paginate)->items();
+            ->where('status','active')
+            ->where('vender_id',$request->get('vender_id'))->with(['variants','variants.variantType'])
+            ->paginate($this->paginate)->items();
 
         $check = ($this->paginate > count($products)) ? false : true;
 
